@@ -32,20 +32,7 @@ namespace HorrorFPS.ItemsEditor
 
             Quaternion facing;
             Vector3 origin = Origin(out facing);
-            GameObject rootGo = new GameObject("[Demo] Itens, Sanidade e Corpo");
-            rootGo.transform.SetPositionAndRotation(origin, facing);
-            Transform root = rootGo.transform;
-
-            EnsureGround(root, origin);
-            BuildChest(root, items);
-            BuildFloorItems(root, items);
-            BuildTargets(root);
-            BuildZone(root);
-            BuildWallAndPortrait(root);
-            BuildHallucinations(root);
-            BuildLamp(root);
-            BuildBarrel(root);
-            BuildListener(root);
+            GameObject rootGo = Build(items, origin, facing, true);
 
             Undo.RegisterCreatedObjectUndo(rootGo, "Create Horror FPS demo props");
             Selection.activeGameObject = rootGo;
@@ -60,6 +47,30 @@ namespace HorrorFPS.ItemsEditor
                            "• Barril vermelho: Detonar sacode a cabeça, acelera o coração e faz barulho.\n" +
                            "• O \"ouvinte\" vira para qualquer barulho que você fizer (tiro, passos correndo, batimento alto).\n\n" +
                            "Dica: sem modificar o prefab do jogador, os módulos entram sozinhos ao dar Play.");
+        }
+
+        /// <summary>
+        /// Monta a bancada inteira (baú, itens no chão, bonecos de treino, zona de sanidade, retrato, alucinações, lâmpada, barril e ouvinte)
+        /// sob um objeto novo em 'origin'. Não abre diálogo, não seleciona nada e não registra undo: o menu 6 e a cena completa usam isto.
+        /// 'ensureGround' acrescenta um chão só se não houver nenhum embaixo (consulta a física: desligue se você já fornece o chão).
+        /// </summary>
+        public static GameObject Build(Dictionary<string, ItemData> items, Vector3 origin, Quaternion facing, bool ensureGround)
+        {
+            GameObject rootGo = new GameObject("[Demo] Itens, Sanidade e Corpo");
+            rootGo.transform.SetPositionAndRotation(origin, facing);
+            Transform root = rootGo.transform;
+
+            if (ensureGround) EnsureGround(root, origin);
+            BuildChest(root, items);
+            BuildFloorItems(root, items);
+            BuildTargets(root);
+            BuildZone(root);
+            BuildWallAndPortrait(root);
+            BuildHallucinations(root);
+            BuildLamp(root);
+            BuildBarrel(root);
+            BuildListener(root);
+            return rootGo;
         }
 
         // ------------------------------------------------------------------ posição

@@ -13,14 +13,20 @@ namespace HorrorFPS.EditorTools
     /// </summary>
     public static partial class HorrorFPSSetup
     {
-        const string Root = "Assets/Huggable Horrors";
-        const string InputPath = Root + "/Input/HorrorControls.inputactions";
-        const string PrefabPath = Root + "/Prefabs/Player.prefab";
-        const string ScenePath = Root + "/Scenes/HorrorDemo.unity";
+        // A pasta-raiz vem de ProjectPaths (onde o framework está no projeto): não depende do nome da pasta ("HorrorFPS", "Huggable Horrors"...).
+        static string Root { get { return ProjectPaths.Root; } }
+        static string InputPath { get { return Root + "/Input/HorrorControls.inputactions"; } }
+        static string PrefabPath { get { return Root + "/Prefabs/Player.prefab"; } }
+        static string ScenePath { get { return Root + "/Scenes/HorrorDemo.unity"; } }
 
         [MenuItem("Tools/Horror FPS/1. Create Player Prefab")]
         public static void CreatePlayerPrefabMenu()
         {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null
+                && !EditorUtility.DisplayDialog("Horror FPS",
+                    "O prefab do jogador já existe em " + PrefabPath + ".\n\nRecriar APAGA o que você configurou nele (módulos, modelo, ajustes) e volta ao prefab básico. Continuar?",
+                    "Recriar", "Cancelar"))
+                return;
             GameObject prefab = EnsurePlayerPrefab(true);
             if (prefab != null) EditorGUIUtility.PingObject(prefab);
         }
@@ -30,6 +36,10 @@ namespace HorrorFPS.EditorTools
         {
             GameObject prefab = EnsurePlayerPrefab(false);
             if (prefab == null) return;
+            if (AssetDatabase.LoadMainAssetAtPath(ScenePath) != null
+                && !EditorUtility.DisplayDialog("Horror FPS",
+                    "A cena " + ScenePath + " já existe. Recriar APAGA o que você editou nela. Continuar?", "Recriar", "Cancelar"))
+                return;
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             BuildDemoScene(prefab);
             EditorUtility.DisplayDialog("Horror FPS",
@@ -50,7 +60,7 @@ namespace HorrorFPS.EditorTools
             InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputPath);
             if (actions == null)
             {
-                Debug.LogError("[HorrorFPS] Não achei " + InputPath + ". Mantenha a pasta Assets/HorrorFPS como veio no pacote.");
+                Debug.LogError("[HorrorFPS] Não achei " + InputPath + ". Mantenha a pasta do framework inteira (Input/HorrorControls.inputactions e a pasta Editor).");
                 return null;
             }
 

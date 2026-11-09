@@ -14,9 +14,9 @@ namespace HorrorFPS
     /// </summary>
     public static class PlayerAnimatorControllerBuilder
     {
-        public const string ControllerPath = AnimationEditorUtil.Dir + "/PlayerBody.controller";
-        const string UpperMaskPath = AnimationEditorUtil.Dir + "/PlayerUpperBody.mask";
-        const string LeftArmMaskPath = AnimationEditorUtil.Dir + "/PlayerLeftArm.mask";
+        public static string ControllerPath { get { return AnimationEditorUtil.Dir + "/PlayerBody.controller"; } }
+        static string UpperMaskPath { get { return AnimationEditorUtil.Dir + "/PlayerUpperBody.mask"; } }
+        static string LeftArmMaskPath { get { return AnimationEditorUtil.Dir + "/PlayerLeftArm.mask"; } }
 
         [MenuItem("Tools/Horror FPS/15. Create Player Animator Controller")]
         public static void Run()

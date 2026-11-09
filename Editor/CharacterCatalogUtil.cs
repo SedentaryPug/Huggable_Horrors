@@ -10,8 +10,8 @@ namespace HorrorFPS.ItemsEditor
     /// </summary>
     public static class CharacterCatalogUtil
     {
-        public const string Folder = "Assets/HorrorFPS/Resources/HorrorFPS";
-        public const string CharactersFolder = "Assets/HorrorFPS/Resources/HorrorFPS/Characters";
+        public static string Folder { get { return ProjectPaths.Folder("Resources/HorrorFPS"); } }
+        public static string CharactersFolder { get { return ProjectPaths.Folder("Resources/HorrorFPS/Characters"); } }
 
         public static CharacterCatalog Find()
         {

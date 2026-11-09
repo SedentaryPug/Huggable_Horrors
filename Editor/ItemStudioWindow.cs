@@ -131,7 +131,7 @@ namespace HorrorFPS.ItemsEditor
                 }
             }
             catch (Exception) { }
-            return "Assets/HorrorFPS/Generated/ItemIcons";
+            return ProjectPaths.Folder("Generated/ItemIcons");
         }
 
         void RefreshList()

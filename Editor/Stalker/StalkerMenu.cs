@@ -19,9 +19,39 @@ namespace HorrorFPS
         [MenuItem("Tools/Horror FPS/18. Create Stalker Demo In Open Scene")]
         public static void CreateDemo()
         {
+            Vector3 origin = SceneView.lastActiveSceneView != null ? SceneView.lastActiveSceneView.pivot : Vector3.zero;
+            DemoResult demo = BuildDemo(origin, false);
+
+            EditorSceneManager.MarkSceneDirty(demo.root.scene);
+            Selection.activeGameObject = demo.monster;
+            EditorUtility.DisplayDialog("Perseguidor",
+                "Bancada criada em [Stalker Demo]: 4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor (vermelho, com Stalker Finisher) e um rádio isca (verde).\n\n"
+                + (demo.baked ? "NavMesh gerado.\n\n" : "NÃO consegui gerar o NavMesh sozinho: abra Window > AI > Navigation e faça o Bake (ou adicione um NavMeshSurface em [Stalker Demo] e clique Bake).\n\n")
+                + demo.finisherNote + "\n\n"
+                + "Para testar seguir entre cenas, chamado por tempo/barulho e vários perseguidores, rode o menu 20 neste monstro (cria a StalkerDefinition).\n\n"
+                + "Dê Play numa cena com jogadores (ex.: a cena completa do menu 27 ou um nível do jogo). O painel de debug aparece no canto da tela. Faça barulho ao longe e fique perto do rádio sem ser visto: depois de algumas viagens em vão ele passa a ignorá-lo.",
+                "OK");
+        }
+
+        /// <summary>Resultado de BuildDemo.</summary>
+        public sealed class DemoResult
+        {
+            public GameObject root;
+            public GameObject monster;
+            public bool baked;
+            public string finisherNote;
+        }
+
+        /// <summary>
+        /// Monta a bancada do perseguidor (arena 40x40 com 4 salas, pontos de ronda e de aparição, o monstro com finalizador e um rádio isca)
+        /// em 'origin'. Não abre diálogo nem seleciona nada: o menu 18 e a cena completa usam isto.
+        /// 'embedded' = a arena fica dentro de uma cena maior: abre uma porta de 7 m na parede sul (para os jogadores entrarem),
+        /// o NavMesh cobre só a arena e o painel de debug do monstro fica desligado (ligue "Show Hud" no Stalker Brain para vê-lo).
+        /// </summary>
+        public static DemoResult BuildDemo(Vector3 origin, bool embedded)
+        {
             GameObject root = new GameObject("[Stalker Demo]");
             Undo.RegisterCreatedObjectUndo(root, "Create Stalker Demo");
-            Vector3 origin = SceneView.lastActiveSceneView != null ? SceneView.lastActiveSceneView.pivot : Vector3.zero;
             root.transform.position = origin;
             Transform r = root.transform;
 
@@ -31,7 +61,17 @@ namespace HorrorFPS
             // arena 40x40 com 4 salas ligadas pelo centro
             Box(r, "Floor", new Vector3(0f, -0.2f, 0f), new Vector3(40f, 0.4f, 40f), floor);
             Box(r, "Wall_N", new Vector3(0f, 1.5f, 20f), new Vector3(40f, 3f, 0.5f), wall);
-            Box(r, "Wall_S", new Vector3(0f, 1.5f, -20f), new Vector3(40f, 3f, 0.5f), wall);
+            if (embedded)
+            {
+                // porta de 7 m (x de -3,5 a 3,5, 2,5 m de altura) no meio da parede sul
+                Box(r, "Wall_S_L", new Vector3(-11.75f, 1.5f, -20f), new Vector3(16.5f, 3f, 0.5f), wall);
+                Box(r, "Wall_S_R", new Vector3(11.75f, 1.5f, -20f), new Vector3(16.5f, 3f, 0.5f), wall);
+                Box(r, "Wall_S_Verga", new Vector3(0f, 2.75f, -20f), new Vector3(7f, 0.5f, 0.5f), wall);
+            }
+            else
+            {
+                Box(r, "Wall_S", new Vector3(0f, 1.5f, -20f), new Vector3(40f, 3f, 0.5f), wall);
+            }
             Box(r, "Wall_E", new Vector3(20f, 1.5f, 0f), new Vector3(0.5f, 3f, 40f), wall);
             Box(r, "Wall_W", new Vector3(-20f, 1.5f, 0f), new Vector3(0.5f, 3f, 40f), wall);
             Box(r, "Inner_X1", new Vector3(-12f, 1.5f, 0f), new Vector3(16f, 3f, 0.5f), wall);
@@ -40,7 +80,7 @@ namespace HorrorFPS
             Box(r, "Inner_Z2", new Vector3(0f, 1.5f, 12f), new Vector3(0.5f, 3f, 16f), wall);
 
             // o bake vem ANTES do monstro e do rádio (senão eles abrem buracos no NavMesh)
-            bool baked = TryBake(root);
+            bool baked = TryBake(root, embedded);
 
             GameObject patrol = new GameObject("PatrolPoints");
             patrol.transform.SetParent(r, false);
@@ -66,7 +106,7 @@ namespace HorrorFPS
             StalkerSenses senses = m.AddComponent<StalkerSenses>();
             senses.eyes = head.transform;
             StalkerBrain brain = m.AddComponent<StalkerBrain>();
-            brain.showHud = true;
+            brain.showHud = !embedded;
 
             // finalização: último golpe -> cutscene de teste -> a vítima morre
             StalkerFinisher fin = m.AddComponent<StalkerFinisher>();
@@ -101,15 +141,12 @@ namespace HorrorFPS
             SetEnum(so, "noiseKind", "Custom");
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            EditorSceneManager.MarkSceneDirty(root.scene);
-            Selection.activeGameObject = m;
-            EditorUtility.DisplayDialog("Perseguidor",
-                "Bancada criada em [Stalker Demo]: 4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor (vermelho, com Stalker Finisher) e um rádio isca (verde).\n\n"
-                + (baked ? "NavMesh gerado.\n\n" : "NÃO consegui gerar o NavMesh sozinho: abra Window > AI > Navigation e faça o Bake (ou adicione um NavMeshSurface em [Stalker Demo] e clique Bake).\n\n")
-                + finNote + "\n\n"
-                + "Para testar seguir entre cenas, chamado por tempo/barulho e vários perseguidores, rode o menu 20 neste monstro (cria a StalkerDefinition).\n\n"
-                + "Dê Play numa cena com jogadores (ex.: a HorrorDemo). O painel de debug aparece no canto da tela. Faça barulho ao longe e fique perto do rádio sem ser visto: depois de algumas viagens em vão ele passa a ignorá-lo.",
-                "OK");
+            DemoResult result = new DemoResult();
+            result.root = root;
+            result.monster = m;
+            result.baked = baked;
+            result.finisherNote = finNote;
+            return result;
         }
 
         // ------------------------------------------------------------------ 19. adicionar ao selecionado
@@ -370,7 +407,7 @@ namespace HorrorFPS
         }
 
         /// <summary>Gera o NavMesh sem depender de pacote: usa o NavMeshSurface se existir, senão o construtor antigo (por reflexão).</summary>
-        static bool TryBake(GameObject root)
+        static bool TryBake(GameObject root, bool childrenOnly)
         {
             try
             {
@@ -378,6 +415,17 @@ namespace HorrorFPS
                 if (surf != null)
                 {
                     Component c = Undo.AddComponent(root, surf);
+                    if (c != null && childrenOnly)
+                    {
+                        // só a geometria dentro de 'root' (Collect Objects = Children); sem isso o bake pega a cena inteira
+                        SerializedObject surfaceSo = new SerializedObject(c);
+                        SerializedProperty collect = surfaceSo.FindProperty("m_CollectObjects");
+                        if (collect != null)
+                        {
+                            collect.intValue = 2;
+                            surfaceSo.ApplyModifiedPropertiesWithoutUndo();
+                        }
+                    }
                     MethodInfo build = surf.GetMethod("BuildNavMesh", Type.EmptyTypes);
                     if (c != null && build != null) { build.Invoke(c, null); return true; }
                 }

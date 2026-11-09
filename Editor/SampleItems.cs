@@ -6,7 +6,7 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 5. Create Sample Items — cria dezoito itens de exemplo em Assets/HorrorFPS/Resources/HorrorFPS/Items,
+    /// Tools > Horror FPS > 5. Create Sample Items — cria dezoito itens de exemplo em &lt;raiz do framework&gt;/Resources/HorrorFPS/Items,
     /// com formas variadas (inclusive quebradas), descrições que mudam pela sanidade de quem olha, ações com efeitos
     /// (cura, calma, sanidade, coice, barulho), equipamentos que funcionam (lanterna, facas, armas de fogo, ver ItemEquip) e modelos de
     /// inspeção com pontos interativos. Itens que já existem não são tocados, exceto os que ainda não têm equipamento (só pelo menu).
@@ -34,15 +34,26 @@ namespace HorrorFPS.ItemsEditor
         /// <summary>Garante os itens de exemplo (cria os que faltam) e devolve todos por id.</summary>
         public static Dictionary<string, ItemData> EnsureAll(out int created)
         {
-            WizardUtil.EnsureFolder(WizardUtil.ItemsFolder);
+            string folder = WizardUtil.ItemsFolder;
+            WizardUtil.EnsureFolder(folder);
             Dictionary<string, ItemData> map = new Dictionary<string, ItemData>();
             HashSet<string> fresh = new HashSet<string>();
             int made = 0;
 
+            // itens que já existem em QUALQUER pasta do projeto (pelo id): nada é duplicado se o asset foi movido ou está na pasta antiga
+            Dictionary<string, ItemData> known = new Dictionary<string, ItemData>();
+            string[] guids = AssetDatabase.FindAssets("t:ItemData");
+            for (int i = 0; i < guids.Length; i++)
+            {
+                ItemData d = AssetDatabase.LoadAssetAtPath<ItemData>(AssetDatabase.GUIDToAssetPath(guids[i]));
+                if (d != null && !string.IsNullOrEmpty(d.id) && !known.ContainsKey(d.id)) known[d.id] = d;
+            }
+
             foreach (ItemData def in Definitions())
             {
-                string path = WizardUtil.ItemsFolder + "/" + def.id + ".asset";
-                ItemData existing = AssetDatabase.LoadAssetAtPath<ItemData>(path);
+                string path = folder + "/" + def.id + ".asset";
+                ItemData existing;
+                if (!known.TryGetValue(def.id, out existing)) existing = AssetDatabase.LoadAssetAtPath<ItemData>(path);
                 if (existing != null) { map[def.id] = existing; UnityEngine.Object.DestroyImmediate(def); continue; }
                 AssetDatabase.CreateAsset(def, path);
                 map[def.id] = def;

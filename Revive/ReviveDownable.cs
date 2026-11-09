@@ -268,7 +268,7 @@ namespace HorrorFPS
                 if (!ReviveDeath.Undo(player, snap, prof.downedHealth, out report))
                 {
                     ReviveBridge.WarnOnce("Não consegui desfazer a morte de " + Label + " (" + report + "). Vale a morte normal do framework. " +
-                        "Para ligar o gancho exato, veja ReviveApi.TryIntercept no doc (envie PlayerContext.cs, StatsComponent.cs e GameOverScreen.cs).");
+                        "Para ligar o gancho exato, veja ReviveApi.TryIntercept (comentário em Revive/ReviveApi.cs).");
                     GoDead();
                     return;
                 }

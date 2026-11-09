@@ -15,12 +15,12 @@ namespace HorrorFPS.EditorTools
     /// </summary>
     public static partial class HorrorFPSSetup
     {
-        const string MenuScenePath = Root + "/Scenes/MainMenu.unity";
-        const string CoreScenePath = Root + "/Scenes/Core.unity";
-        const string HallScenePath = Root + "/Scenes/Level_Hall.unity";
-        const string CellarScenePath = Root + "/Scenes/Level_Cellar.unity";
-        const string AnnexScenePath = Root + "/Scenes/Level_Annex.unity";
-        const string CatalogPath = Root + "/Resources/HorrorFPS/GameCatalog.asset";
+        static string MenuScenePath { get { return Root + "/Scenes/MainMenu.unity"; } }
+        static string CoreScenePath { get { return Root + "/Scenes/Core.unity"; } }
+        static string HallScenePath { get { return Root + "/Scenes/Level_Hall.unity"; } }
+        static string CellarScenePath { get { return Root + "/Scenes/Level_Cellar.unity"; } }
+        static string AnnexScenePath { get { return Root + "/Scenes/Level_Annex.unity"; } }
+        static string CatalogPath { get { return Root + "/Resources/HorrorFPS/GameCatalog.asset"; } }
 
         [MenuItem("Tools/Horror FPS/3. Create Full Game Demo (menu, níveis, save, cutscenes)")]
         public static void CreateFullDemoMenu()
@@ -28,6 +28,18 @@ namespace HorrorFPS.EditorTools
             GameObject prefab = EnsurePlayerPrefab(false);
             if (prefab == null) return;
             InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputPath);
+
+            // as cenas do jogo são recriadas do zero: avisa antes de sobrescrever o que já existe
+            string[] scenePaths = { MenuScenePath, CoreScenePath, HallScenePath, CellarScenePath, AnnexScenePath };
+            string existing = string.Empty;
+            for (int i = 0; i < scenePaths.Length; i++)
+                if (AssetDatabase.LoadMainAssetAtPath(scenePaths[i]) != null) existing += "\n  • " + scenePaths[i];
+            if (existing.Length > 0
+                && !EditorUtility.DisplayDialog("Horror FPS",
+                    "Estas cenas já existem e serão RECRIADAS do zero (o que você editou nelas se perde):" + existing + "\n\nContinuar?",
+                    "Recriar", "Cancelar"))
+                return;
+
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
             EnsureFolder(Root + "/Scenes");
