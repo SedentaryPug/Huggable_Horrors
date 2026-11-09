@@ -1,0 +1,906 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &138358149383453006
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 687331170299895957}
+  m_Layer: 0
+  m_Name: CameraPivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &687331170299895957
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 138358149383453006}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1564402209624802926}
+  m_Father: {fileID: 3790434316960599491}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &204205850941339835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3274969089187337810}
+  - component: {fileID: 5978556515864304765}
+  - component: {fileID: 58061379324102409}
+  - component: {fileID: 4857606744560193596}
+  m_Layer: 0
+  m_Name: '[Inventory]'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3274969089187337810
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 204205850941339835}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3790434316960599491}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5978556515864304765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 204205850941339835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d58b9e844a83a342922680cf7c284b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.GridContainer
+  containerId: bag
+  displayName: Mochila
+  accepted: -1
+  tab: 0
+  startingItems: []
+  width: 8
+  height: 6
+  blockedPattern: 
+--- !u!114 &58061379324102409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 204205850941339835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e13c07e2459ac9488cfc6fa07f7ee76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.ListContainer
+  containerId: pockets
+  displayName: Bolsos
+  accepted: -1
+  tab: 0
+  startingItems: []
+  unlimited: 0
+  maxSlots: 6
+--- !u!114 &4857606744560193596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 204205850941339835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38f59f5a91fbb22408e762d2e3973d45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.InventoryOwner
+  displayName: Mochila
+  dropAnchor: {fileID: 0}
+  dropDistance: 1.1
+--- !u!1 &1554161892725553268
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1564402209624802926}
+  - component: {fileID: 8681495091311215594}
+  - component: {fileID: 5158207088692541998}
+  m_Layer: 0
+  m_Name: PlayerCamera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1564402209624802926
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554161892725553268}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 687331170299895957}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &8681495091311215594
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554161892725553268}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.05
+  far clip plane: 1000
+  field of view: 75
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!81 &5158207088692541998
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554161892725553268}
+  m_Enabled: 1
+--- !u!1 &6656952091317167387
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3790434316960599491}
+  - component: {fileID: 8302935435968460936}
+  - component: {fileID: 2559204444360118852}
+  - component: {fileID: 4122076255563272789}
+  - component: {fileID: 5051832635897098289}
+  - component: {fileID: 2486798224399070896}
+  - component: {fileID: 2474944665137231821}
+  - component: {fileID: 5870914989901092858}
+  - component: {fileID: 830570786901850072}
+  - component: {fileID: 8506408810521174338}
+  - component: {fileID: 3771937053849815712}
+  - component: {fileID: 2561305726429659600}
+  - component: {fileID: 4877617746723672220}
+  - component: {fileID: 630591801206522415}
+  - component: {fileID: 3494486313553232298}
+  - component: {fileID: 1548062665751780208}
+  - component: {fileID: 2725345576659896605}
+  - component: {fileID: 97037441879376394}
+  - component: {fileID: 4232702285483283494}
+  - component: {fileID: 4815274915193959175}
+  - component: {fileID: 699688834591189117}
+  - component: {fileID: 8056542778824647693}
+  - component: {fileID: 8528853378155827907}
+  - component: {fileID: 3583853917097580176}
+  - component: {fileID: 6172094985005377421}
+  - component: {fileID: 6852371235924837616}
+  - component: {fileID: 4540063844033495938}
+  - component: {fileID: 3598486831268622690}
+  - component: {fileID: 3025582910862146318}
+  m_Layer: 0
+  m_Name: Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3790434316960599491
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 687331170299895957}
+  - {fileID: 3274969089187337810}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &8302935435968460936
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.8
+  m_Radius: 0.3
+  m_SlopeLimit: 50
+  m_StepOffset: 0.35
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &2559204444360118852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: d3329460a97adba4c86807ab48ae8a36, type: 3}
+  m_NotificationBehavior: 3
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Gameplay
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 8681495091311215594}
+--- !u!114 &4122076255563272789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 170cf6ce1638c3340b2b22535d8a7b23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerInputHandler
+--- !u!114 &5051832635897098289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb35924cd1bfb048a76803c68b854a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerContext
+  playerCamera: {fileID: 8681495091311215594}
+  audioListener: {fileID: 5158207088692541998}
+--- !u!114 &2486798224399070896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f868bff539200048bfc9e210c8fc1e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.FirstPersonController
+  cameraPivot: {fileID: 687331170299895957}
+  walkSpeed: 3.2
+  sprintSpeed: 5.4
+  crouchSpeed: 1.5
+  acceleration: 14
+  airControl: 0.35
+  jumpHeight: 0.9
+  gravityScale: 1.6
+  coyoteTime: 0.1
+  fallDamageSpeed: 11
+  fallDamagePerMetersPerSecond: 6
+  standHeight: 1.8
+  crouchHeight: 1.1
+  eyeOffset: 0.15
+  crouchSmoothing: 10
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  maxPitch: 85
+  headBob: 1
+  bobFrequency: 1.9
+  bobAmplitude: 0.035
+  stepDistance: 2.1
+  sprintStaminaPerSecond: 14
+  jumpStaminaCost: 6
+  minStaminaToSprint: 12
+--- !u!114 &2474944665137231821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b262906441492aa41a11a78b063bad2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerClimber
+  snapSpeed: 4
+  faceSpeed: 540
+  exitDuration: 0.4
+  regrabCooldown: 0.35
+--- !u!114 &5870914989901092858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 954863b918fd33b43a9898013de98096, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerInteractor
+  probeDistance: 3
+  probeRadius: 0.06
+  mask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &830570786901850072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d2086e5e914d434284f6258a7c384fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerDragger
+  maxMass: 60
+  pullForce: 900
+  maxAcceleration: 50
+  pullStiffness: 12
+  torqueFactor: 0.35
+  angularDamping: 0.92
+  breakDistance: 1.6
+  breakTime: 0.4
+  scrollStep: 0.25
+  padAdjustSpeed: 1.5
+  minSpeedMultiplier: 0.45
+--- !u!114 &8506408810521174338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf6f510eb83ce284bb8f2b14d7ca22c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerHUD
+  glyphSet: {fileID: 0}
+  displayedStats: 000000000100000002000000
+  alwaysShowStats: 0
+  statFadeDelay: 2.5
+--- !u!114 &3771937053849815712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdbc012bcdc549d43997ad73c6ebb77c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.StatsComponent
+  stats:
+  - type: 0
+    baseValue: 100
+    isResource: 1
+    startPercent: 1
+    regenPerSecond: 0
+    regenDelay: 0
+  - type: 1
+    baseValue: 100
+    isResource: 1
+    startPercent: 1
+    regenPerSecond: 20
+    regenDelay: 1.2
+  - type: 2
+    baseValue: 100
+    isResource: 1
+    startPercent: 1
+    regenPerSecond: 0
+    regenDelay: 0
+  - type: 6
+    baseValue: 1
+    isResource: 0
+    startPercent: 1
+    regenPerSecond: 0
+    regenDelay: 0
+  - type: 5
+    baseValue: 0
+    isResource: 0
+    startPercent: 1
+    regenPerSecond: 0
+    regenDelay: 0
+  vitalStat: 0
+  invulnerable: 0
+  destroyOnDeath: 0
+  destroyDelay: 0
+  onDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  onDied:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2561305726429659600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6871ead7ff51624fbd84c4f1ffa4906, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.ItemInput
+--- !u!114 &4877617746723672220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be6764a2602296e468ba7198c082e9e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerOverlay
+  sortingOrderBase: 200
+--- !u!114 &630591801206522415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913f1d12da4510c4a810fa0b8d251dc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.Hotbar
+--- !u!114 &3494486313553232298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 551275bcd47b2384dbee9ad1122c7a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.HotbarHUD
+  showSeconds: 3.5
+  alwaysVisible: 0
+--- !u!114 &1548062665751780208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 555106f67b36d0c4d92ca6fda75a5234, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.InventoryScreen
+  maxCellSolo: 72
+  lockMovementWhileOpen: 1
+  mouseSensitivity: 1
+  stickSpeed: 650
+  dragHoldSeconds: 0.22
+  dragMovePixels: 10
+  maxCell: 48
+--- !u!114 &2725345576659896605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74a1731e7caec96468fa23997bb83ed5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerMotionProbe
+  movingMin: 0.4
+  runningMin: 4.6
+  crouchRatio: 0.86
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundCheckDistance: 0.28
+  stepLengthWalk: 1.9
+  stepLengthRun: 2.6
+  stepLengthCrouch: 1.3
+  useExternalSteps: 0
+  emitNoise: 1
+  crouchNoise: 1.5
+  walkNoise: 5
+  runNoise: 11
+  landNoiseMax: 18
+--- !u!114 &97037441879376394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a62703ba4d66144ea507393c2f43329, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.BreathingComponent
+  restRate: 13
+  maxRate: 44
+  audioMode: 0
+  volume: 0.7
+  audibleFrom: 0.3
+  customInhale: {fileID: 0}
+  customExhale: {fileID: 0}
+  customGasp: {fileID: 0}
+  allowHold: 1
+  maxHoldSeconds: 9
+  cooldownSeconds: 4
+  emitNoise: 1
+  noiseFrom: 0.4
+  noiseMaxRadius: 5
+  gaspRadius: 9
+--- !u!114 &4232702285483283494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c086946c9883d14dab5c17dc48a617b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.HeartbeatComponent
+  restBpm: 66
+  maxBpm: 178
+  riseBpmPerSecond: 28
+  fallBpmPerSecond: 7
+  runBpm: 42
+  insanityBpm: 38
+  threatBpm: 62
+  holdBreathBpm: 12
+  audioMode: 0
+  volume: 0.85
+  audibleFrom: 0.2
+  customBeat: {fileID: 0}
+  shakeHands: 1
+  maxTremor: 0.12
+  slowWhenRacing: 1
+  racingSpeedMultiplier: 0.9
+  racingFrom: 0.78
+  emitNoise: 1
+  noiseFrom: 0.55
+  noiseMaxRadius: 6
+--- !u!114 &4815274915193959175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30438357fd043da42b8046c19d51bf4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.DynamicHeadBob
+  verticalAmplitude: 0.034
+  sideAmplitude: 0.021
+  rollDegrees: 0.5
+  strideLength: 3.6
+  runMultiplier: 1.5
+  crouchMultiplier: 0.55
+  leanDegrees: 1.1
+  stiffness: 95
+  damping: 11
+  traumaDecay: 0.85
+  shakeMeters: 0.045
+  shakeDegrees: 3.2
+  shakeFrequency: 13
+  enableBob: 1
+  suppressBaseBob: 1
+--- !u!114 &699688834591189117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 568166fe4d7f71743af20add6d69bb98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.DamageReaction
+  fullHitDamage: 40
+  minStrength: 0.15
+  sanityPerDamage: 0.06
+  noiseRadius: 7
+  autoBind: 1
+--- !u!114 &8056542778824647693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1861b1f848664b145a1f5508db234344, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.SanityComponent
+  profile: {fileID: 0}
+  startNormalized: 1
+  saveInSession: 1
+--- !u!114 &8528853378155827907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e809def8e44fec141a113a7448c20d27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.SanityFX
+  vignette: 1
+  grain: 1
+  tint: 1
+  maxVignette: 0.8
+  vignetteColor: {r: 0.03, g: 0, b: 0, a: 1}
+  tintColor: {r: 0.4, g: 0.05, b: 0.08, a: 1}
+  cameraEffects: 1
+  maxFovBreath: 2.2
+  maxRoll: 2
+  flashThreshold: 0.04
+  onInsanity:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3583853917097580176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f655e3ac87ac8244480a520ea1f6ac43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.SanityEffects
+  slowdown: 1
+  speedAtZero: 0.84
+  tremor: 1
+  maxTremor: 0.18
+  flinch: 1
+  flinchMinSeconds: 10
+  flinchMaxSeconds: 26
+  faint: 1
+  faintBelow: 0.03
+  faintSeconds: 3.2
+  faintCooldown: 75
+  wakeSanity: 0.28
+--- !u!114 &6172094985005377421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a7e8f526a349d34e88280f597818880, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.SanityAudio
+  audioMode: 0
+  volume: 0.7
+  tinnitus: 1
+  tinnitusMax: 0.12
+  drone: 1
+  droneMax: 0.3
+  hallucinations: 1
+  startsAt: 0.38
+  minDistance: 1.5
+  maxDistance: 6
+  customWhispers: []
+  customKnocks: []
+  customScrapes: []
+--- !u!114 &6852371235924837616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b52045b208c3eda47822ded8456fb2c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.SanitySubtitles
+  fontSize: 18
+  bottomOffset: 112
+--- !u!114 &4540063844033495938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90edf7de096d6df4c9f69c3dfa8cbc1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerAnimDriver
+  player: {fileID: 5051832635897098289}
+  viewCamera: {fileID: 0}
+  velocitySmoothing: 14
+  teleportDistance: 3
+  sprintSpeedThreshold: 4.6
+  crouchDepthEstimate: 0.55
+  groundedGrace: 0.08
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  fallbackStepLength: 1.7
+  manualClimbing: 0
+  manualDragging: 0
+  manualHoldingBreath: 0
+  showDebug: 0
+--- !u!114 &3598486831268622690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d334d98347e4dbb41a5afdc64383ff8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.PlayerAnimItemAdapter
+  flashlightSlot: lanterna
+  handSlot: mao
+  rules:
+  - idContains: faca
+    kind: 2
+  - idContains: cabra
+    kind: 2
+  - idContains: taco
+    kind: 2
+  - idContains: machado
+    kind: 2
+  - idContains: martelo
+    kind: 2
+  - idContains: bastao
+    kind: 2
+  - idContains: pistola
+    kind: 3
+  - idContains: revolver
+    kind: 3
+  - idContains: espingarda
+    kind: 4
+  - idContains: rifle
+    kind: 4
+  - idContains: fuzil
+    kind: 4
+  - idContains: automatica
+    kind: 4
+  - idContains: shotgun
+    kind: 4
+--- !u!114 &3025582910862146318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656952091317167387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6c31909cbdb50846b2b484d08f1b229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.BodyVisibility
+  ownerSees: 254
+  hiddenKeepShadow: 1
+  warnUnmarked: 1

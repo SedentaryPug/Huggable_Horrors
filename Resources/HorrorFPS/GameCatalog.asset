@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8e36a67d50fd724692874dfd09ff649, type: 3}
+  m_Name: GameCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.GameCatalog
+  mainMenuScene: MainMenu
+  coreScene: Core
+  gameTitle: Huggable Horrors
+  firstLevel: hall
+  levels:
+  - id: hall
+    displayName: "Sal\xE3o"
+    scenes:
+    - Level_Hall
+    defaultSpawn: start
+    loadingTip: "Segure o bot\xE3o de interagir para pular uma cutscene."
+  - id: cellar
+    displayName: "Por\xE3o"
+    scenes:
+    - Level_Cellar
+    defaultSpawn: start
+    loadingTip: Use o gravador para salvar o jogo. Checkpoints salvam sozinhos.
+  loadingTips:
+  - "Dois jogadores? Aperte um bot\xE3o no segundo controle para entrar."
+  - "Objetos que voc\xEA move continuam onde voc\xEA deixou, mesmo depois de trocar
+    de n\xEDvel."
+  - "Nem tudo que se mexe no escuro \xE9 a sua imagina\xE7\xE3o."
