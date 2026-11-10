@@ -588,7 +588,8 @@ namespace HorrorFPS
         void DropToWorld(ItemInstance item)
         {
             if (!item.data.canDrop) { Notify("Não dá para jogar isto fora."); return; }
-            owner.Drop(item);
+            try { owner.Drop(item); }
+            catch (System.Exception e) { Debug.LogException(e); }      // um ouvinte com erro não pode deixar o desenho velho na tela
             RefreshAll();
             dirty = false;
         }

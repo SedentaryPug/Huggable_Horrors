@@ -487,8 +487,12 @@ namespace HorrorFPS
                 return null;
             }
 
-            Action<ItemInstance> h = Dropped; if (h != null) h(toDrop);
-            ItemEvents.RaiseDropped(this, toDrop);
+            try
+            {
+                Action<ItemInstance> h = Dropped; if (h != null) h(toDrop);
+                ItemEvents.RaiseDropped(this, toDrop);
+            }
+            catch (Exception e) { Debug.LogException(e); }      // erro num ouvinte não desfaz o descarte nem trava o inventário
             return w;
         }
 
