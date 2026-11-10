@@ -278,8 +278,10 @@ namespace HorrorFPS
             // ordem: 0) contêiner da aba certa que já tem o mesmo item (completa pilhas) • 1) qualquer contêiner da aba certa
             //        • 2) qualquer outro que aceite (ex.: chave sem lista de Chaves vai para a mochila)
             InventoryTab want = inst.data.ResolvedTab;
-            for (int pass = 0; pass < 3 && inst.stack > 0; pass++)
-                for (int i = 0; i < containers.Count && inst.stack > 0; i++)
+            // 'added < total' e não 'inst.stack > 0': quando a instância inteira entra num contêiner ela mesma é o item guardado e
+            // continua com stack > 0; o laço então a colocava de novo em outro contêiner (item duplicado na lista e células fantasmas)
+            for (int pass = 0; pass < 3 && added < total; pass++)
+                for (int i = 0; i < containers.Count && added < total; i++)
                 {
                     ItemContainer c = containers[i];
                     if (c == preferred || !c.Accepts(inst.data)) continue;

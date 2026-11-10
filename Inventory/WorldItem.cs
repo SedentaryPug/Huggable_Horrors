@@ -60,7 +60,7 @@ namespace HorrorFPS
             if (it == null || inv == null) return;
 
             inv.AddInstance(it);
-            if (it.stack > 0) return;           // coube só uma parte: o resto continua no chão
+            if (it.container == null && it.stack > 0) return;           // coube só uma parte: o resto continua no chão (se a instância inteira entrou, ela já está num contêiner)
 
             if (!string.IsNullOrEmpty(setVariableOnPickup)) FrameworkBridge.SetBool(setVariableOnPickup, true);
             onPickedUp.Invoke();
