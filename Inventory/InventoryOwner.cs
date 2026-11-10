@@ -213,6 +213,21 @@ namespace HorrorFPS
             return list;
         }
 
+        /// <summary>True se há um item equipado que bloqueia o arrastar objetos (ItemEquip.blocksGrab): o botão passa a ser do item.</summary>
+        public bool BlocksGrab
+        {
+            get
+            {
+                foreach (KeyValuePair<string, ItemInstance> kv in equipped)
+                {
+                    ItemInstance it = kv.Value;
+                    if (it == null || it.data == null) continue;
+                    if (it.data.equip == null || it.data.equip.blocksGrab) return true;
+                }
+                return false;
+            }
+        }
+
         public ItemInstance FindFirst(string itemId)
         {
             for (int i = 0; i < containers.Count; i++) { ItemInstance it = containers[i].FindFirst(itemId); if (it != null) return it; }

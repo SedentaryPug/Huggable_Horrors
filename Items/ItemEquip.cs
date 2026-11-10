@@ -14,12 +14,14 @@ namespace HorrorFPS
     /// <summary>
     /// Comportamento de um item quando EQUIPADO (campo 'equip' do ItemData). O estado (munição no carregador, bateria,
     /// durabilidade, lanterna ligada) fica na instância do item e vai para o save.
-    /// Controles: usar equipado (botão direito / LT) golpeia ou atira; R recarrega; F liga/desliga a lanterna.
+    /// Controles: usar equipado (botão esquerdo / RT) golpeia ou atira; botão direito / LT mira (arma de fogo); R recarrega; F liga/desliga a lanterna.
     /// </summary>
     [Serializable]
     public class ItemEquip
     {
         public EquipKind kind;
+        [Tooltip("Com o item equipado, o jogador não consegue agarrar e arrastar objetos (o botão esquerdo / RT passa a ser do item). Desmarque em itens que não usam esse botão, como a lanterna.")]
+        public bool blocksGrab = true;
 
         // ---- na mão
         [Tooltip("Modelo mostrado na mão. Vazio = o modelo de inspeção do item (ou o do mundo).")]
@@ -72,6 +74,16 @@ namespace HorrorFPS
         [Range(0f, 1f)] public float recoil = 0.7f;
         public AudioClip emptySound;
         public AudioClip reloadSound;
+
+        [Header("Mira (botão direito / LT, segurando)")]
+        [Tooltip("Campo de visão ao mirar (0 = sem zoom). O campo de visão normal vem da câmera do jogador.")]
+        public float aimFov = 50f;
+        [Tooltip("Posição do modelo ao mirar, em relação à câmera (X direita, Y cima, Z frente).")]
+        public Vector3 aimPosition = new Vector3(0f, -0.14f, 0.42f);
+        [Tooltip("Multiplica a dispersão ao mirar (0 = tiro certeiro, 1 = igual a sem mirar).")]
+        [Range(0f, 1f)] public float aimSpreadMultiplier = 0.3f;
+        [Tooltip("Tempo para entrar na mira, em segundos.")]
+        public float aimSeconds = 0.15f;
     }
 
     /// <summary>Estado de um equipamento guardado na instância do item (contadores e flags) e textos para a interface.</summary>

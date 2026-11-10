@@ -8,13 +8,14 @@ namespace HorrorFPS
     /// Faz o que o item EQUIPADO faz de verdade (ItemData.equip): mostra o modelo na mão, liga a lanterna, golpeia, atira, recarrega.
     /// Um por jogador. A "mão" segura uma arma (branca ou de fogo) e a lanterna fica à parte (os dois ao mesmo tempo).
     ///
-    /// Controles (só com o inventário fechado): usar equipado (botão direito / LT) golpeia ou atira • R / D-pad baixo recarrega •
+    /// Controles (só com o inventário fechado): usar equipado (botão esquerdo / RT) golpeia ou atira • botão direito / LT mira (arma de fogo,
+    /// segurando: zoom, menos dispersão, arma no centro) • R / D-pad baixo recarrega •
     /// F / D-pad cima liga e desliga a lanterna (equipa uma, se não houver).
     /// Dano: vai para quem tiver IDamageable (StatsComponent do framework) e/ou IItemHittable (HitTarget, seus scripts).
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment Controller")]
     [PlayerModule("Equipamento", 0)]
-    public class EquipmentController : MonoBehaviour, IItemUseHandler
+    public class EquipmentController : MonoBehaviour, IItemUseHandler, ICameraModifier
     {
         [Tooltip("Camadas que golpes e tiros acertam.")]
         [SerializeField] LayerMask hitMask = ~0;
@@ -38,6 +39,7 @@ namespace HorrorFPS
         float batteryAcc, lampSeed;
 
         bool busy, reloading;
+        float aimT;                 // 0 = arma baixa, 1 = mirando
         float nextAttack, nextSync;
         float swingT = -1f, reloadT = -1f, kick;
         Coroutine action;
@@ -47,6 +49,9 @@ namespace HorrorFPS
         public ItemInstance Hand { get { return hand; } }
         public ItemInstance Lamp { get { return lamp; } }
         public bool IsReloading { get { return reloading; } }
+        /// <summary>0..1: quanto o jogador já está mirando (arma de fogo). Use para HUD, mira, sons...</summary>
+        public float AimAmount { get { return aimT; } }
+        public bool IsAiming { get { return aimT > 0.5f; } }
         public float ReloadProgress { get { return reloadT < 0f ? 0f : reloadT; } }
         /// <summary>O controlador cuida do botão de usar equipado (o jeito antigo — ação principal do item — fica desligado).</summary>
         public bool OwnsPrimary { get { return hand != null || lamp != null; } }
@@ -64,6 +69,7 @@ namespace HorrorFPS
             lampSeed = Random.value * 50f;
             owner.Equipped += OnEquipped;
             owner.Unequipped += OnUnequipped;
+            CameraFx.Register(this);
             ready = true;
             Sync();
             return true;
@@ -71,6 +77,7 @@ namespace HorrorFPS
 
         void OnDestroy()
         {
+            CameraFx.Unregister(this);
             if (owner != null) { owner.Equipped -= OnEquipped; owner.Unequipped -= OnUnequipped; }
         }
 
@@ -122,6 +129,7 @@ namespace HorrorFPS
             if (Time.unscaledTime >= nextSync) { nextSync = Time.unscaledTime + 0.4f; Sync(); }
 
             TickLamp(Time.deltaTime);
+            TickAim(Time.deltaTime);
             TickViewModel(Time.deltaTime);
             if (muzzle != null && muzzle.enabled && Time.time >= muzzleOffAt) muzzle.enabled = false;
 
@@ -129,11 +137,7 @@ namespace HorrorFPS
 
             if (ItemInput.Pressed(input.ToggleLight)) ToggleLamp();
 
-            if (hand == null)
-            {
-                if (lamp != null && ItemInput.Pressed(input.UseEquipped)) ToggleLamp();      // só a lanterna na mão: o botão de usar liga/desliga
-                return;
-            }
+            if (hand == null) return;       // só a lanterna: liga e desliga com F / D-pad cima (o botão esquerdo continua livre para arrastar)
 
             ItemEquip eq = hand.data.equip;
             if (eq.kind == EquipKind.Melee)
@@ -146,6 +150,27 @@ namespace HorrorFPS
                 if (fire) TryFire();
                 if (ItemInput.Pressed(input.Reload)) TryReload();
             }
+        }
+
+        /// <summary>Segurar o botão de mirar (arma de fogo na mão): entra e sai da mira suavemente.</summary>
+        void TickAim(float dt)
+        {
+            float target = 0f;
+            float seconds = 0.15f;
+            if (hand != null && hand.data.equip.kind == EquipKind.Firearm)
+            {
+                seconds = Mathf.Max(0.01f, hand.data.equip.aimSeconds);
+                if (!reloading && Allowed() && ItemInput.Held(input.Aim)) target = 1f;
+            }
+            aimT = Mathf.MoveTowards(aimT, target, dt / seconds);
+        }
+
+        /// <summary>Zoom da mira: só na imagem da câmera deste jogador (a lógica do jogo continua vendo a câmera normal).</summary>
+        public void Contribute(Camera c, ref CameraDelta delta)
+        {
+            if (c == null || c != cam || aimT <= 0f || hand == null) return;
+            float fov = hand.data.equip.aimFov;
+            if (fov > 1f) delta.fov += (fov - c.fieldOfView) * aimT;
         }
 
         bool Allowed()
@@ -392,11 +417,12 @@ namespace HorrorFPS
             if (handRoot != null && hand != null)
             {
                 ItemEquip eq = hand.data.equip;
-                Vector3 pos = eq.heldPosition;
+                Vector3 pos = Vector3.Lerp(eq.heldPosition, eq.aimPosition, aimT);
                 Quaternion rot = Quaternion.identity;
 
                 float t = Time.time;
-                pos += new Vector3(Mathf.Sin(t * 1.3f) * 0.003f, Mathf.Sin(t * 2.1f) * 0.003f, 0f);     // respiração
+                float sway = 1f - 0.8f * aimT;      // mirando, a arma balança menos
+                pos += new Vector3(Mathf.Sin(t * 1.3f) * 0.003f, Mathf.Sin(t * 2.1f) * 0.003f, 0f) * sway;     // respiração
 
                 if (swingT >= 0f)
                 {
@@ -586,7 +612,7 @@ namespace HorrorFPS
                 Vector3 dir = ct.forward;
                 if (eq.spread > 0.001f)
                 {
-                    Quaternion cone = Quaternion.AngleAxis(Random.Range(0f, 360f), ct.forward) * Quaternion.AngleAxis(Random.Range(0f, eq.spread), ct.up);
+                    Quaternion cone = Quaternion.AngleAxis(Random.Range(0f, 360f), ct.forward) * Quaternion.AngleAxis(Random.Range(0f, eq.spread * Mathf.Lerp(1f, eq.aimSpreadMultiplier, aimT)), ct.up);
                     dir = cone * ct.forward;
                 }
                 RaycastHit[] hits = Physics.RaycastAll(ct.position, dir, Mathf.Max(1f, eq.range), hitMask, QueryTriggerInteraction.Ignore);

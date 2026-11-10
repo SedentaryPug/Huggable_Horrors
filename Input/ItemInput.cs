@@ -36,7 +36,8 @@ namespace HorrorFPS
         public InputAction NavDown { get; private set; }
         public InputAction NavLeft { get; private set; }
         public InputAction NavRight { get; private set; }
-        public InputAction UseEquipped { get; private set; }  // acionar o item equipado (fora do inventário)
+        public InputAction UseEquipped { get; private set; }  // acionar o item equipado (fora do inventário): atirar, golpear
+        public InputAction Aim { get; private set; }          // mirar com o item equipado (arma de fogo): segurar
         public InputAction Scroll { get; private set; }       // roda do mouse
         public InputAction HotbarPrev { get; private set; }
         public InputAction HotbarNext { get; private set; }
@@ -103,8 +104,10 @@ namespace HorrorFPS
             NavDown = Button("NavDown", "<Keyboard>/downArrow", "<Keyboard>/s", "<Gamepad>/dpad/down");
             NavLeft = Button("NavLeft", "<Keyboard>/leftArrow", "<Keyboard>/a", "<Gamepad>/dpad/left");
             NavRight = Button("NavRight", "<Keyboard>/rightArrow", "<Keyboard>/d", "<Gamepad>/dpad/right");
-            // acionar o equipado: botão direito do mouse / LT (o esquerdo e o RT já são do arrastar objetos do framework)
-            UseEquipped = Button("UseEquipped", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
+            // item equipado: botão esquerdo / RT aciona (atira, golpeia) e botão direito / LT mira. São os mesmos botões do arrastar
+            // objetos, que fica bloqueado enquanto há item equipado que bloqueia o arrastar (ItemEquip.blocksGrab).
+            UseEquipped = Button("UseEquipped", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
+            Aim = Button("Aim", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
 
             // ações de valor (Vector2): forma curta do AddAction (nome, tipo, binding). Os controles já são Vector2,
             // então ReadValue<Vector2>() funciona sem declarar o tipo esperado.

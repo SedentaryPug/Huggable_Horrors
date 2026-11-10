@@ -25,6 +25,7 @@ namespace HorrorFPS.ItemsEditor
             {
                 case EquipPreset.Flashlight:
                     e.kind = EquipKind.Flashlight;
+                    e.blocksGrab = false;       // a lanterna não usa o botão esquerdo: dá para arrastar objetos com ela equipada
                     e.heldPosition = new Vector3(0.2f, -0.18f, 0.4f);
                     e.heldEuler = new Vector3(0f, -90f, 0f);
                     e.noise = 0f;
