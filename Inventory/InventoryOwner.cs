@@ -148,7 +148,7 @@ namespace HorrorFPS
         /// <summary>Primeiro contêiner da aba dada (ou nulo).</summary>
         public ItemContainer FindTabContainer(InventoryTab tab)
         {
-            for (int i = 0; i < containers.Count; i++) if (containers[i] != null && containers[i].Tab == tab) return containers[i];
+            for (int i = 0; i < containers.Count; i++) if (containers[i] != null && !containers[i].ManualOnly && containers[i].Tab == tab) return containers[i];
             return null;
         }
 
@@ -160,7 +160,7 @@ namespace HorrorFPS
 
         public ListContainer FirstList()
         {
-            for (int i = 0; i < containers.Count; i++) { ListContainer l = containers[i] as ListContainer; if (l != null) return l; }
+            for (int i = 0; i < containers.Count; i++) { ListContainer l = containers[i] as ListContainer; if (l != null && !l.ManualOnly) return l; }
             return null;
         }
 
@@ -181,7 +181,7 @@ namespace HorrorFPS
             if (data.IsSpecialTab && FindTabContainer(data.ResolvedTab) == null && CanCreateTab()) return true;   // a lista da aba nasce ao guardar
             ItemInstance probe = new ItemInstance(data, 1);
             for (int i = 0; i < containers.Count; i++)
-                if (containers[i].Accepts(data) && containers[i].CanFit(probe)) return true;
+                if (!containers[i].ManualOnly && containers[i].Accepts(data) && containers[i].CanFit(probe)) return true;
             return false;
         }
 
@@ -211,6 +211,66 @@ namespace HorrorFPS
             list.Unlimited = true;
             RefreshContainers();
             return list;
+        }
+
+        /// <summary>
+        /// Bandeja de remanejo do jogador: lista ilimitada onde o inventário deixa peças soltas enquanto você reorganiza a mochila.
+        /// Não entra em coleta automática (ManualOnly) e é esvaziada ao fechar a tela (FlushManualContainers).
+        /// </summary>
+        public ListContainer EnsureTray()
+        {
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ListContainer found = containers[i] as ListContainer;
+                if (found != null && found.ManualOnly) return found;
+            }
+            if (!CanCreateTab()) return null;
+
+            GameObject go = new GameObject("[Bandeja]");
+            go.transform.SetParent(transform, false);
+            ListContainer list = go.AddComponent<ListContainer>();
+            list.ContainerId = "tray";
+            list.DisplayName = "Bandeja";
+            list.Tab = InventoryTab.Bag;
+            list.Unlimited = true;
+            list.ManualOnly = true;
+            RefreshContainers();
+            return list;
+        }
+
+        /// <summary>
+        /// Devolve ao inventário o que estiver em contêineres ManualOnly (bandeja): o item vai para a aba/contêiner onde couber;
+        /// se não couber em lugar nenhum e puder ser jogado, cai no chão. O que não pode ser jogado continua na bandeja.
+        /// </summary>
+        public void FlushManualContainers()
+        {
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ItemContainer c = containers[i];
+                if (c == null || !c.ManualOnly || c.Count == 0) continue;
+                List<ItemInstance> list = new List<ItemInstance>(c.Items);
+                for (int k = 0; k < list.Count; k++)
+                {
+                    ItemInstance it = list[k];
+                    if (it == null || it.data == null || it.container != c) continue;
+                    ItemContainer dest = FindAutoDestination(it);
+                    if (dest != null && ItemTransfer.Ok(ItemTransfer.Move(it, dest))) continue;
+                    if (it.data.canDrop) Drop(it, true);
+                }
+            }
+        }
+
+        ItemContainer FindAutoDestination(ItemInstance it)
+        {
+            ItemContainer tabC = FindTabContainer(it.data.ResolvedTab);
+            if (tabC != null && tabC.Accepts(it.data) && tabC.CanFit(it)) return tabC;
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ItemContainer c = containers[i];
+                if (c == null || c.ManualOnly || !c.Accepts(it.data)) continue;
+                if (c.CanFit(it)) return c;
+            }
+            return null;
         }
 
         /// <summary>True se há um item equipado que bloqueia o arrastar objetos (ItemEquip.blocksGrab): o botão passa a ser do item.</summary>
@@ -284,7 +344,7 @@ namespace HorrorFPS
                 for (int i = 0; i < containers.Count && added < total; i++)
                 {
                     ItemContainer c = containers[i];
-                    if (c == preferred || !c.Accepts(inst.data)) continue;
+                    if (c == preferred || c.ManualOnly || !c.Accepts(inst.data)) continue;
                     bool right = c.Tab == want;
                     if (pass == 2 && want != InventoryTab.Bag && c.Tab == InventoryTab.Bag && CanCreateTab()) continue;   // chave/registro/mapa do jogador nunca vai para a mochila
                     if (pass == 0 && !(right && c.FindFirst(inst.data.Id) != null)) continue;
@@ -622,6 +682,7 @@ namespace HorrorFPS
         void OnBeforeSave()
         {
             if (!sessionSaved) return;
+            FlushManualContainers();        // nada fica "no ar" (bandeja) dentro do save
             OwnerSave s = new OwnerSave();
             s.containerIds = new string[containers.Count];
             s.containerStates = new string[containers.Count];

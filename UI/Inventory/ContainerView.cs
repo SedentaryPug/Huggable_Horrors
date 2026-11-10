@@ -32,6 +32,12 @@ namespace HorrorFPS
         /// <summary>Tenta soltar o item da mão no ponto. Devolve o resultado.</summary>
         public abstract TransferResult DropHeld(ItemInstance held, int heldRotation, Vector2 screenPoint);
 
+        /// <summary>Solta UMA unidade da pilha na mão (botão direito, como no Minecraft/Terraria). A pilha continua na mão com o resto.</summary>
+        public virtual TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            return TransferResult.Invalid;
+        }
+
         /// <summary>
         /// Em qual célula DA PEÇA (na rotação atual dela) o ponto cai. Usado para o arrasto começar exatamente por ali.
         /// Falso se o contêiner não tem células (lista) ou o ponto não está sobre a peça.

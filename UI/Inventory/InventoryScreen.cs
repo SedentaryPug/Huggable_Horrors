@@ -85,8 +85,8 @@ namespace HorrorFPS
             get
             {
                 return input != null && input.UsesMouse
-                    ? "Clique: menu  •  Segure e arraste: mover  •  R: girar  •  F: inspecionar  •  G: jogar fora  •  O: organizar  •  Enter: pegar/soltar  •  Setas: mover" + TabHint()
-                    : "A: pegar/soltar  •  D-pad: mover  •  RB: girar  •  X: menu  •  LB: inspecionar  •  L3: organizar  •  B: voltar" + TabHint();
+                    ? "Clique: menu  •  Segure e arraste: mover (solte fora = bandeja)  •  Botão direito com pilha: soltar 1  •  R: girar  •  F: inspecionar  •  G: jogar fora  •  O: organizar  •  Enter: pegar/soltar  •  Setas: mover" + TabHint()
+                    : "A: pegar/soltar  •  X com pilha na mão: soltar 1  •  D-pad: mover  •  RB: girar  •  X: menu  •  LB: inspecionar  •  L3: organizar  •  B: voltar" + TabHint();
             }
         }
 
@@ -161,6 +161,7 @@ namespace HorrorFPS
             CancelPress();
             mouseDragging = false;
             ClearHold();
+            if (owner != null) owner.FlushManualContainers();       // peças soltas na bandeja voltam para a mochila (ou caem no chão)
             menu.Close();
             if (inspect != null) inspect.Close();
             if (subscribed)
@@ -249,6 +250,14 @@ namespace HorrorFPS
 
         void MoveCursor(float dt)
         {
+            Vector2 before = cursor;
+            MoveCursorRaw(dt);
+            Vector2 v = (cursor - before) / Mathf.Max(dt, 0.0001f);
+            CursorVelocity = Vector2.Lerp(CursorVelocity, v, 0.4f);
+        }
+
+        void MoveCursorRaw(float dt)
+        {
             if (RealPointer)
             {
                 // o ponteiro real manda: a velocidade é a do sistema, como em qualquer UI
@@ -315,6 +324,7 @@ namespace HorrorFPS
             UpdateInfo(held != null ? held : hoverItem);
             UpdateGhost();
             UpdateSlotHover(slot);
+            if (tray != null) tray.Tick(dt);
 
             // rolar listas
             scrollCooldown -= dt;
@@ -395,7 +405,11 @@ namespace HorrorFPS
             // botão secundário
             if (ItemInput.Pressed(input.Secondary))
             {
-                if (held != null) ClearHold();
+                if (held != null)
+                {
+                    if (held.stack > 1 && hv != null) DropOneHeld(hv);        // pilha na mão: deixa 1 unidade aqui e continua com o resto
+                    else ClearHold();
+                }
                 else if (hoverItem != null && hv != null) OpenMenu(hoverItem);
                 else if (slot >= 0 && hotbar != null) { hotbar.Clear(slot); dirty = true; }
             }
@@ -441,6 +455,9 @@ namespace HorrorFPS
 
         // ------------------------------------------------------------------ item na mão
         /// <summary>Célula da peça na mão que está sob o cursor (para o arrasto "começar" de onde foi pega).</summary>
+        /// <summary>Velocidade do cursor em pixels de tela por segundo, suavizada (usada para "arremessar" a peça na bandeja).</summary>
+        public Vector2 CursorVelocity { get; private set; }
+
         public bool TryGetGrab(ItemInstance item, out Vector2Int cell)
         {
             cell = grabCell;
@@ -500,7 +517,7 @@ namespace HorrorFPS
                 if (held != null)
                 {
                     TryDrop(hv, slot);
-                    if (held != null) ClearHold();      // não coube / soltou fora: o item volta ao lugar de onde saiu
+                    if (held != null && !SendHeldToTray()) ClearHold();      // não coube / soltou fora: vai para a bandeja (sem bandeja, volta ao lugar de onde saiu)
                 }
             }
             return false;
@@ -511,6 +528,28 @@ namespace HorrorFPS
             if (pressItem == null) return;
             pressItem = null; pressView = null; pressTime = 0f;
             ShowCharge(-1f);
+        }
+
+        /// <summary>Botão direito com uma pilha na mão: solta UMA unidade onde o cursor está (como no Minecraft e no Terraria).</summary>
+        void DropOneHeld(ContainerView hv)
+        {
+            ItemInstance it = held;
+            TransferResult r = hv.DropOne(it, heldRot, cursor);
+            if (ItemTransfer.Ok(r)) { RefreshAll(); return; }
+            if (r == TransferResult.Rejected) Notify("Isto não cabe aqui.");
+            else if (r == TransferResult.NoSpace) Notify("Sem espaço.");
+            else if (r == TransferResult.Blocked) Notify("Lugar ocupado.");
+        }
+
+        /// <summary>Largou a peça fora de qualquer lugar (ou não coube): ela fica solta na bandeja, que é a área de remanejo.</summary>
+        bool SendHeldToTray()
+        {
+            if (tray == null || held == null) return false;
+            ItemInstance it = held;
+            TransferResult r = tray.Receive(it, heldRot, cursor, CursorVelocity, true);
+            if (!ItemTransfer.Ok(r)) return false;
+            ClearHold();
+            return true;
         }
 
         void BeginHold(ItemInstance item, ContainerView from)
@@ -524,6 +563,7 @@ namespace HorrorFPS
             heldRot = item.rotation;
             hasGrab = from != null && from.TryGetGrabCell(at, item, out grabCell);
             if (!hasGrab) grabCell = Vector2Int.zero;
+            ghostSmoothValid = false;
             RebuildGhost();
             RefreshAll();
         }
@@ -532,6 +572,7 @@ namespace HorrorFPS
         {
             held = null;
             hasGrab = false;
+            ghostSmoothValid = false;
             DestroyGhost();
             if (open) RefreshAll();
         }

@@ -190,6 +190,12 @@ namespace HorrorFPS
             return ItemTransfer.Move(held, list);
         }
 
+        public override TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            if (held == null || held.stack < 2 || held.container == list) return TransferResult.Invalid;
+            return ItemTransfer.Move(held, list, 1);
+        }
+
         public override void Scroll(float amount)
         {
             if (Mathf.Abs(amount) < 0.01f) return;

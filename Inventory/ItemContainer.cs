@@ -49,6 +49,8 @@ namespace HorrorFPS
         public string ContainerId { get { return containerId; } set { containerId = value; } }
         public string DisplayName { get { return displayName; } set { displayName = value; } }
         public InventoryTab Tab { get { return tab; } set { tab = value; } }
+        /// <summary>True = só recebe itens postos à mão (ex.: a bandeja de remanejo): nunca entra em coleta automática nem aparece como lista/grade da aba.</summary>
+        public bool ManualOnly { get; set; }
         public ItemCategory AcceptedCategories { get { return accepted; } set { accepted = value; } }
         public abstract ContainerKind Kind { get; }
         public IReadOnlyList<ItemInstance> Items { get { return items; } }

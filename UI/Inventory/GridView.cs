@@ -208,6 +208,35 @@ namespace HorrorFPS
             for (int i = 0; i < previewPool.Count; i++) previewPool[i].gameObject.SetActive(false);
         }
 
+        public override TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            Vector2Int c;
+            if (held == null || held.data == null || held.stack < 2 || !CellAt(screenPoint, out c)) return TransferResult.Invalid;
+            if (!grid.Accepts(held.data)) return TransferResult.Rejected;
+
+            Vector2Int origin = OriginFor(held, heldRotation, c);
+            if (!grid.GetOverlaps(held, origin, heldRotation, overlaps)) return TransferResult.Blocked;
+
+            if (overlaps.Count == 0)
+            {
+                // a pilha na mão ainda ocupa o lugar de origem: TryPlaceAt recusa se a nova peça cair sobre ela
+                ItemInstance one = held.Clone(1);
+                if (!grid.TryPlaceAt(one, origin, heldRotation)) return TransferResult.Blocked;
+                held.stack -= 1;
+                held.NotifyModified();
+                return TransferResult.Success;
+            }
+            if (overlaps.Count == 1 && overlaps[0].CanStackWith(held) && overlaps[0].stack < overlaps[0].MaxStack)
+            {
+                overlaps[0].stack += 1;
+                overlaps[0].NotifyModified();
+                held.stack -= 1;
+                held.NotifyModified();
+                return TransferResult.Merged;
+            }
+            return TransferResult.Blocked;
+        }
+
         public override TransferResult DropHeld(ItemInstance held, int heldRotation, Vector2 screenPoint)
         {
             Vector2Int c;

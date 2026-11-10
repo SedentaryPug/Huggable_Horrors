@@ -22,6 +22,9 @@ namespace HorrorFPS
         ItemInstance browseItem;                // registro/mapa selecionado
         ItemInstance shownBrowse;
         float contentH, bagColH;                // alturas calculadas ao abrir a janela
+        const float TrayW = 200f;
+        float trayColW;                         // largura extra da janela para a bandeja (só na mochila sozinha)
+        TrayView tray;
 
         RectTransform Host { get { return content != null ? content : window; } }
 
@@ -129,6 +132,7 @@ namespace HorrorFPS
             menu.Close();
             CancelPress();
             mouseDragging = false;
+            if (tray != null && owner != null) owner.FlushManualContainers();      // saiu da mochila: a bandeja se esvazia
             activeTab = t;
             RebuildContent();
         }
@@ -149,6 +153,7 @@ namespace HorrorFPS
         {
             for (int i = 0; i < views.Count; i++) views[i].Destroy();
             views.Clear();
+            tray = null;
             if (reader != null) { reader.Destroy(); reader = null; }
             if (mapViewer != null) { mapViewer.Destroy(); mapViewer = null; }
             if (content != null) Destroy(content.gameObject);
@@ -174,7 +179,9 @@ namespace HorrorFPS
             switch (activeTab)
             {
                 case InventoryTab.Bag:
-                    LayoutColumn(owner, x, top, w, bagColH, maxCellSolo, true, (int)InventoryTab.Bag, 6);
+                    float bagW = w - trayColW;
+                    LayoutColumn(owner, x, top, bagW, bagColH, maxCellSolo, true, (int)InventoryTab.Bag, 6);
+                    BuildTray(x + bagW + 12f, top, TrayW, bagColH);
                     BuildInfoPanel(x, top + bagColH + 4f, w, contentH - bagColH - 4f);
                     break;
 
@@ -200,6 +207,15 @@ namespace HorrorFPS
                     break;
                 }
             }
+        }
+
+        void BuildTray(float x, float y, float w, float h)
+        {
+            if (trayColW <= 0f || owner == null) return;
+            ListContainer t = owner.EnsureTray();
+            if (t == null) return;
+            tray = new TrayView(this, t, Host, x, y, w, h, Mathf.Round(maxCellSolo * 0.5f));
+            views.Add(tray);
         }
 
         // linhas visíveis de cada lista de uma aba, dividindo a altura entre as listas que a aba tiver

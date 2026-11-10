@@ -25,6 +25,13 @@ namespace HorrorFPS
         int ghostRot = -1;
         float ghostCell = 40f;
         float rotT = 1f;            // 0..1: animação do giro da peça na mão (1 = parada)
+        [Tooltip("Inércia da peça arrastada: quanto maior, mais ela cola no cursor (0 = sem suavização).")]
+        [SerializeField] float ghostFollow = 24f;
+        [Tooltip("Inclinação da peça arrastada pela velocidade horizontal, em graus por 1000 px/s (0 = não inclina).")]
+        [SerializeField] float ghostTiltPer1000 = 9f;
+        bool ghostSmoothValid;
+        Vector2 ghostSmooth, ghostVel;
+        float ghostTilt;
 
         readonly RectTransform[] slotRects = new RectTransform[Hotbar.SlotCount];
         readonly Image[] slotBacks = new Image[Hotbar.SlotCount];
@@ -50,13 +57,14 @@ namespace HorrorFPS
                     GridContainer g = owner.Containers[i] as GridContainer;
                     if (g != null && g.Tab == InventoryTab.Bag) gridW = Mathf.Max(gridW, g.Width * maxCellSolo);
                 }
-                winW = Mathf.Max(SoloMinW, gridW + 32f);
-                bagColH = ColumnHeight(owner, winW - 32f, maxCellSolo, (int)InventoryTab.Bag, 6);
+                trayColW = TrayW + 12f;
+                winW = Mathf.Max(SoloMinW, gridW + 32f) + trayColW;
+                bagColH = ColumnHeight(owner, winW - 32f - trayColW, maxCellSolo, (int)InventoryTab.Bag, 6);
                 contentH = bagColH + 4f + SoloInfoH;
                 if (tabList.Count > 1) contentH = Mathf.Max(contentH, 380f);     // espaço para o leitor e o mapa
                 winH = top + contentH + 8f + SoloFooter;
             }
-            else { winW = PairW; winH = PairH; }
+            else { winW = PairW; winH = PairH; trayColW = 0f; }
 
             window = InvUI.Rect(layer, "Window");
             InvUI.Center(window, winW, winH);
@@ -87,6 +95,7 @@ namespace HorrorFPS
             float h = 0f;
             for (int i = 0; i < who.Containers.Count; i++)
             {
+                if (who.Containers[i].ManualOnly) continue;
                 if (tabFilter >= 0 && (int)who.Containers[i].Tab != tabFilter) continue;
                 GridContainer g = who.Containers[i] as GridContainer;
                 if (g != null) h += 22f + g.Height * Mathf.Floor(Mathf.Min(cell, width / g.Width)) + 4f + 8f;
@@ -103,6 +112,7 @@ namespace HorrorFPS
             for (int i = 0; i < who.Containers.Count; i++)
             {
                 ItemContainer c = who.Containers[i];
+                if (c.ManualOnly) continue;
                 if (tabFilter >= 0 && (int)c.Tab != tabFilter) continue;
                 ContainerView v = null;
                 GridContainer g = c as GridContainer;
@@ -329,6 +339,23 @@ namespace HorrorFPS
             else
                 ghost.anchoredPosition = new Vector2(local.x - size.x * 0.5f, -(local.y - size.y * 0.5f));
 
+            // inércia: a peça segue o cursor com um pequeno atraso e se inclina um pouco com a velocidade
+            float dtg = Time.unscaledDeltaTime;
+            Vector2 target = ghost.anchoredPosition;
+            if (!ghostSmoothValid || ghostFollow <= 0f)
+            {
+                ghostSmooth = target; ghostVel = Vector2.zero; ghostTilt = 0f; ghostSmoothValid = true;
+            }
+            else
+            {
+                Vector2 prev = ghostSmooth;
+                ghostSmooth += (target - ghostSmooth) * (1f - Mathf.Exp(-ghostFollow * dtg));
+                ghostVel = Vector2.Lerp(ghostVel, (ghostSmooth - prev) / Mathf.Max(dtg, 0.0001f), 0.35f);
+                float wantTilt = Mathf.Clamp(-ghostVel.x * ghostTiltPer1000 / 1000f, -12f, 12f);
+                ghostTilt = Mathf.Lerp(ghostTilt, wantTilt, 1f - Mathf.Exp(-14f * dtg));
+            }
+            ghost.anchoredPosition = ghostSmooth;
+
             // "levanta" a peça quando o arrasto começa: nasce um pouco maior e assenta, crescendo a partir do ponteiro
             if (popT < 1f)
             {
@@ -340,12 +367,17 @@ namespace HorrorFPS
             }
             else if (ghost.localScale.x != 1f) ghost.localScale = Vector3.one;
 
-            // giro suave: a peça nasce na orientação antiga e gira 90° até a nova, em torno do ponto que o jogador segura
+            // giro suave (90° até a orientação nova) somado à inclinação da inércia, em torno do ponto que o jogador segura
+            float spin = 0f;
             if (rotT < 1f)
             {
                 rotT = Mathf.Min(1f, rotT + Time.unscaledDeltaTime / 0.13f);
                 float e = rotT * rotT * (3f - 2f * rotT);
-                float a = 90f * (1f - e);
+                spin = 90f * (1f - e);
+            }
+            float a = spin + ghostTilt;
+            if (Mathf.Abs(a) > 0.01f)
+            {
                 Vector2 c = new Vector2(local.x, -local.y);
                 Vector2 off = ghost.anchoredPosition - c;
                 float rad = a * Mathf.Deg2Rad, cs = Mathf.Cos(rad), sn = Mathf.Sin(rad);
