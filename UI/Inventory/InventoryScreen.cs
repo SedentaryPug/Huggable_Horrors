@@ -342,6 +342,8 @@ namespace HorrorFPS
                         }
                         heldRot = (heldRot + 1) % 4;
                         RebuildGhost();
+                        rotT = 0f;          // começa o giro suave (PositionGhost aplica)
+                        PositionGhost();
                     }
                 }
                 else if (hoverItem != null) RotateInPlace(hoverItem);

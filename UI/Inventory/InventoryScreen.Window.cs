@@ -24,6 +24,7 @@ namespace HorrorFPS
         ItemInstance ghostItem;
         int ghostRot = -1;
         float ghostCell = 40f;
+        float rotT = 1f;            // 0..1: animação do giro da peça na mão (1 = parada)
 
         readonly RectTransform[] slotRects = new RectTransform[Hotbar.SlotCount];
         readonly Image[] slotBacks = new Image[Hotbar.SlotCount];
@@ -305,12 +306,20 @@ namespace HorrorFPS
             ghostItem = held;
             ghostRot = heldRot;
             if (cursorRoot != null) cursorRoot.SetAsLastSibling();
+            PositionGhost();        // já nasce sob o cursor: sem o quadro "fantasma" no canto superior esquerdo
         }
 
         void UpdateGhost()
         {
             if (held == null) { DestroyGhost(); return; }
             if (ghost == null || ghostItem != held || ghostRot != heldRot || !Mathf.Approximately(WantedGhostCell(), ghostCell)) RebuildGhost();
+            else PositionGhost();
+        }
+
+        /// <summary>Coloca a peça na mão sob o cursor, com o "pulo" de início de arrasto e o giro suave de 90°.</summary>
+        void PositionGhost()
+        {
+            if (ghost == null || held == null) return;
             Vector2 local;
             InvUI.ToTopLeftLocal(layer, cursor, out local);
             Vector2 size = ghost.sizeDelta;
@@ -330,6 +339,20 @@ namespace HorrorFPS
                 ghost.anchoredPosition = c + (ghost.anchoredPosition - c) * sc;
             }
             else if (ghost.localScale.x != 1f) ghost.localScale = Vector3.one;
+
+            // giro suave: a peça nasce na orientação antiga e gira 90° até a nova, em torno do ponto que o jogador segura
+            if (rotT < 1f)
+            {
+                rotT = Mathf.Min(1f, rotT + Time.unscaledDeltaTime / 0.13f);
+                float e = rotT * rotT * (3f - 2f * rotT);
+                float a = 90f * (1f - e);
+                Vector2 c = new Vector2(local.x, -local.y);
+                Vector2 off = ghost.anchoredPosition - c;
+                float rad = a * Mathf.Deg2Rad, cs = Mathf.Cos(rad), sn = Mathf.Sin(rad);
+                ghost.localRotation = Quaternion.Euler(0f, 0f, a);
+                ghost.anchoredPosition = c + new Vector2(off.x * cs - off.y * sn, off.x * sn + off.y * cs);
+            }
+            else if (ghost.localRotation != Quaternion.identity) ghost.localRotation = Quaternion.identity;
         }
 
         // ------------------------------------------------------------------ feedback do "segurar para arrastar" (mouse)
@@ -370,7 +393,7 @@ namespace HorrorFPS
         void DestroyGhost()
         {
             if (ghost != null) Destroy(ghost.gameObject);
-            ghost = null; ghostItem = null; ghostRot = -1;
+            ghost = null; ghostItem = null; ghostRot = -1; rotT = 1f;
         }
 
         // ------------------------------------------------------------------ menu de contexto
