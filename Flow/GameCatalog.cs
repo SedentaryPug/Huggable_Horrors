@@ -33,6 +33,8 @@ namespace HorrorFPS
         public string mainMenuScene = "MainMenu";
         [Tooltip("Cena com o LocalPlayerManager: fica carregada durante toda a partida e guarda os jogadores.")]
         public string coreScene = "Core";
+        [Tooltip("Cenas que NÃO usam jogador (créditos, galeria, cenas de teste de UI...). Ao dar Play nelas, nenhum jogador é criado. O menu principal e a cena Core já são ignorados sozinhos.")]
+        public string[] noPlayerScenes = new string[0];
 
         [Header("Jogo")]
         [Tooltip("Vazio = nome do produto (Project Settings > Player).")]
@@ -76,6 +78,17 @@ namespace HorrorFPS
             for (int i = 0; i < levels.Count; i++)
                 if (levels[i].id == levelId) return levels[i];
             return null;
+        }
+
+        /// <summary>True se a cena é o menu, a Core ou está na lista noPlayerScenes (não spawna jogador).</summary>
+        public bool IsNoPlayerScene(string sceneName)
+        {
+            if (string.IsNullOrEmpty(sceneName)) return false;
+            if (sceneName == mainMenuScene || sceneName == coreScene) return true;
+            if (noPlayerScenes == null) return false;
+            for (int i = 0; i < noPlayerScenes.Length; i++)
+                if (noPlayerScenes[i] == sceneName) return true;
+            return false;
         }
 
         /// <summary>Nível que contém uma cena (a cena ativa do nível ou qualquer cena aditiva dele).</summary>
