@@ -47,6 +47,9 @@ namespace HorrorFPS
 
         public override string GetBlockedReason(PlayerContext p)
         {
+            ItemInstance it = Instance;
+            InventoryOwner inv = it != null ? PlayerRef.Find<InventoryOwner>(p) : null;
+            if (inv != null && inv.BlocksDuplicate(it.data)) return "Você já tem isto";
             return "Inventário cheio";
         }
 

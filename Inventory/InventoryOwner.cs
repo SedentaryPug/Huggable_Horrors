@@ -177,10 +177,40 @@ namespace HorrorFPS
         public bool CanFitAny(ItemData data)
         {
             if (data == null) return false;
+            if (BlocksDuplicate(data)) return false;
+            if (data.IsSpecialTab && FindTabContainer(data.ResolvedTab) == null && CanCreateTab()) return true;   // a lista da aba nasce ao guardar
             ItemInstance probe = new ItemInstance(data, 1);
             for (int i = 0; i < containers.Count; i++)
                 if (containers[i].Accepts(data) && containers[i].CanFit(probe)) return true;
             return false;
+        }
+
+        /// <summary>True se o item não pode repetir (regra do ItemData) e este dono já tem uma unidade dele.</summary>
+        public bool BlocksDuplicate(ItemData data)
+        {
+            return data != null && !data.AllowsDuplicates && CountOf(data.Id) > 0;
+        }
+
+        bool CanCreateTab() { return GetComponentInParent<PlayerContext>() != null; }
+
+        /// <summary>
+        /// Lista da aba especial do dono. Só o jogador cria a lista que falta (ilimitada, não ocupa espaço da mochila);
+        /// assim chaves, registros e mapas nunca caem na mochila por falta da aba.
+        /// </summary>
+        ItemContainer EnsureTabContainer(InventoryTab tab)
+        {
+            ItemContainer c = FindTabContainer(tab);
+            if (c != null || tab == InventoryTab.Bag || !CanCreateTab()) return c;
+
+            GameObject go = new GameObject("[" + InventoryTabs.Label(tab) + "]");
+            go.transform.SetParent(transform, false);
+            ListContainer list = go.AddComponent<ListContainer>();
+            list.ContainerId = tab == InventoryTab.Keys ? "keys" : (tab == InventoryTab.Records ? "records" : "maps");
+            list.DisplayName = InventoryTabs.Label(tab);
+            list.Tab = tab;
+            list.Unlimited = true;
+            RefreshContainers();
+            return list;
         }
 
         public ItemInstance FindFirst(string itemId)
@@ -217,7 +247,15 @@ namespace HorrorFPS
         public int AddInstance(ItemInstance inst, string preferContainerId = null)
         {
             if (inst == null || inst.data == null || inst.stack <= 0) return 0;
+            if (BlocksDuplicate(inst.data)) return 0;               // já tem e não pode repetir: nada entra, a instância fica como está
+
+            // sem repetição, só 1 unidade entra; o excedente volta para a instância no fim
+            int extra = 0;
+            if (!inst.data.AllowsDuplicates && inst.stack > 1) { extra = inst.stack - 1; inst.stack = 1; }
+
             int total = inst.stack, added = 0;
+
+            if (inst.data.IsSpecialTab) EnsureTabContainer(inst.data.ResolvedTab);
 
             ItemContainer preferred = string.IsNullOrEmpty(preferContainerId) ? null : GetContainer(preferContainerId);
             if (preferred != null) added += preferred.AddPartial(inst);
@@ -231,11 +269,13 @@ namespace HorrorFPS
                     ItemContainer c = containers[i];
                     if (c == preferred || !c.Accepts(inst.data)) continue;
                     bool right = c.Tab == want;
+                    if (pass == 2 && want != InventoryTab.Bag && c.Tab == InventoryTab.Bag && CanCreateTab()) continue;   // chave/registro/mapa do jogador nunca vai para a mochila
                     if (pass == 0 && !(right && c.FindFirst(inst.data.Id) != null)) continue;
                     if (pass == 1 && !right) continue;
                     added += c.AddPartial(inst);
                 }
 
+            inst.stack += extra;
             if (added > 0)
             {
                 Action<ItemInstance> h = Picked; if (h != null) h(inst);

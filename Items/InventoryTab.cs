@@ -15,6 +15,12 @@ namespace HorrorFPS
     /// <summary>Em qual aba um item entra. Auto decide pela categoria do item.</summary>
     public enum ItemTabRule { Auto = 0, Bag = 1, Keys = 2, Records = 3, Maps = 4 }
 
+    /// <summary>
+    /// Se o jogador pode carregar o mesmo item mais de uma vez. Auto: itens das abas Chaves, Registros e Mapa que não empilham
+    /// só podem ser coletados uma vez; os da Mochila podem repetir. Permitir e Proibir forçam a regra.
+    /// </summary>
+    public enum ItemDuplicateRule { Auto = 0, Allow = 1, Forbid = 2 }
+
     public static class InventoryTabs
     {
         public static string Label(InventoryTab t)
