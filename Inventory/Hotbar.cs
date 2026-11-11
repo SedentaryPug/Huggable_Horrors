@@ -12,12 +12,35 @@ namespace HorrorFPS
     [PlayerModule("Inventário", 1)]
     public class Hotbar : MonoBehaviour
     {
+        /// <summary>Máximo de atalhos (teclas 1-9). A quantidade em uso é Slots.</summary>
         public const int SlotCount = 9;
+
+        [Tooltip("Quantos atalhos este jogador tem (1 a 9). 0 = usa o valor do GameCatalog.")]
+        [SerializeField, Range(0, SlotCount)] int slotsOverride = 0;
 
         InventoryOwner owner;
         readonly ItemInstance[] cache = new ItemInstance[SlotCount];
         readonly List<ItemInstance> buffer = new List<ItemInstance>();
         bool dirty = true;
+
+        /// <summary>Quantos atalhos estão em uso (1..9): o override deste jogador ou, se for 0, o padrão do GameCatalog.</summary>
+        public int Slots
+        {
+            get
+            {
+                int n = slotsOverride > 0 ? slotsOverride : GameCatalog.Instance.hotbarSlots;
+                return Mathf.Clamp(n, 1, SlotCount);
+            }
+        }
+
+        /// <summary>Muda a quantidade de atalhos deste jogador em tempo de execução (1..9; 0 volta ao padrão do GameCatalog).</summary>
+        public void SetSlots(int count)
+        {
+            slotsOverride = Mathf.Clamp(count, 0, SlotCount);
+            if (Selected >= Slots) Selected = 0;
+            dirty = true;
+            Raise();
+        }
 
         public int Selected { get; private set; }
         public event Action Changed;
@@ -53,20 +76,20 @@ namespace HorrorFPS
             for (int i = 0; i < buffer.Count; i++)
             {
                 int k = buffer[i].hotkey;
-                if (k >= 0 && k < SlotCount && cache[k] == null) cache[k] = buffer[i];
+                if (k >= 0 && k < Slots && cache[k] == null) cache[k] = buffer[i];
             }
         }
 
         public ItemInstance GetItem(int slot)
         {
-            if (slot < 0 || slot >= SlotCount) return null;
+            if (slot < 0 || slot >= Slots) return null;
             if (dirty) Rebuild();
             return cache[slot];
         }
 
         public int SlotOf(ItemInstance item)
         {
-            return item != null && item.hotkey >= 0 && item.hotkey < SlotCount ? item.hotkey : -1;
+            return item != null && item.hotkey >= 0 && item.hotkey < Slots ? item.hotkey : -1;
         }
 
         /// <summary>Liga o item ao slot (o item que estava lá perde o atalho). Passe slot -1 para tirar o atalho do item.</summary>
@@ -75,7 +98,7 @@ namespace HorrorFPS
             if (item == null) return;
             Bind();
             if (dirty) Rebuild();
-            if (slot < 0 || slot >= SlotCount) { item.hotkey = -1; item.NotifyModified(); dirty = true; Raise(); return; }
+            if (slot < 0 || slot >= Slots) { item.hotkey = -1; item.NotifyModified(); dirty = true; Raise(); return; }
             ItemInstance old = cache[slot];
             if (old != null && old != item) { old.hotkey = -1; old.NotifyModified(); }
             item.hotkey = slot;
@@ -103,7 +126,8 @@ namespace HorrorFPS
 
         public void Cycle(int dir)
         {
-            Selected = ((Selected + dir) % SlotCount + SlotCount) % SlotCount;
+            int n = Slots;
+            Selected = ((Selected + dir) % n + n) % n;
             Raise();
         }
 

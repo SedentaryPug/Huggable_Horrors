@@ -244,15 +244,21 @@ namespace HorrorFPS
                 {
                     ItemInstance inst = ItemInstance.FromSave(s.items[i]);
                     if (inst == null) continue;
-                    if (!PlaceRestored(inst))
-                    {
-                        Action<ItemContainer, ItemInstance> o = Overflowed;
-                        if (o != null) o(this, inst);
-                        else Debug.LogWarning("[HorrorFPS] Não coube '" + inst + "' ao restaurar " + name + "/" + containerId);
-                    }
+                    if (!PlaceRestored(inst)) RaiseOverflow(inst, "ao restaurar");
                 }
             NotifyChanged();
         }
+
+        /// <summary>Avisa o dono de que o item ficou sem lugar (ele realoca em outro contêiner ou joga no chão).</summary>
+        protected void RaiseOverflow(ItemInstance inst, string why)
+        {
+            Action<ItemContainer, ItemInstance> o = Overflowed;
+            if (o != null) o(this, inst);
+            else Debug.LogWarning("[HorrorFPS] Não coube '" + inst + "' " + why + " em " + name + "/" + containerId);
+        }
+
+        /// <summary>Confere se o tamanho configurado ainda comporta os itens (a grade encolheu?). Quem sobrar vai para o dono realocar.</summary>
+        public virtual void Revalidate() { }
 
         protected virtual void FillSizeForSave(ContainerSave s) { }
         protected virtual bool PlaceRestored(ItemInstance inst) { return AddInternal(inst, false) > 0; }

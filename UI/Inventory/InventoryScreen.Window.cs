@@ -150,7 +150,8 @@ namespace HorrorFPS
 
         void BuildHotbarStrip(float x, float y, float rightLimit)
         {
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            int n = hotbar != null ? hotbar.Slots : Hotbar.SlotCount;
+            for (int i = 0; i < n; i++)
             {
                 RectTransform rt = InvUI.Rect(window, "slot" + i);
                 InvUI.TopLeft(rt, x + i * 52f, y, 44f, 44f);
@@ -163,10 +164,10 @@ namespace HorrorFPS
                 slotCounts[i] = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
                 InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, 41f, 43f);
             }
-            float capX = x + 9 * 52f + 8f, capW = Mathf.Min(330f, rightLimit - capX);
+            float capX = x + n * 52f + 8f, capW = Mathf.Min(330f, rightLimit - capX);
             if (capW >= 120f)
             {
-                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas 1-9): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
+                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas 1-" + n + "): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
                 InvUI.TopLeft(cap.rectTransform, capX, y, capW, 44f);
             }
         }
@@ -502,7 +503,7 @@ namespace HorrorFPS
         {
             if (hotbar == null) return;
             List<ItemMenu.Entry> e = new List<ItemMenu.Entry>();
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            for (int i = 0; i < hotbar.Slots; i++)
             {
                 int slot = i;
                 ItemInstance cur = hotbar.GetItem(i);

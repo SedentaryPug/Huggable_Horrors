@@ -30,6 +30,7 @@ namespace HorrorFPS
 
         class SlotUI { public Image back, swatch, icon, selected; public Text number, count; }
         readonly SlotUI[] slots = new SlotUI[Hotbar.SlotCount];
+        int slotCount;
 
         void Start() { Build(); }
 
@@ -44,12 +45,13 @@ namespace HorrorFPS
             built = true;
 
             RectTransform layer = overlay.NewLayer("Hud");
-            float total = Hotbar.SlotCount * (Slot + Gap) - Gap;
+            slotCount = hotbar.Slots;
+            float total = slotCount * (Slot + Gap) - Gap;
             strip = InvUI.Rect(layer, "Hotbar");
             InvUI.BottomCenter(strip, total, Slot, 14f);
             stripGroup = strip.gameObject.AddComponent<CanvasGroup>();
 
-            for (int i = 0; i < slots.Length; i++)
+            for (int i = 0; i < slotCount; i++)
             {
                 SlotUI s = new SlotUI();
                 RectTransform rt = InvUI.Rect(strip, "slot" + i);
@@ -72,6 +74,19 @@ namespace HorrorFPS
 
             hotbar.Changed += OnHotbarChanged;
             if (owner != null) { owner.Picked += OnPicked; owner.Dropped += OnDropped; owner.Changed += OnOwnerChanged; }
+        }
+
+        /// <summary>Descarta a faixa e monta de novo (a quantidade de atalhos mudou).</summary>
+        void Rebuild()
+        {
+            if (hotbar != null) hotbar.Changed -= OnHotbarChanged;
+            if (owner != null) { owner.Picked -= OnPicked; owner.Dropped -= OnDropped; owner.Changed -= OnOwnerChanged; }
+            if (strip != null) Destroy(strip.gameObject);
+            if (message != null) Destroy(message.gameObject);
+            for (int i = 0; i < slots.Length; i++) slots[i] = null;
+            built = false;
+            dirty = true;
+            Build();
         }
 
         void OnDestroy()
@@ -115,7 +130,8 @@ namespace HorrorFPS
         void Refresh()
         {
             dirty = false;
-            for (int i = 0; i < slots.Length; i++)
+            if (hotbar.Slots != slotCount) { Rebuild(); return; }        // a quantidade de atalhos mudou em jogo: refaz a faixa
+            for (int i = 0; i < slotCount; i++)
             {
                 ItemInstance it = hotbar.GetItem(i);
                 SlotUI s = slots[i];

@@ -132,7 +132,20 @@ namespace HorrorFPS
         void RelocateOverflow(ItemInstance item)
         {
             AddInstance(item);                          // tenta os outros contêineres
-            if (item.stack > 0) Drop(item, true);       // não coube em lugar nenhum: vai para o chão
+            if (item.container != null || item.stack <= 0) return;
+            if (item.data != null && item.data.canDrop) { Drop(item, true); return; }      // não coube em lugar nenhum: vai para o chão
+            ListContainer tray = EnsureTray();          // item que não pode ser jogado espera na bandeja, nunca some
+            if (tray == null || !tray.TryAdd(item)) Debug.LogWarning("[HorrorFPS] Sem lugar para '" + item + "' e ele não pode ser jogado fora.");
+        }
+
+        /// <summary>
+        /// Confere o tamanho de cada contêiner (a mochila encolheu, a grade foi editada...). O que não couber mais é realocado e,
+        /// se não houver lugar, jogado no chão; itens com atalho na hotbar são os últimos a sair. A tela de inventário chama ao abrir e ao fechar.
+        /// </summary>
+        public void EnforceSizes()
+        {
+            for (int i = 0; i < containers.Count; i++)
+                if (containers[i] != null) containers[i].Revalidate();
         }
 
         // ------------------------------------------------------------------ consulta

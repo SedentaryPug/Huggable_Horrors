@@ -46,6 +46,7 @@ namespace HorrorFPS
             Ensure<PlayerMotionProbe>(player);
             Ensure<BreathingComponent>(player);
             Ensure<HeartbeatComponent>(player);
+            Ensure<HeartbeatHUD>(player);
             Ensure<DynamicHeadBob>(player);
             Ensure<DamageReaction>(player);
 

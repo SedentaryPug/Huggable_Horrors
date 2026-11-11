@@ -144,6 +144,7 @@ namespace HorrorFPS
             prevLock = Cursor.lockState;            // antes de travar os controles: é o estado de jogo que será devolvido ao fechar
             prevVisible = Cursor.visible;
             if (lockMovementWhileOpen) FrameworkBridge.LockControls(player);
+            owner.EnforceSizes();                   // mochila encolheu? o que não cabe mais é realocado ou jogado antes de desenhar
             owner.Changed += MarkDirty;
             if (other != null) other.Changed += MarkDirty;
             subscribed = true;
@@ -161,7 +162,7 @@ namespace HorrorFPS
             CancelPress();
             mouseDragging = false;
             ClearHold();
-            if (owner != null) owner.FlushManualContainers();       // peças soltas na bandeja voltam para a mochila (ou caem no chão)
+            if (owner != null) { owner.FlushManualContainers(); owner.EnforceSizes(); }       // peças soltas na bandeja voltam para a mochila (ou caem no chão)
             menu.Close();
             if (inspect != null) inspect.Close();
             if (subscribed)
@@ -235,7 +236,7 @@ namespace HorrorFPS
                 if (hud != null && !string.IsNullOrEmpty(er.message)) hud.Flash(er.message);
             }
             if (hotbar == null) return;
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            for (int i = 0; i < hotbar.Slots; i++)
                 if (ItemInput.Pressed(input.HotbarKeys[i])) UseHotbar(i);
             if (ItemInput.Pressed(input.HotbarPrev)) { hotbar.Cycle(-1); if (hud != null) hud.Flash(); }
             if (ItemInput.Pressed(input.HotbarNext)) { hotbar.Cycle(1); if (hud != null) hud.Flash(); }
