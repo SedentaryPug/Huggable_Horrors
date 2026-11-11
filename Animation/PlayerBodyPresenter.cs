@@ -33,6 +33,12 @@ namespace HorrorFPS
         [Tooltip("Quanto o anchor fica abaixo da câmera depois do ajuste (m).")]
         public float eyeDrop = 0.04f;
 
+        /// <summary>
+        /// Giro extra do corpo (graus) em relação ao olhar. Quem apresenta o corpo escreve aqui (ex.: pernas viradas para a direção
+        /// do movimento, com o tronco girando de volta pelo IK de olhar). Só vale com <see cref="followCameraYaw"/>.
+        /// </summary>
+        protected float bodyYawOffset;
+
         protected PlayerAnimDriver driver;
         PoseDelta delta;
         Vector3 baseOffset;
@@ -126,8 +132,8 @@ namespace HorrorFPS
                 Quaternion yaw = Quaternion.Euler(0f, s.yaw, 0f);
                 Transform parent = transform.parent;
                 Vector3 origin = parent != null ? parent.position : Vector3.zero;
-                transform.position = origin + yaw * local;
-                transform.rotation = yaw * baseRotation;
+                transform.position = origin + yaw * local;                 // o recuo segue o olhar...
+                transform.rotation = Quaternion.Euler(0f, s.yaw + bodyYawOffset, 0f) * baseRotation;   // ...e o corpo pode girar à parte
             }
             else
             {

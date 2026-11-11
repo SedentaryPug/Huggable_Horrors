@@ -20,7 +20,8 @@ Assets/HorrorFPS/Animation/                  (runtime)
   BodyViewHook.cs            esconde/mostra as regiões ANTES de cada câmera desenhar (Built-in e URP/HDRP)
   PoseFx.cs                  PoseDelta + IPoseModifier (efeitos procedurais somáveis)
   PlayerBodyPresenter.cs     base dos "apresentadores": ancora o corpo, soma os procedurais, item na mão
-  PlayerBodyRig.cs           corpo de verdade: Humanoid + Animator + IK de olhar e de mãos
+  PlayerBodyRig.cs           corpo de verdade: Humanoid + Animator + IK de olhar e de mãos + direção do movimento
+  BodyIK.cs                  IBodyIK: ponto de extensão para IK extra (pés, mãos na escada...), chamado pelo PlayerBodyRig
   PlaceholderPuppet.cs       corpo de TESTE de primitivas (sem modelo, sem clipes)
   PoseBreathing.cs           respiração visível (mais rápida com esforço)
   PoseImpulse.cs             molas: pouso, dano, coice, golpe, equipar, arfada
@@ -30,9 +31,12 @@ Assets/HorrorFPS/Editor/Animation/           (somente editor)
   PlaceholderBodyBuilder.cs              menu 14
   PlayerAnimatorControllerBuilder.cs     menu 15
   ModelBodySetup.cs                      menu 16
+  MixamoClips.cs                         reconhece clipes do Mixamo pelo nome e ajusta a importação (Humanoid, loop, root motion)
+  MixamoSetupWindow.cs                   menu 31 (janela passo a passo)
+  BodyMeshSplitter.cs                    menu 32 (separa a cabeça do corpo pelos pesos do skin)
 ```
 
-Menus novos: **Tools ▸ Horror FPS ▸ 14. Add Animation Rig To Player Prefab (placeholder body)**, **15. Create Player Animator Controller**, **16. Setup Selected Model As Player Body**.
+Menus novos: **Tools ▸ Horror FPS ▸ 14. Add Animation Rig To Player Prefab (placeholder body)**, **15. Create Player Animator Controller**, **16. Setup Selected Model As Player Body**, **31. Mixamo: Humanoid + Locomotion Controller**, **32. Split Head From Selected Player Body**. A locomoção com clipes do Mixamo (Y Bot) tem doc próprio: `HorrorFPS-Locomocao-Mixamo.md`.
 
 Requisitos: Unity 2022.3 LTS ou Unity 6, pacote **Input System** (o `PlayerInput` é usado só no painel de depuração). Namespace `HorrorFPS`. Sem `.asmdef`. Funciona em Built-in, URP e HDRP.
 
@@ -110,16 +114,20 @@ Todo Animator Controller do corpo usa estes nomes. **Parâmetro que não existir
 | float | `HitDir` | ângulo (−180..180°) de onde veio o último golpe, relativo à frente do corpo |
 | float | `TurnRate` | giro horizontal em graus/s |
 | float | `ClimbX`, `ClimbY` | movimento ao escalar |
+| float | `ClimbRate` | escalada: velocidade de reprodução do clipe (−1,5..1,5; 0 = parado no degrau; negativo = descendo). Use como *Multiplier* de velocidade do estado `Climb` |
+| float | `Dir` | +1 normal, −1 = toca o clipe ao contrário (andar de costas com o clipe de frente). *Multiplier* de velocidade dos estados `Locomotion`/`Crouch`/`Drag` |
 | bool | `Grounded`, `Sprint`, `Climbing`, `Dragging`, `HoldingBreath`, `Dead`, `HasFlashlight`, `FlashlightOn` | estados |
 | int | `HandItem` | 0 nada · 1 genérico · 2 corpo a corpo · 3 pistola · 4 arma longa |
 | int | `SanityStage` | 0 estável … 4 quebrado |
-| trigger | `Jump`, `Land`, `Attack`, `Fire`, `Reload`, `Equip`, `Hit`, `Interact`, `Gasp` | acontecimentos pontuais |
+| trigger | `Jump`, `Land`, `Attack`, `Fire`, `Reload`, `Equip`, `Hit`, `Interact`, `Gasp`, `StopRun` | acontecimentos pontuais (`Land` só em queda de verdade; `StopRun` ao parar depois de correr) |
 
 Layers (por nome): **`Upper Body`**, **`Flashlight`**, **`Additive`**. O peso das duas primeiras é controlado pelo código (entram quando há item/lanterna); a Additive fica sempre em 1.
 
 ## 6. Animator Controller pronto (menu 15)
 
-**Tools ▸ Horror FPS ▸ 15. Create Player Animator Controller** cria `Assets/HorrorFPS/Generated/Animation/PlayerBody.controller` com todos os parâmetros, as layers, as transições e duas máscaras de avatar (`PlayerUpperBody.mask`, `PlayerLeftArm.mask`). **Os estados vêm vazios: arraste os seus clipes.** Se o controller já existir, o menu pergunta se deve só **acrescentar parâmetros** (não perde nada) ou recriar do zero.
+**Tools ▸ Horror FPS ▸ 15. Create Player Animator Controller** cria `Assets/HorrorFPS/Generated/Animation/PlayerBody.controller` com todos os parâmetros, as layers, as transições e duas máscaras de avatar (`PlayerUpperBody.mask`, `PlayerLeftArm.mask`). **Os estados vêm vazios: arraste os seus clipes.** Se o controller já existir, o menu pergunta se deve só **acrescentar parâmetros** (não perde nada) ou recriar do zero. A layer **Base** sai com **IK Pass ligado** (sem isso o IK de olhar, de mãos e de pés não roda enquanto não há item nas mãos).
+
+**Com clipes do Mixamo** use a janela do **menu 31**: ela monta a layer Base já com os clipes (Idle, Locomotion, Crouch, giro, parada, pulo, queda, pouso, escada) e deixa o resto igual. A estrutura dela é diferente da tabela abaixo (o `Idle` é um estado próprio e o agachar parado é uma pose): ver `HorrorFPS-Locomocao-Mixamo.md`.
 
 | Layer | Estado | Clipe que vai ali | Quando entra |
 |---|---|---|---|
@@ -146,7 +154,7 @@ Dicas:
 
 **Antes: o modelo precisa de**
 - Rig **Humanoid** (Import Settings ▸ Rig ▸ Animation Type = Humanoid ▸ Apply). Sem Humanoid os parâmetros funcionam, mas **IK de olhar e de mãos não**.
-- **Um renderer por região** (cabeça / corpo / mãos / pernas / sapatos, e opcionalmente braços/acessórios). Num mesh único não dá para esconder só a cabeça do dono: o menu avisa. No mínimo separe **a cabeça** do resto.
+- **Um renderer por região** (cabeça / corpo / mãos / pernas / sapatos, e opcionalmente braços/acessórios). **Modelo de mesh único (ex.: Y Bot do Mixamo): o menu 16 separa a cabeça do corpo sozinho** pelos pesos do skin (menu 32, `BodyMeshSplitter`); o resto do corpo continua num renderer só. Com vários renderers, marque no mínimo a cabeça.
 - Escala em metros e pés na origem do modelo.
 - **Near Clip ≤ 0,1** na câmera do jogador, para o peito não ser cortado ao olhar para baixo (o menu 14 já ajusta).
 
@@ -154,7 +162,7 @@ Dicas:
 1. Selecione o **FBX/prefab do modelo** no Project (ele é instanciado dentro do prefab do jogador, que o menu acha sozinho: o primeiro prefab com `PlayerContext`, de preferência chamado "Player") — ou um modelo que você já arrastou para dentro do jogador na cena.
 2. **Tools ▸ Horror FPS ▸ 16. Setup Selected Model As Player Body.**
 3. O menu: instala o básico (como o 14), posiciona o modelo nos **pés do CharacterController**, põe `Animator` (controller do menu 15, se existir; `applyRootMotion` desligado; `Always Animate`), `PlayerBodyRig`, `PoseBreathing`, `PoseImpulse`, `PoseWallAvoid`, e um `BodyPart` em cada renderer com a região **adivinhada pelo nome** (head/hair/face… → Cabeça; hand/glove → Mãos; arm/sleeve → Braços; shoe/boot/foot → Pés; leg/pant/jeans → Pernas; o resto → Torso). O boneco `[Body]` de teste é **desativado** (não apagado).
-4. **Confira os `BodyPart` (Region)** — o chute por nome erra com nomes esquisitos. O resumo no Console diz quantos renderers caíram em cada região; se nenhum caiu em Cabeça, ele avisa.
+4. **Confira os `BodyPart` (Region)** — o chute por nome erra com nomes esquisitos. O resumo no Console diz quantos renderers caíram em cada região. Se nenhum for a cabeça e o modelo for Humanoid, o menu **corta a cabeça do mesh** (novo renderer `..._Head`, `BodyPart` = Head; meshes novos em `Generated/Animation/Meshes`; o FBX ganha *Read/Write*). Rodar o menu de novo no mesmo FBX **reaproveita** a instância que já está no jogador.
 5. Se a altura do modelo difere do `CharacterController` em mais de 25 cm, o menu avisa (ajuste o *Scale Factor* na importação).
 
 ### `PlayerBodyRig` (no objeto do Animator)
@@ -163,8 +171,12 @@ Dicas:
 |---|---|
 | `locomotionDamp` (0,07), `layerBlendSpeed` (6) | suavização dos parâmetros / entrada das layers |
 | `lookAtIK`, `lookWeight`, `bodyWeight`, `headWeight`, `eyesWeight`, `clampWeight`, `lookDistance` | a cabeça acompanha a câmera (o feixe da lanterna sai para onde o corpo olha) |
+| `warpLegs`, `warpWhenCrouched`, `maxLegTurn` (65°), `legTurnSpeed`, `legTurnMinSpeed`, `warpBodyWeight` | direção do movimento com poucos clipes: as **pernas viram** para onde o jogador anda (o tronco gira de volta pelo IK de olhar) e andar de costas toca o clipe de frente **ao contrário** (`Dir` = −1). Desligue `warpLegs` se o seu controller tem clipes para os lados |
+| `stopRunFrom` (3,8), `stopRunTo` (1,2), `landMinMagnitude` (0,5), `climbRefSpeed` (1,2) | dispara `StopRun` ao parar depois de correr; só quedas acima de ~1 m disparam `Land`; velocidade de escalada que equivale ao clipe tocando normal |
 | `handIK`, `rightHandTarget`/`leftHandTarget` | alvos das mãos. Vazios = o rig cria `[HandTarget R/L]` como filhos da câmera, nas posições `rightHandLocalPosition`/`leftHandLocalPosition` (+ Euler). **Ajuste a posição/rotação até a mão ficar certa no seu modelo** |
 | (herdados do `PlayerBodyPresenter`) | `followCameraYaw`, `lookDownPullback` (0,2 m), `lookUpPullback` (0,05), `pullbackSmoothing`, `maxPitch` (80°), `fitEyeHeightOnStart` + `eyeAnchor` + `eyeDrop` (alinha a altura do osso da cabeça à câmera) |
+
+**IK extra (pés, escada...):** implemente `IBodyIK` (`BodyIK.cs`) num MonoBehaviour do corpo ou de qualquer filho do jogador; o rig o acha no `Start` e o chama de dentro do `OnAnimatorIK`, depois do olhar e das mãos (em tempo de execução: `rig.AddIK(modulo)`). A chamada vem **uma vez por layer com IK Pass**: trabalhe quando `layerIndex == 0` ou seja idempotente.
 
 Pesos do IK das mãos: a **direita** vai para o alvo quando há item na mão; a **esquerda** quando é pistola/arma longa (duas mãos) ou há lanterna. Por isso **ligue `IK Pass`** nas layers `Upper Body` e `Flashlight` (o menu 15 já liga).
 
@@ -272,9 +284,9 @@ O Console mostra **uma** mensagem por jogador dizendo o que foi estimado. Estima
 
 - **Compilado só no papel** — espere 1 ou 2 rodadas de ajuste.
 - **Modelo do item nas mãos dos outros jogadores:** ainda não ligado ao `EquipmentController` (seção 9).
-- **Sem IK de pés, sem ragdoll, sem torção do tronco** (o corpo gira inteiro com a câmera; a cabeça/tronco acompanham o pitch por IK). Dá para acrescentar depois como mais um `IPoseModifier`/layer.
-- **O corpo fica sempre de frente para o olhar** (como em jogos de primeira pessoa com corpo): andar de lado ou para trás é feito pelo blend tree, o tronco não gira independente.
-- **Mesh único** não permite esconder só a cabeça do dono (seção 7).
+- **IK de pés e de mãos na escada ainda não existem** (só o gancho `IBodyIK`, seção 7); sem ragdoll.
+- **O tronco acompanha o olhar:** com os clipes só para frente (Mixamo) as pernas viram até 65° para a direção do movimento e o tronco gira de volta pelo IK de olhar. Andar de lado puro fica "andando em diagonal" (limite de 65°); com clipes laterais de verdade desligue `warpLegs`.
+- **Mesh único:** o menu 16 separa a cabeça sozinho (seção 7). As partes do corpo abaixo do pescoço continuam num renderer só (o dono vê tudo menos a cabeça).
 - **`HandItem` é classificado pelo id** (regras editáveis); itens sem regra viram "genérico".
 - **Sombras:** a cabeça escondida do dono projeta sombra para ele (de propósito). Em URP, confira se a luz principal projeta sombras na qualidade que você usa.
 - **Câmera de morte/espectador** fora do jogador vê tudo, inclusive a cabeça do corpo do dono.
@@ -285,7 +297,7 @@ O Console mostra **uma** mensagem por jogador dizendo o que foi estimado. Estima
 
 **Ver o próprio corpo sem a cabeça, e o outro jogador com tudo** — menu 14, Play com 2 jogadores (seção 2).
 
-**Trocar o boneco por um modelo** — importar Humanoid, dividir por região, menu 15 (uma vez), menu 16 com o modelo selecionado, arrastar clipes no controller.
+**Trocar o boneco por um modelo** — importar Humanoid, dividir por região, menu 15 (uma vez), menu 16 com o modelo selecionado, arrastar clipes no controller. **Com Y Bot + clipes do Mixamo:** só o menu 31 (passos 1 a 4).
 
 **Mostrar o capacete/máscara para o dono** — marque o renderer como `Accessory` e deixe `Accessory` em `ownerSees` (já está); para esconder, tire a flag.
 
@@ -305,7 +317,7 @@ O Console mostra **uma** mensagem por jogador dizendo o que foi estimado. Estima
 | O outro jogador não vê o corpo | `BodyVisibility` ausente/desligado; o corpo está desativado; ou a câmera dele é filha do jogador errado |
 | Não vejo as pernas/torso ao olhar para baixo | `Near Clip` alto (use ≤ 0,1); `ownerSees` sem Torso/Legs; `lookDownPullback` pequeno para o seu modelo (aumente); câmera acima demais do modelo (use `fitEyeHeightOnStart` + `eyeAnchor`) |
 | O peito atravessa a câmera | Aumente `lookDownPullback` e/ou diminua o Near Clip |
-| Corpo em T-pose | Controller sem clipes (seção 6), sem controller no Animator, ou Humanoid sem Avatar |
+| Corpo em T-pose | Controller sem clipes (seção 6), sem controller no Animator, ou Humanoid sem Avatar. Com clipes do Mixamo: clipe **Generic** (rode o passo 1 do menu 31) ou controller recriado e Animator com "Missing" (rode o passo 4) |
 | Mãos não pegam a lanterna/arma | Modelo não Humanoid; `IK Pass` desligado nas layers; alvo da mão mal posicionado (`rightHandLocalPosition`) |
 | Corpo desaparece de longe/fora de tela | `Culling Mode` do Animator diferente de *Always Animate* (o menu 16 define) |
 | Mensagem "estimando pelo deslocamento" | O controller não expõe aquele membro com nomes conhecidos (seção 11); funciona assim, mas me mande o arquivo se quiser exato |
