@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -90,9 +92,40 @@ namespace HorrorFPS.ItemsEditor
             return false;
         }
 
+        // No Unity 6 cada janela Inspector pode ter o seu próprio tracker (o sharedTracker nem sempre é o desta janela, e aí os soltos
+        // não somem). Procuramos o tracker que realmente contém ESTE editor: primeiro o compartilhado, depois o de cada Inspector aberto.
+        bool TrackerHasThis(ActiveEditorTracker t)
+        {
+            if (t == null) return false;
+            Editor[] eds = t.activeEditors;
+            for (int i = 0; i < eds.Length; i++) if (eds[i] == this) return true;
+            return false;
+        }
+
+        ActiveEditorTracker FindMyTracker()
+        {
+            ActiveEditorTracker shared = ActiveEditorTracker.sharedTracker;
+            if (TrackerHasThis(shared)) return shared;
+            try
+            {
+                Type win = typeof(Editor).Assembly.GetType("UnityEditor.InspectorWindow");
+                MethodInfo get = win != null ? win.GetMethod("GetInspectors", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) : null;
+                IEnumerable inspectors = get != null ? get.Invoke(null, null) as IEnumerable : null;
+                if (inspectors != null)
+                    foreach (object w in inspectors)
+                    {
+                        PropertyInfo p = w.GetType().GetProperty("tracker", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        ActiveEditorTracker t = p != null ? p.GetValue(w, null) as ActiveEditorTracker : null;
+                        if (TrackerHasThis(t)) return t;
+                    }
+            }
+            catch (Exception) { }       // API interna mudou: cai no compartilhado (e o botão "Esconder (fixo)" continua valendo)
+            return shared;
+        }
+
         bool TrackerNeedsUpdate()
         {
-            ActiveEditorTracker tracker = ActiveEditorTracker.sharedTracker;
+            ActiveEditorTracker tracker = FindMyTracker();
             Editor[] eds = tracker.activeEditors;
             for (int i = 0; i < eds.Length; i++)
             {
@@ -106,7 +139,7 @@ namespace HorrorFPS.ItemsEditor
         void ApplyTrackerVisibility()
         {
             if (this == null) return;                      // este Inspector já foi fechado
-            ActiveEditorTracker tracker = ActiveEditorTracker.sharedTracker;
+            ActiveEditorTracker tracker = FindMyTracker();
             Editor[] eds = tracker.activeEditors;
             bool changed = false;
             for (int i = 0; i < eds.Length; i++)
