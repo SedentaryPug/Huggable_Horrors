@@ -14,6 +14,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Sanity/Sanity Effects")]
     [PlayerModule("Sanidade", 2)]
+    [RequireComponent(typeof(SanityComponent))]
     public class SanityEffects : MonoBehaviour
     {
         const string LockKey = "Sanity";

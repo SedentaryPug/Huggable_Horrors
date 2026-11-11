@@ -9,6 +9,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Hotbar HUD")]
     [PlayerModule("Interface", 2)]
+    [RequireComponent(typeof(Hotbar), typeof(PlayerOverlay))]
     public class HotbarHUD : MonoBehaviour
     {
         [SerializeField] float showSeconds = 3.5f;

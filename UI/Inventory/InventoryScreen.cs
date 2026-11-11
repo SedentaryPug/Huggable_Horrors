@@ -17,6 +17,7 @@ namespace HorrorFPS
     [AddComponentMenu("HorrorFPS/UI/Inventory Screen")]
     [DefaultExecutionOrder(500)]    // depois dos outros: o estado do cursor do mouse (liberado enquanto a mochila está aberta) é decidido por último a cada quadro
     [PlayerModule("Inventário", 2)]
+    [RequireComponent(typeof(PlayerOverlay), typeof(ItemInput))]
     public partial class InventoryScreen : MonoBehaviour
     {
         [Tooltip("Trava o movimento do jogador enquanto o inventário está aberto (o mundo continua rodando).")]

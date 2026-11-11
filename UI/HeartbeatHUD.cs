@@ -10,6 +10,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Heartbeat HUD")]
     [PlayerModule("Interface", 3)]
+    [RequireComponent(typeof(PlayerOverlay), typeof(HeartbeatComponent))]
     public class HeartbeatHUD : MonoBehaviour
     {
         public enum HudCorner { BottomLeft, BottomRight, TopLeft, TopRight }

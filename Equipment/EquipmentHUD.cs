@@ -9,6 +9,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment HUD")]
     [PlayerModule("Equipamento", 1)]
+    [RequireComponent(typeof(PlayerOverlay), typeof(EquipmentController))]
     public class EquipmentHUD : MonoBehaviour
     {
         PlayerOverlay overlay;

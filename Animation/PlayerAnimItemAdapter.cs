@@ -14,6 +14,7 @@ namespace HorrorFPS
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("HorrorFPS/Animation/Player Anim Item Adapter")]
+    [RequireComponent(typeof(PlayerAnimDriver))]
     public class PlayerAnimItemAdapter : MonoBehaviour
     {
         [Serializable]

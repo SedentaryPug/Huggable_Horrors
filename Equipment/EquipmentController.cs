@@ -15,6 +15,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment Controller")]
     [PlayerModule("Equipamento", 0)]
+    [RequireComponent(typeof(ItemInput))]
     public class EquipmentController : MonoBehaviour, IItemUseHandler, ICameraModifier
     {
         [Tooltip("Camadas que golpes e tiros acertam.")]
