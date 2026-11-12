@@ -37,6 +37,9 @@ namespace HorrorFPS
 
         public override float Height { get { return HeaderH + bodyH + 4f; } }
 
+        /// <summary>Tamanho da célula das peças na bandeja (menor que o da mochila).</summary>
+        public float CellSize { get { return cell; } }
+
         public TrayView(InventoryScreen screen, ListContainer list, RectTransform parent, float x, float y, float width, float height, float cell)
             : base(screen, list)
         {
@@ -253,6 +256,15 @@ namespace HorrorFPS
             Vector2Int rel;
             if (!HitBody(b, local, out rel)) return false;
             cellOut = rel;
+            return true;
+        }
+
+        public override bool GetItemBox(ItemInstance item, RectTransform layer, out Rect box)
+        {
+            box = new Rect();
+            Body b = FindBody(item);
+            if (b == null || b.rt == null || layer == null) return false;
+            box = InvUI.RectInLayer(layer, b.rt);
             return true;
         }
 

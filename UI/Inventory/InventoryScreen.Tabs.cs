@@ -130,6 +130,7 @@ namespace HorrorFPS
         {
             if (t == activeTab || !tabList.Contains(t)) return;
             menu.Close();
+            Play(InvSound.TabSwitch);
             CancelPress();
             mouseDragging = false;
             if (tray != null && owner != null) owner.FlushManualContainers();      // saiu da mochila: a bandeja se esvazia

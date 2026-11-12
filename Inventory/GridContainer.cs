@@ -272,6 +272,20 @@ namespace HorrorFPS
             return true;
         }
 
+        /// <summary>
+        /// Define o tamanho da grade (colunas x fileiras) como se você tivesse editado o inspetor: o que não couber mais é realocado
+        /// pelo dono e, se não houver lugar, jogado no chão. Para recusar a mudança quando algo não coubesse, use Resize.
+        /// </summary>
+        public void SetSize(int columns, int rows)
+        {
+            columns = Mathf.Max(1, columns);
+            rows = Mathf.Max(1, rows);
+            if (columns == width && rows == height) return;
+            width = columns; height = rows;
+            EnsureBuilt();                  // detecta a mudança, refaz as células e recoloca os itens (o excedente vai para o dono)
+            NotifyChanged();
+        }
+
         /// <summary>Muda o tamanho da grade (ex.: mochila maior). Falha, sem mudar nada, se algum item não couber.</summary>
         public bool Resize(int newWidth, int newHeight)
         {

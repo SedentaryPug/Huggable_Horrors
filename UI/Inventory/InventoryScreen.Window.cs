@@ -33,11 +33,11 @@ namespace HorrorFPS
         Vector2 ghostSmooth, ghostVel;
         float ghostTilt;
 
-        readonly RectTransform[] slotRects = new RectTransform[Hotbar.SlotCount];
-        readonly Image[] slotBacks = new Image[Hotbar.SlotCount];
-        readonly Image[] slotSwatches = new Image[Hotbar.SlotCount];
-        readonly Image[] slotIcons = new Image[Hotbar.SlotCount];
-        readonly Text[] slotCounts = new Text[Hotbar.SlotCount];
+        readonly RectTransform[] slotRects = new RectTransform[Hotbar.MaxSlots];
+        readonly Image[] slotBacks = new Image[Hotbar.MaxSlots];
+        readonly Image[] slotSwatches = new Image[Hotbar.MaxSlots];
+        readonly Image[] slotIcons = new Image[Hotbar.MaxSlots];
+        readonly Text[] slotCounts = new Text[Hotbar.MaxSlots];
 
         // ------------------------------------------------------------------ montagem
         void BuildWindow()
@@ -84,6 +84,8 @@ namespace HorrorFPS
 
             BuildHotbarStrip(16f, winH - 56f, winW - 16f - 190f - 8f);
             BuildDropZone(winW - 16f - 190f, winH - 56f, 190f, 44f);
+
+            BuildFx();          // camada dos efeitos: acima da janela, abaixo do menu e do cursor
 
             popupLayer = InvUI.Rect(layer, "popup");
             InvUI.Stretch(popupLayer);
@@ -150,24 +152,30 @@ namespace HorrorFPS
 
         void BuildHotbarStrip(float x, float y, float rightLimit)
         {
-            int n = hotbar != null ? hotbar.Slots : Hotbar.SlotCount;
+            int n = hotbar != null ? hotbar.Slots : Hotbar.MaxSlots;
+            // com muitos atalhos os quadrados encolhem para a faixa caber (44 px até 9 atalhos; mínimo 28 px)
+            const float gap = 8f;
+            float sz = Mathf.Clamp((Mathf.Max(60f, rightLimit - x) + gap) / n - gap, 28f, 44f);
+            float step = sz + gap;
+            float top = y + (44f - sz) * 0.5f;
+            float inset = Mathf.Round(sz * 0.16f);
             for (int i = 0; i < n; i++)
             {
                 RectTransform rt = InvUI.Rect(window, "slot" + i);
-                InvUI.TopLeft(rt, x + i * 52f, y, 44f, 44f);
+                InvUI.TopLeft(rt, x + i * step, top, sz, sz);
                 slotRects[i] = rt;
                 slotBacks[i] = InvUI.Img(rt, "back", InvUI.Cell); InvUI.Stretch(slotBacks[i].rectTransform);
-                slotSwatches[i] = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(slotSwatches[i].rectTransform, 7f, 7f, 7f, 7f);
+                slotSwatches[i] = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(slotSwatches[i].rectTransform, inset, inset, inset, inset);
                 slotIcons[i] = InvUI.Img(rt, "ic", Color.white); slotIcons[i].preserveAspect = true; InvUI.Stretch(slotIcons[i].rectTransform, 4f, 4f, 4f, 4f);
-                Text n = InvUI.Label(rt, "n", (i + 1).ToString(), 11, TextAnchor.UpperLeft, InvUI.Accent);
-                InvUI.TopLeft(n.rectTransform, 3f, 1f, 20f, 16f);
+                Text num = InvUI.Label(rt, "n", Hotbar.KeyLabel(i), 11, TextAnchor.UpperLeft, InvUI.Accent);
+                InvUI.TopLeft(num.rectTransform, 3f, 1f, 20f, 16f);
                 slotCounts[i] = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
-                InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, 41f, 43f);
+                InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, sz - 3f, sz - 1f);
             }
-            float capX = x + n * 52f + 8f, capW = Mathf.Min(330f, rightLimit - capX);
+            float capX = x + n * step + 8f, capW = Mathf.Min(330f, rightLimit - capX);
             if (capW >= 120f)
             {
-                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas 1-" + n + "): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
+                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas " + Hotbar.KeyRange(n) + "): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
                 InvUI.TopLeft(cap.rectTransform, capX, y, capW, 44f);
             }
         }
@@ -198,6 +206,7 @@ namespace HorrorFPS
             DestroyContent();
             tabRects.Clear(); tabBacks.Clear(); tabTexts.Clear();
             DestroyGhost();
+            DestroyFx();
             if (window != null) Destroy(window.gameObject);
             if (popupLayer != null) Destroy(popupLayer.gameObject);
             if (dimObject != null) Destroy(dimObject);
@@ -386,6 +395,14 @@ namespace HorrorFPS
                 ghost.anchoredPosition = c + new Vector2(off.x * cs - off.y * sn, off.x * sn + off.y * cs);
             }
             else if (ghost.localRotation != Quaternion.identity) ghost.localRotation = Quaternion.identity;
+
+            // "não coube": a peça balança de um lado ao outro e assenta (por cima de tudo, depois do giro, para não girar junto)
+            if (shakeT < 1f)
+            {
+                shakeT = Mathf.Min(1f, shakeT + Time.unscaledDeltaTime * animationSpeed / 0.34f);
+                float k = 1f - shakeT;
+                ghost.anchoredPosition += new Vector2(Mathf.Sin(shakeT * 40f) * shakePixels * k * k, 0f);
+            }
         }
 
         // ------------------------------------------------------------------ feedback do "segurar para arrastar" (mouse)
@@ -462,8 +479,29 @@ namespace HorrorFPS
             AddMoveEntries(e, item, owner);
             if (other != null) AddMoveEntries(e, item, other);
             if (item.data.canDrop) e.Add(new ItemMenu.Entry("Jogar fora", () => DropToWorld(item)));
-            menu.Show(popupLayer, cursor, item.GetName(this), e);
-            if (!input.UsesMouse) cursor = menu.StepRow(cursor, 1);        // sem mouse: já cai na primeira opção
+            ShowMenu(item.GetName(this), e);
+        }
+
+        /// <summary>
+        /// Abre o menu com a primeira opção habilitada em foco (E / Enter / A já a escolhem). Sem ponteiro de mouse, o cursor virtual
+        /// vai junto para essa opção; com mouse o ponteiro não é mexido.
+        /// </summary>
+        void ShowMenu(string title, List<ItemMenu.Entry> entries)
+        {
+            menu.Animated = animations;
+            menu.Speed = animationSpeed;
+            menu.Show(popupLayer, cursor, title, entries, MenuHint);
+            if (!RealPointer && menu.IsOpen) cursor = overlay.ClampToViewport(menu.FocusPoint());
+        }
+
+        string MenuHint
+        {
+            get
+            {
+                return input != null && input.UsesMouse
+                    ? "E escolhe • Setas movem • Botão dir. fecha"
+                    : "A/X escolhe • D-pad move • B volta";
+            }
         }
 
         void AddMoveEntries(List<ItemMenu.Entry> e, ItemInstance item, InventoryOwner who)
@@ -481,7 +519,8 @@ namespace HorrorFPS
         void MoveTo(ItemInstance item, ItemContainer target)
         {
             TransferResult r = ItemTransfer.Move(item, target);
-            if (!ItemTransfer.Ok(r)) Notify("Não cabe.");
+            if (!ItemTransfer.Ok(r)) { Notify("Não cabe."); Play(InvSound.DropReject); }
+            else Play(r == TransferResult.Merged ? InvSound.DropMerge : InvSound.DropFit);
             dirty = true;
         }
 
@@ -507,12 +546,11 @@ namespace HorrorFPS
             {
                 int slot = i;
                 ItemInstance cur = hotbar.GetItem(i);
-                string label = "Tecla " + (i + 1) + (cur != null && cur != item ? "   (troca com " + InvUI.Truncate(cur.GetName(this), 16) + ")" : (cur == item ? "   (atual)" : ""));
+                string label = "Tecla " + Hotbar.KeyLabel(i) + (cur != null && cur != item ? "   (troca com " + InvUI.Truncate(cur.GetName(this), 16) + ")" : (cur == item ? "   (atual)" : ""));
                 e.Add(new ItemMenu.Entry(label, () => { hotbar.Assign(slot, item); dirty = true; }));
             }
             e.Add(new ItemMenu.Entry("Remover atalho", () => { hotbar.Assign(-1, item); dirty = true; }, item.hotkey >= 0));
-            menu.Show(popupLayer, cursor, "Atalho de " + item.GetName(this), e);
-            if (!input.UsesMouse) cursor = menu.StepRow(cursor, 1);
+            ShowMenu("Atalho de " + item.GetName(this), e);
         }
     }
 }

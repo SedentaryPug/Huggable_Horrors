@@ -37,6 +37,13 @@ namespace HorrorFPS
         [SerializeField] Transform dropAnchor;
         [SerializeField] float dropDistance = 1.1f;
 
+        [Header("Tamanho da mochila")]
+        [Tooltip("Colunas da mochila DESTE dono (a grade principal). 0 = usa o tamanho escrito no GridContainer da mochila.")]
+        [SerializeField, Min(0)] int bagColumns = 0;
+        [Tooltip("Fileiras da mochila DESTE dono. 0 = usa o tamanho escrito no GridContainer da mochila.")]
+        [SerializeField, Min(0)] int bagRows = 0;
+
+        bool bagSizeDirty;
         readonly List<ItemContainer> containers = new List<ItemContainer>();
         readonly Dictionary<string, ItemInstance> equipped = new Dictionary<string, ItemInstance>();
         readonly List<ItemInstance> overflowBuffer = new List<ItemInstance>();
@@ -63,7 +70,52 @@ namespace HorrorFPS
         void Awake()
         {
             RefreshContainers();
+            ApplyBagSize();
             sessionSaved = IsPlayer && GetComponentInParent<SaveableEntity>() == null;
+        }
+
+        /// <summary>Mexeu em "Bag Columns" / "Bag Rows" com o jogo rodando: aplica no fim do quadro (jogar itens no chão não pode acontecer dentro do OnValidate).</summary>
+        void OnValidate()
+        {
+            if (Application.isPlaying) bagSizeDirty = true;
+        }
+
+        // ------------------------------------------------------------------ tamanho da mochila
+        /// <summary>Grade principal (aba Mochila) deste dono, ou nula se ele não tem uma.</summary>
+        public GridContainer Bag
+        {
+            get
+            {
+                for (int i = 0; i < containers.Count; i++)
+                {
+                    GridContainer g = containers[i] as GridContainer;
+                    if (g != null && !g.ManualOnly && g.Tab == InventoryTab.Bag) return g;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Muda o tamanho da mochila (colunas x fileiras) e grava nos campos do inspetor. O que não couber mais é realocado e,
+        /// se não houver lugar, jogado no chão (itens com atalho na hotbar são os últimos a sair). Devolve false se não há mochila.
+        /// </summary>
+        public bool SetBagSize(int columns, int rows)
+        {
+            bagColumns = Mathf.Max(0, columns);
+            bagRows = Mathf.Max(0, rows);
+            return ApplyBagSize();
+        }
+
+        bool ApplyBagSize()
+        {
+            bagSizeDirty = false;
+            GridContainer g = Bag;
+            if (g == null) return false;
+            if (bagColumns <= 0 && bagRows <= 0) return true;               // sem override: vale o GridContainer
+            int c = bagColumns > 0 ? bagColumns : g.Width;
+            int r = bagRows > 0 ? bagRows : g.Height;
+            g.SetSize(c, r);
+            return true;
         }
 
         void Start()
@@ -113,6 +165,7 @@ namespace HorrorFPS
 
         void LateUpdate()
         {
+            if (bagSizeDirty) ApplyBagSize();
             if (!equipDirty) return;
             equipDirty = false;
             // equipamento some se o item saiu do inventário

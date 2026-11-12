@@ -215,6 +215,21 @@ namespace HorrorFPS
             return new Vector2(world.x, world.y);
         }
 
+        /// <summary>
+        /// Retângulo de um elemento medido dentro de uma camada (origem no canto superior esquerdo da camada, y para baixo).
+        /// Serve para os efeitos desenharem em cima de qualquer elemento, mesmo com a janela redimensionada.
+        /// </summary>
+        public static Rect RectInLayer(RectTransform layer, RectTransform rt)
+        {
+            if (layer == null || rt == null) return new Rect();
+            Vector3[] c = new Vector3[4];
+            rt.GetWorldCorners(c);              // 0 = inferior esquerdo, 1 = superior esquerdo, 2 = superior direito, 3 = inferior direito
+            Vector2 a, b;
+            ToTopLeftLocal(layer, new Vector2(c[1].x, c[1].y), out a);
+            ToTopLeftLocal(layer, new Vector2(c[3].x, c[3].y), out b);
+            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+        }
+
         public static string Truncate(string s, int max)
         {
             if (string.IsNullOrEmpty(s) || s.Length <= max) return s;

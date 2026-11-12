@@ -30,7 +30,7 @@ namespace HorrorFPS
         bool built;
 
         class SlotUI { public Image back, swatch, icon, selected; public Text number, count; }
-        readonly SlotUI[] slots = new SlotUI[Hotbar.SlotCount];
+        readonly SlotUI[] slots = new SlotUI[Hotbar.MaxSlots];
         int slotCount;
 
         void Start() { Build(); }
@@ -61,7 +61,7 @@ namespace HorrorFPS
                 s.swatch = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(s.swatch.rectTransform, 6, 6, 6, 6);
                 s.icon = InvUI.Img(rt, "ic", Color.white); s.icon.preserveAspect = true; InvUI.Stretch(s.icon.rectTransform, 4, 4, 4, 4);
                 s.selected = InvUI.Img(rt, "sel", new Color(InvUI.Accent.r, InvUI.Accent.g, InvUI.Accent.b, 0.35f)); InvUI.Stretch(s.selected.rectTransform);
-                s.number = InvUI.Label(rt, "n", (i + 1).ToString(), 11, TextAnchor.UpperLeft, InvUI.Accent);
+                s.number = InvUI.Label(rt, "n", Hotbar.KeyLabel(i), 11, TextAnchor.UpperLeft, InvUI.Accent);
                 InvUI.TopLeft(s.number.rectTransform, 3f, 1f, 20f, 16f);
                 s.count = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
                 InvUI.TopLeft(s.count.rectTransform, 0f, 0f, Slot - 3f, Slot - 1f);

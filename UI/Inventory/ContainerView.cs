@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace HorrorFPS
@@ -45,6 +46,25 @@ namespace HorrorFPS
         public virtual bool TryGetGrabCell(Vector2 screenPoint, ItemInstance item, out Vector2Int cell)
         {
             cell = Vector2Int.zero;
+            return false;
+        }
+
+        /// <summary>
+        /// Onde a peça cairia se fosse solta no ponto (o mesmo cálculo da prévia verde/vermelha): as células e a caixa que as envolve,
+        /// em coordenadas da camada (origem no canto superior esquerdo, y para baixo). Alimenta as animações de encaixou / não coube.
+        /// Falso se este contêiner não tem células (lista, bandeja).
+        /// </summary>
+        public virtual bool GetDropFootprint(ItemInstance held, int heldRotation, Vector2 screenPoint, RectTransform layer, List<Rect> cells, out Rect box)
+        {
+            cells.Clear();
+            box = new Rect();
+            return false;
+        }
+
+        /// <summary>Retângulo atual de um item deste contêiner, em coordenadas da camada (para a peça "voltar ao lugar"). Falso se não está visível.</summary>
+        public virtual bool GetItemBox(ItemInstance item, RectTransform layer, out Rect box)
+        {
+            box = new Rect();
             return false;
         }
 

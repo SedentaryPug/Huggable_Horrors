@@ -74,7 +74,7 @@ namespace HorrorFPS
             }
             if (item.hotkey >= 0)
             {
-                Text k = InvUI.Label(root, "hotkey", (item.hotkey + 1).ToString(), 11, TextAnchor.UpperRight, InvUI.Accent);
+                Text k = InvUI.Label(root, "hotkey", Hotbar.KeyLabel(item.hotkey), 11, TextAnchor.UpperRight, InvUI.Accent);
                 InvUI.TopLeft(k.rectTransform, 0f, 1f, w - 3f, 16f);
                 k.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.9f);
             }

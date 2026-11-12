@@ -37,8 +37,8 @@ namespace HorrorFPS
         public string[] noPlayerScenes = new string[0];
 
         [Header("Jogador")]
-        [Tooltip("Quantos atalhos a hotbar tem (1 a 9; as teclas são 1-9). Um jogador pode ter outro valor no campo 'Slots Override' do Hotbar dele.")]
-        [Range(1, 9)] public int hotbarSlots = 9;
+        [Tooltip("Quantos atalhos a hotbar tem (1 a 12; as teclas são 1-9, 0, - e =). Um jogador pode ter outro valor no campo 'Slots Override' do Hotbar dele.")]
+        [Range(1, Hotbar.MaxSlots)] public int hotbarSlots = 9;
 
         [Header("Jogo")]
         [Tooltip("Vazio = nome do produto (Project Settings > Player).")]
