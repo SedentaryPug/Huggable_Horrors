@@ -6,7 +6,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Dispara as dicas de tutorial automáticas de UM jogador, conforme o campo 'When' de cada dica (ver TutorialWhen): tempo de jogo,
-    /// andar, primeira dica de interação, pegar/equipar item, dano, status baixo, esconderijo, objetivo novo. Só PEDE a dica
+    /// andar, primeira dica de interação, pegar/equipar item, dano, status baixo, esconderijo, objetivo novo, barulho alto. Só PEDE a dica
     /// (Tutorials.Show); quem decide se ela aparece é a regra "uma vez por jogador" e o TutorialHUD.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Tutorials/Tutorial Director")]
@@ -23,11 +23,12 @@ namespace HorrorFPS
         InventoryOwner owner;
         StatsComponent stats;
         PlayerInteractor interactor;
+        PlayerMotionProbe motion;
 
         float playTime, walkTime;
         readonly List<Delayed> delayed = new List<Delayed>();
         readonly HashSet<string> fired = new HashSet<string>();
-        bool hooked;
+        bool hooked, wasLoud;
 
         void Start()
         {
@@ -36,6 +37,7 @@ namespace HorrorFPS
             interactor = player.Interactor;
             stats = player.Stats;
             owner = PlayerRef.Find<InventoryOwner>(this);
+            motion = PlayerRef.Find<PlayerMotionProbe>(this);
 
             if (interactor != null) interactor.PromptChanged += OnPrompt;
             if (owner != null) { owner.Picked += OnPicked; owner.Equipped += OnEquipped; }
@@ -66,6 +68,11 @@ namespace HorrorFPS
             float dt = Time.deltaTime;
             playTime += dt;
             if (player.Input != null && player.Input.MoveInput.sqrMagnitude > 0.25f) walkTime += dt;
+
+            // primeira vez que o jogador faz barulho alto (correndo, piso barulhento): a dica explica o medidor e o agachar
+            bool loud = motion != null && motion.Level == NoiseLevel.Loud;
+            if (loud && !wasLoud) Trigger(TutorialWhen.LoudNoise, null);
+            wasLoud = loud;
 
             IList<TutorialEntry> all = Tutorials.All;
             for (int i = 0; i < all.Count; i++)

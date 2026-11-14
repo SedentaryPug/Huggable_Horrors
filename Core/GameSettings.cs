@@ -26,6 +26,7 @@ namespace HorrorFPS
         static HoldMode grabMode = HoldMode.Hold;
         static HoldMode crouchMode = HoldMode.Hold;
         static bool tips = true;
+        static bool noiseIndicator = true;
 
         public static event Action Changed;
 
@@ -47,6 +48,7 @@ namespace HorrorFPS
             grabMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "GrabMode", (int)grabMode);
             crouchMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "CrouchMode", (int)crouchMode);
             tips = PlayerPrefs.GetInt(Prefix + "Tips", tips ? 1 : 0) == 1;
+            noiseIndicator = PlayerPrefs.GetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0) == 1;
         }
 
         static void Save()
@@ -58,6 +60,7 @@ namespace HorrorFPS
             PlayerPrefs.SetInt(Prefix + "GrabMode", (int)grabMode);
             PlayerPrefs.SetInt(Prefix + "CrouchMode", (int)crouchMode);
             PlayerPrefs.SetInt(Prefix + "Tips", tips ? 1 : 0);
+            PlayerPrefs.SetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0);
             Changed?.Invoke();
         }
 
@@ -105,6 +108,13 @@ namespace HorrorFPS
         {
             get { EnsureLoaded(); return tips; }
             set { EnsureLoaded(); tips = value; Save(); }
+        }
+
+        /// <summary>Medidor de ruído (barrinhas no canto da tela) que mostra o quanto o jogador está sendo ouvido. Ver NoiseMeterHUD.</summary>
+        public static bool NoiseIndicator
+        {
+            get { EnsureLoaded(); return noiseIndicator; }
+            set { EnsureLoaded(); noiseIndicator = value; Save(); }
         }
     }
 }

@@ -164,6 +164,14 @@ namespace HorrorFPS
         public const string ObjectivesFailedSection = "FALHARAM";
         public const string ObjectivesEmpty = "Nenhum objetivo ainda.";
 
+        // Ruído (agachar silencioso)
+        public const string NoiseIndicator = "Indicador de ruído";
+        public const string NoiseSilent = "Silencioso";
+        public const string NoiseQuiet = "Baixo";
+        public const string NoiseNormal = "Médio";
+        public const string NoiseLoud = "Alto";
+        public const string NoiseCrouched = "Agachado";
+
         // Dicas / Como jogar
         public const string HowToPlayButton = "Como jogar";
         public const string HowToPlayTitle = "COMO JOGAR";

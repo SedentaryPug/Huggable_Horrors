@@ -19,8 +19,10 @@ namespace HorrorFPS
                 TutorialWhen.Walking, "", 8f, 8f, "Sprint"));
             list.Add(Make("jump", "Pular", "Aperte {Jump} para pular.",
                 TutorialWhen.Walking, "", 18f, 7f, "Jump"));
-            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar e passar por vãos baixos.",
-                TutorialWhen.Walking, "", 30f, 8f, "Crouch"));
+            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar: você anda mais devagar, mas faz muito menos barulho, e ainda passa por vãos baixos.",
+                TutorialWhen.Walking, "", 30f, 9f, "Crouch"));
+            list.Add(Make("noise", "Barulho", "Correr, pular e mexer em coisas fazem barulho, e o que estiver por perto ouve. O medidor no canto da tela mostra o quanto você está fazendo: agache ({Crouch}) ou ande devagar para ficar quieto.",
+                TutorialWhen.LoudNoise, "", 1f, 12f, ""));
 
             // ---- mundo
             list.Add(Make("interact", "Interagir", "Olhe para portas, itens e objetos e aperte {Interact} para interagir.",

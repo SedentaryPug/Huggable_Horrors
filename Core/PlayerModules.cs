@@ -46,6 +46,7 @@ namespace HorrorFPS
             Ensure<ObjectivesHUD>(player);
             Ensure<TutorialHUD>(player);
             Ensure<TutorialDirector>(player);
+            Ensure<NoiseMeterHUD>(player);            // indicador de ruído (agachar = menos barulho)
 
             // corpo (a sonda de movimento primeiro: os outros dependem dela)
             Ensure<PlayerMotionProbe>(player);
