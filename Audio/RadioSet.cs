@@ -195,6 +195,13 @@ namespace HorrorFPS
 
         public void Toggle() { SetOn(!IsOn); }
 
+        // Versões "void" de um parâmetro só, para os campos de UnityEvent do Inspector (eles não listam métodos com retorno ou parâmetros opcionais).
+        public void TurnOn() { SetOn(true); }
+        public void TurnOff() { SetOn(false); }
+        public void PlayNextTransmission() { PlayNext(); }
+        /// <summary>Toca a fala 'id' (liga o rádio sozinho se estiver desligado). Para UnityEvent.</summary>
+        public void PlayTransmission(string id) { Play(id, true); }
+
         /// <summary>Toca a próxima fala disponível. Devolve false se o rádio está desligado ou não há fala.</summary>
         public bool PlayNext()
         {
