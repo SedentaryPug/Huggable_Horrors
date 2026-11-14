@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Base das páginas de leitura do menu de pausa (Objetivos, Como jogar): lista rolável de cartões de texto + status + linha de
+    /// Base das páginas de leitura do menu de pausa (Objetivos, Como jogar, Diário): lista rolável de cartões de texto + status + linha de
     /// botões embaixo. Cada cartão é um botão só para dar foco (teclado/controle rolam a lista com ScrollFollowSelection).
     /// A subclasse monta os botões extras com AddBottomButton e termina com AddBackButton.
     /// </summary>
@@ -21,6 +21,9 @@ namespace HorrorFPS
         Button back;
 
         public Selectable FirstSelectable { get { return entries.Count > 0 ? (Selectable)entries[0] : back; } }
+
+        /// <summary>Quantos cartões de texto a lista tem agora.</summary>
+        protected int EntryCount { get { return entries.Count; } }
 
         protected InfoPanelBase(RectTransform pageRoot)
         {
@@ -61,6 +64,26 @@ namespace HorrorFPS
             UIFactory.SetLayout(back.gameObject, 200f, 64f);
         }
 
+        /// <summary>Esvazia a linha de botões de baixo (para a página trocar de modo: lista, leitura...).</summary>
+        protected void ClearBottomButtons()
+        {
+            for (int i = bottom.childCount - 1; i >= 0; i--)
+            {
+                Transform child = bottom.GetChild(i);
+                child.SetParent(null, false);
+                UnityEngine.Object.Destroy(child.gameObject);
+            }
+            back = null;
+        }
+
+        /// <summary>Dá o foco (teclado/controle) a um botão desta página.</summary>
+        protected static void Focus(Selectable target)
+        {
+            if (target == null || UnityEngine.EventSystems.EventSystem.current == null) return;
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(target.gameObject);
+        }
+
         /// <summary>Esvazia a lista (chame antes de montar de novo).</summary>
         protected void ClearEntries()
         {
@@ -98,8 +121,14 @@ namespace HorrorFPS
         /// <summary>Cartão de texto (rich text) com a altura que o texto precisar.</summary>
         protected void AddEntry(string richText)
         {
+            AddEntry(richText, null);
+        }
+
+        /// <summary>Cartão de texto que também funciona como botão: 'onClick' roda ao clicar ou apertar Enter / A. Devolve o botão.</summary>
+        protected Button AddEntry(string richText, UnityAction onClick)
+        {
             Text label;
-            Button b = UIFactory.CreateButton(content, string.Empty, new Vector2(EntryWidth, 64f), null, out label);
+            Button b = UIFactory.CreateButton(content, string.Empty, new Vector2(EntryWidth, 64f), onClick, out label);
             label.supportRichText = true;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Overflow;
@@ -112,6 +141,7 @@ namespace HorrorFPS
             float textHeight = Measure(label, EntryWidth - 36f);
             UIFactory.SetLayout(b.gameObject, -1f, Mathf.Max(64f, textHeight + 24f));
             entries.Add(b);
+            return b;
         }
 
         static float Measure(Text t, float width)

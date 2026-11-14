@@ -6,7 +6,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Dispara as dicas de tutorial automáticas de UM jogador, conforme o campo 'When' de cada dica (ver TutorialWhen): tempo de jogo,
-    /// andar, primeira dica de interação, pegar/equipar item, dano, status baixo, esconderijo, objetivo novo, barulho alto. Só PEDE a dica
+    /// andar, primeira dica de interação, pegar/equipar item, dano, status baixo, esconderijo, objetivo novo, barulho alto, registro novo no diário. Só PEDE a dica
     /// (Tutorials.Show); quem decide se ela aparece é a regra "uma vez por jogador" e o TutorialHUD.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Tutorials/Tutorial Director")]
@@ -44,6 +44,7 @@ namespace HorrorFPS
             if (stats != null) { stats.Damaged += OnDamaged; stats.StatChanged += OnStatChanged; }
             HidingSpot.Entered += OnHid;
             Objectives.Started += OnObjectiveStarted;
+            Journal.Unlocked += OnJournalUnlocked;
             hooked = true;
         }
 
@@ -55,6 +56,7 @@ namespace HorrorFPS
             if (stats != null) { stats.Damaged -= OnDamaged; stats.StatChanged -= OnStatChanged; }
             HidingSpot.Entered -= OnHid;
             Objectives.Started -= OnObjectiveStarted;
+            Journal.Unlocked -= OnJournalUnlocked;
         }
 
         // ------------------------------------------------------------------ tempo
@@ -135,6 +137,11 @@ namespace HorrorFPS
         void OnObjectiveStarted(ObjectiveEntry objective)
         {
             Trigger(TutorialWhen.ObjectiveStarted, null);
+        }
+
+        void OnJournalUnlocked(JournalEntry entry)
+        {
+            Trigger(TutorialWhen.JournalUnlocked, null);
         }
 
         // ------------------------------------------------------------------ disparo

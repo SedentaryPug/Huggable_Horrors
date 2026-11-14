@@ -49,7 +49,9 @@ namespace HorrorFPS
             // ---- jogo
             list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para ver seus objetivos na tela. A lista completa fica no menu de pausa.",
                 TutorialWhen.ObjectiveStarted, "", 5f, 9f, ""));
-            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos e os controles.",
+            list.Add(Make("journal", "Diário", "Notas, diários e gravações que você acha ficam guardados. Aperte {Pause} e escolha Diário para reler quando quiser.",
+                TutorialWhen.JournalUnlocked, "", 4f, 10f, ""));
+            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos, o diário e os controles.",
                 TutorialWhen.GameStart, "", 120f, 8f, ""));
 
             // ---- avisos (não são comandos: ficam fora da lista Como jogar)
