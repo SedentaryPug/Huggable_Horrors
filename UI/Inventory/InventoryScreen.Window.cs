@@ -466,7 +466,18 @@ namespace HorrorFPS
                         e.Add(new ItemMenu.Entry(label, () => UseAction(item, a), ok));
                     }
                 if (item.data.IsEquippable)
-                    e.Add(new ItemMenu.Entry(owner.IsEquipped(item) ? "Desequipar" : "Equipar", () => { owner.ToggleEquip(item); dirty = true; }));
+                {
+                    if (owner.IsHandItem(item))
+                    {
+                        // item de mão: escolhe a mão (a mesma escolha do clique esquerdo / direito ao equipar pelo atalho)
+                        HandSide cur = owner.HandOf(item);
+                        if (cur != HandSide.Left) e.Add(new ItemMenu.Entry(cur == HandSide.None ? "Equipar na mão esquerda" : "Passar para a mão esquerda", () => { owner.EquipToHand(item, HandSide.Left); dirty = true; }));
+                        if (cur != HandSide.Right) e.Add(new ItemMenu.Entry(cur == HandSide.None ? "Equipar na mão direita" : "Passar para a mão direita", () => { owner.EquipToHand(item, HandSide.Right); dirty = true; }));
+                        if (cur != HandSide.None) e.Add(new ItemMenu.Entry("Desequipar", () => { owner.ToggleEquip(item); dirty = true; }));
+                    }
+                    else
+                        e.Add(new ItemMenu.Entry(owner.IsEquipped(item) ? "Desequipar" : "Equipar", () => { owner.ToggleEquip(item); dirty = true; }));
+                }
             }
             if (item.data.canInspect) e.Add(new ItemMenu.Entry("Inspecionar", () => OpenInspect(item)));
             if (mine)

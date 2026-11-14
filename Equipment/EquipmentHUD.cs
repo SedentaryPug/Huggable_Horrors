@@ -4,8 +4,8 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Canto inferior direito da tela do jogador: arma na mão (balas / durabilidade), bateria da lanterna e barra de recarga.
-    /// Só aparece quando há algo equipado e o inventário está fechado.
+    /// Canto inferior direito da tela do jogador: o item de cada mão (balas / durabilidade, "[2 mãos]" quando segura com as duas),
+    /// a bateria da lanterna e a barra de recarga. Só aparece quando há algo equipado e o inventário está fechado.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment HUD")]
     [PlayerModule("Equipamento", 1)]
@@ -17,9 +17,9 @@ namespace HorrorFPS
         InventoryOwner owner;
         InventoryScreen screen;
         CanvasGroup group;
-        Text weaponText, lampText;
+        Text rightText, leftText, lampText;
         Image barBack, barFill;
-        string lastWeapon, lastLamp;
+        string lastRight, lastLeft, lastLamp;
         bool built;
 
         void Update()
@@ -27,14 +27,16 @@ namespace HorrorFPS
             if (!built && !Build()) return;
 
             bool hidden = screen != null && screen.IsOpen;
-            bool any = equip.Hand != null || equip.Lamp != null;
+            bool any = equip.RightHand != null || equip.LeftHand != null || equip.Lamp != null;
             group.alpha = (!hidden && any) ? 1f : 0f;
             if (hidden || !any) return;
 
-            string w = WeaponLine();
-            if (w != lastWeapon) { lastWeapon = w; weaponText.text = w; }
-            string l = LampLine();
-            if (l != lastLamp) { lastLamp = l; lampText.text = l; }
+            string r = HandLine(equip.RightHand, HandSide.Right);
+            if (r != lastRight) { lastRight = r; rightText.text = r; }
+            string l = HandLine(equip.LeftHand, HandSide.Left);
+            if (l != lastLeft) { lastLeft = l; leftText.text = l; }
+            string lamp = LampLine();
+            if (lamp != lastLamp) { lastLamp = lamp; lampText.text = lamp; }
 
             bool rel = equip.IsReloading;
             if (barBack.gameObject.activeSelf != rel) barBack.gameObject.SetActive(rel);
@@ -43,6 +45,17 @@ namespace HorrorFPS
                 RectTransform fr = barFill.rectTransform;
                 fr.anchorMax = new Vector2(Mathf.Clamp01(equip.ReloadProgress), 1f);
             }
+        }
+
+        Text Row(RectTransform box, string name, int size, Color color, float yMin, float yMax)
+        {
+            Text t = InvUI.Label(box, name, "", size, TextAnchor.MiddleRight, color);
+            t.rectTransform.anchorMin = new Vector2(0f, yMin);
+            t.rectTransform.anchorMax = new Vector2(1f, yMax);
+            t.rectTransform.offsetMin = new Vector2(8f, 1f);
+            t.rectTransform.offsetMax = new Vector2(-10f, -1f);
+            t.horizontalOverflow = HorizontalWrapMode.Overflow;
+            return t;
         }
 
         bool Build()
@@ -58,26 +71,16 @@ namespace HorrorFPS
             box.anchorMin = box.anchorMax = new Vector2(1f, 0f);
             box.pivot = new Vector2(1f, 0f);
             box.anchoredPosition = new Vector2(-18f, 16f);
-            box.sizeDelta = new Vector2(230f, 62f);
+            box.sizeDelta = new Vector2(290f, 92f);
             group = box.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
 
             Image back = InvUI.Img(box, "back", new Color(0.03f, 0.035f, 0.04f, 0.55f));
             InvUI.Stretch(back.rectTransform);
 
-            weaponText = InvUI.Label(box, "weapon", "", 20, TextAnchor.MiddleRight, InvUI.TextColor);
-            weaponText.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-            weaponText.rectTransform.anchorMax = new Vector2(1f, 1f);
-            weaponText.rectTransform.offsetMin = new Vector2(8f, 0f);
-            weaponText.rectTransform.offsetMax = new Vector2(-10f, -2f);
-            weaponText.horizontalOverflow = HorizontalWrapMode.Overflow;
-
-            lampText = InvUI.Label(box, "lamp", "", 15, TextAnchor.MiddleRight, InvUI.TextDim);
-            lampText.rectTransform.anchorMin = new Vector2(0f, 0f);
-            lampText.rectTransform.anchorMax = new Vector2(1f, 0.5f);
-            lampText.rectTransform.offsetMin = new Vector2(8f, 4f);
-            lampText.rectTransform.offsetMax = new Vector2(-10f, 0f);
-            lampText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            rightText = Row(box, "rightHand", 19, InvUI.TextColor, 0.667f, 1f);
+            leftText = Row(box, "leftHand", 19, InvUI.TextColor, 0.334f, 0.667f);
+            lampText = Row(box, "lamp", 15, InvUI.TextDim, 0f, 0.334f);
 
             barBack = InvUI.Img(box, "reloadBack", new Color(0f, 0f, 0f, 0.7f));
             RectTransform bb = barBack.rectTransform;
@@ -95,26 +98,37 @@ namespace HorrorFPS
             return true;
         }
 
-        string WeaponLine()
+        /// <summary>Uma linha por mão: "Dir  Pistola  7 / 20". Com as duas mãos num item, a outra mão aparece apagada ("guardado").</summary>
+        string HandLine(ItemInstance w, HandSide side)
         {
-            ItemInstance w = equip.Hand;
             if (w == null) return "";
+            string tag = side == HandSide.Left ? "Esq" : "Dir";
+            string name = InvUI.Truncate(w.GetName(this), 18);
+            HandSide two = equip.TwoHandSide;
+            if (two != HandSide.None && two != side)
+                return "<color=#6b6f68>" + tag + "  " + name + "  (guardado)</color>";
+
             ItemEquip e = w.data.equip;
-            string name = InvUI.Truncate(w.GetName(this), 22);
-            switch (e.kind)
+            string body = name;
+            if (e != null)
             {
-                case EquipKind.Firearm:
+                switch (e.kind)
                 {
-                    int ammo = EquipState.AmmoOf(w);
-                    string reserve = e.ammoItem == null ? "∞" : owner.CountOf(e.ammoItem.Id).ToString();
-                    string color = ammo <= 0 ? "#d9534f" : (ammo <= Mathf.Max(1, e.magazineSize / 4) ? "#e0b050" : "#e6e6dc");
-                    return name + "   <color=" + color + ">" + ammo + "</color> / " + reserve;
+                    case EquipKind.Firearm:
+                    {
+                        int ammo = EquipState.AmmoOf(w);
+                        string reserve = e.ammoItem == null ? "∞" : owner.CountOf(e.ammoItem.Id).ToString();
+                        string color = ammo <= 0 ? "#d9534f" : (ammo <= Mathf.Max(1, e.magazineSize / 4) ? "#e0b050" : "#e6e6dc");
+                        body = name + "   <color=" + color + ">" + ammo + "</color> / " + reserve;
+                        break;
+                    }
+                    case EquipKind.Melee:
+                        if (e.durability > 0) body = name + "   " + EquipState.DurabilityOf(w) + "/" + e.durability;
+                        break;
                 }
-                case EquipKind.Melee:
-                    if (e.durability <= 0) return name;
-                    return name + "   " + EquipState.DurabilityOf(w) + "/" + e.durability;
             }
-            return name;
+            string grip = two == side ? "  <color=#80ff8c>[2 mãos]</color>" : "";
+            return "<color=#9fa49b>" + tag + "</color>  " + body + grip;
         }
 
         string LampLine()

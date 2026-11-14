@@ -159,6 +159,14 @@ namespace HorrorFPS
             return owner.UseItem(it);
         }
 
+        /// <summary>Marca o slot como o selecionado (sem usar o item).</summary>
+        public void Select(int slot)
+        {
+            if (slot < 0 || slot >= Slots) return;
+            Selected = slot;
+            Raise();
+        }
+
         public void Cycle(int dir)
         {
             int n = Slots;

@@ -11,15 +11,27 @@ namespace HorrorFPS
         Firearm = 3      // arma de fogo: carregador, munição da mochila, recarga, coice, barulho
     }
 
+    /// <summary>Peso do item nas mãos: decide o que dá para fazer segurando com uma mão só.</summary>
+    public enum HandGrip
+    {
+        Auto = 0,   // arma de fogo de vários projéteis ou automática = pesada; o resto = leve
+        Light = 1,  // uma mão sem problemas (faca, pistola)
+        Heavy = 2   // espingarda, rifle, taco: com uma mão só não recarrega (e, nas próximas fases, o coice é muito mais forte)
+    }
+
     /// <summary>
     /// Comportamento de um item quando EQUIPADO (campo 'equip' do ItemData). O estado (munição no carregador, bateria,
     /// durabilidade, lanterna ligada) fica na instância do item e vai para o save.
-    /// Controles: usar equipado (botão esquerdo / RT) golpeia ou atira; botão direito / LT mira (arma de fogo); R recarrega; F liga/desliga a lanterna.
+    /// Controles: botão esquerdo / LT usa o item da mão esquerda e botão direito / RT o da mão direita (com duas mãos, qualquer um);
+    /// arma branca: toque = golpe fraco, segurar o botão e soltar = golpe forte;
+    /// Q mira (arma de fogo); G (toque) segura o item da mão direita com as duas mãos, G (segurar) o da esquerda; R recarrega; F liga/desliga a lanterna.
     /// </summary>
     [Serializable]
     public class ItemEquip
     {
         public EquipKind kind;
+        [Tooltip("Peso nas mãos. Auto: arma de fogo de vários projéteis ou automática conta como pesada.")]
+        public HandGrip grip = HandGrip.Auto;
         [Tooltip("Com o item equipado, o jogador não consegue agarrar e arrastar objetos (o botão esquerdo / RT passa a ser do item). Desmarque em itens que não usam esse botão, como a lanterna.")]
         public bool blocksGrab = true;
 
@@ -57,6 +69,18 @@ namespace HorrorFPS
         public float hitRadius = 0.35f;
         [Tooltip("Golpes que acertam algo antes de quebrar (0 = não quebra).")]
         public int durability;
+        [Tooltip("Liga o golpe forte: um toque dá o golpe FRACO (rápido) e segurar o botão carrega o golpe FORTE, que sai ao soltar. Desligado: o golpe sai assim que aperta.")]
+        public bool heavyAttack = true;
+        [Tooltip("Segundos segurando o botão para o golpe contar como forte (soltar antes dá o golpe fraco).")]
+        public float heavyHoldSeconds = 0.3f;
+        [Tooltip("Dano do golpe forte = dano x este valor. O golpe forte também alcança um pouco mais largo.")]
+        public float heavyDamageMultiplier = 1.8f;
+        [Tooltip("O golpe forte dura este tanto a mais que o fraco (1,5 = 50% mais lento).")]
+        public float heavySwingMultiplier = 1.5f;
+        [Tooltip("O barulho do golpe forte = barulho x este valor.")]
+        public float heavyNoiseMultiplier = 1.4f;
+        [Tooltip("Durabilidade gasta por golpe forte que acerta (o fraco gasta 1).")]
+        public int heavyDurabilityCost = 2;
 
         // ---- arma de fogo
         public float shotsPerSecond = 3f;
@@ -84,6 +108,17 @@ namespace HorrorFPS
         [Range(0f, 1f)] public float aimSpreadMultiplier = 0.3f;
         [Tooltip("Tempo para entrar na mira, em segundos.")]
         public float aimSeconds = 0.15f;
+
+        /// <summary>True se o item é pesado (ver HandGrip): com uma mão só não recarrega.</summary>
+        public bool IsHeavy
+        {
+            get
+            {
+                if (grip == HandGrip.Heavy) return true;
+                if (grip == HandGrip.Light) return false;
+                return kind == EquipKind.Firearm && (pellets > 1 || automatic);
+            }
+        }
     }
 
     /// <summary>Estado de um equipamento guardado na instância do item (contadores e flags) e textos para a interface.</summary>

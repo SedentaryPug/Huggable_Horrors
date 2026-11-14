@@ -120,6 +120,8 @@ MonoBehaviour:
   displayName: Mochila
   dropAnchor: {fileID: 0}
   dropDistance: 1.1
+  bagColumns: 0
+  bagRows: 0
 --- !u!1 &1554161892725553268
 GameObject:
   m_ObjectHideFlags: 0
@@ -555,7 +557,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 913f1d12da4510c4a810fa0b8d251dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.Hotbar
-  slotsOverride: 0
+  slotsOverride: 3
 --- !u!114 &3494486313553232298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -582,6 +584,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 555106f67b36d0c4d92ca6fda75a5234, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.InventoryScreen
+  animations: 1
+  animationSpeed: 1
+  shakePixels: 9
+  sounds:
+    volume: 0.8
+    open: {fileID: 0}
+    close: {fileID: 0}
+    tabSwitch: {fileID: 0}
+    pickUp: {fileID: 0}
+    rotate: {fileID: 0}
+    dropFit: {fileID: 0}
+    dropMerge: {fileID: 0}
+    dropSwap: {fileID: 0}
+    dropReject: {fileID: 0}
+    dropHotbar: {fileID: 0}
+    hotbarClear: {fileID: 0}
+    dropWorld: {fileID: 0}
+    dropTray: {fileID: 0}
+    returnToOrigin: {fileID: 0}
+    organize: {fileID: 0}
+    menuOpen: {fileID: 0}
+    menuMove: {fileID: 0}
+    menuPick: {fileID: 0}
+    menuDenied: {fileID: 0}
+    menuClose: {fileID: 0}
   maxCellSolo: 21
   ghostFollow: 24
   ghostTiltPer1000: 9
@@ -589,6 +616,7 @@ MonoBehaviour:
   mouseSensitivity: 1
   stickSpeed: 650
   dragHoldSeconds: 0.22
+  dragChargeDelay: 0.18
   dragMovePixels: 10
   maxCell: 20
 --- !u!114 &2725345576659896605

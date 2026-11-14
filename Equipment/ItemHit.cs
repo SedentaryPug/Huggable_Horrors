@@ -12,6 +12,8 @@ namespace HorrorFPS
         public Vector3 point;
         public Vector3 direction;
         public bool ranged;
+        /// <summary>Golpe forte (botão segurado e solto) de arma branca. Tiros e golpes fracos: false.</summary>
+        public bool heavy;
     }
 
     /// <summary>

@@ -14,10 +14,11 @@ namespace HorrorFPS.ItemsEditor
 
         static readonly string[] Held = { "heldPrefab", "heldPosition", "heldEuler", "heldScale" };
         static readonly string[] Lamp = { "lightRange", "lightAngle", "lightIntensity", "lightColor", "batterySeconds", "useSound" };
-        static readonly string[] Melee = { "damage", "range", "noise", "swingSeconds", "hitRadius", "durability", "useSound" };
+        static readonly string[] Melee = { "grip", "damage", "range", "noise", "swingSeconds", "hitRadius", "durability",
+        "heavyAttack", "heavyHoldSeconds", "heavyDamageMultiplier", "heavySwingMultiplier", "heavyNoiseMultiplier", "heavyDurabilityCost", "useSound" };
         static readonly string[] Gun =
         {
-            "damage", "range", "noise", "shotsPerSecond", "automatic", "pellets", "spread", "magazineSize",
+            "grip", "damage", "range", "noise", "shotsPerSecond", "automatic", "pellets", "spread", "magazineSize",
             "ammoItem", "reloadSeconds", "recoil", "useSound", "emptySound", "reloadSound"
         };
 

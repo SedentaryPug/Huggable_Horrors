@@ -11,6 +11,7 @@ namespace HorrorFPS
         public string[] containerStates;
         public string[] equipSlots;
         public string[] equipUids;
+        public int twoHand;          // 0 = uma mão, 1 = direita nas duas mãos, 2 = esquerda nas duas mãos (HandSide)
     }
 
     [Serializable]
@@ -19,6 +20,7 @@ namespace HorrorFPS
         public ItemSave[] items;
         public string[] equipSlots;
         public string[] equipUids;
+        public int twoHand;
     }
 
     /// <summary>
@@ -344,12 +346,24 @@ namespace HorrorFPS
         {
             get
             {
+                if (HandPickBlocksInput) return true;       // o clique está escolhendo a mão: não pode agarrar o objeto que estiver na mira
                 foreach (KeyValuePair<string, ItemInstance> kv in equipped)
                 {
                     ItemInstance it = kv.Value;
                     if (it == null || it.data == null) continue;
                     if (it.data.equip == null || it.data.equip.blocksGrab) return true;
                 }
+                return false;
+            }
+        }
+
+        /// <summary>True se há qualquer item equipado (mão ou lanterna).</summary>
+        public bool HasAnyEquipped
+        {
+            get
+            {
+                foreach (KeyValuePair<string, ItemInstance> kv in equipped)
+                    if (kv.Value != null) return true;
                 return false;
             }
         }
@@ -531,21 +545,157 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ equipar
+        public bool IsEquipped(ItemInstance item)
+        {
+            if (item == null || item.data == null || !item.data.IsEquippable) return false;
+            if (IsHandItem(item)) return HandOf(item) != HandSide.None;
+            return GetEquipped(item.data.equipSlot) == item;
+        }
+
+        // ---- mãos: o slot "mao" é a mão DIREITA (compatível com saves e itens antigos) e "mao_esq" é a esquerda
+        public const string RightHandSlot = "mao";
+        public const string LeftHandSlot = "mao_esq";
+
+        HandSide twoHandSide;
+        ItemInstance handPickItem;
+        float handPickUntil;
+        int handPickFrame = -1;
+
+        /// <summary>Disparado quando muda o modo de duas mãos (a troca de item de mão avisa por Equipped/Unequipped).</summary>
+        public event Action HandsChanged;
+
+        public static string SlotOf(HandSide side) { return side == HandSide.Left ? LeftHandSlot : RightHandSlot; }
+
+        /// <summary>True se o item vai nas mãos (slot "mao"): é nele que o jogador escolhe esquerda ou direita.</summary>
+        public bool IsHandItem(ItemInstance item)
+        {
+            return item != null && item.data != null && item.data.equipSlot == RightHandSlot;
+        }
+
+        public ItemInstance GetHandItem(HandSide side)
+        {
+            return side == HandSide.None ? null : GetEquipped(SlotOf(side));
+        }
+
+        /// <summary>Em qual mão o item está (None = guardado ou não é item de mão).</summary>
+        public HandSide HandOf(ItemInstance item)
+        {
+            if (!IsHandItem(item)) return HandSide.None;
+            if (GetEquipped(RightHandSlot) == item) return HandSide.Right;
+            if (GetEquipped(LeftHandSlot) == item) return HandSide.Left;
+            return HandSide.None;
+        }
+
+        /// <summary>Mão cujo item está sendo segurado com as duas mãos (None = cada mão segura o seu).</summary>
+        public HandSide TwoHandSide { get { return twoHandSide; } }
+
+        void RaiseHandsChanged()
+        {
+            Action h = HandsChanged; if (h != null) h();
+            Action<InventoryOwner> c = Changed; if (c != null) c(this);
+        }
+
+        /// <summary>Equipa o item na mão escolhida. Se já estava na outra mão, muda de mão; o que estava nessa mão volta para a mochila.</summary>
+        public bool EquipToHand(ItemInstance item, HandSide side)
+        {
+            if (!IsHandItem(item) || side == HandSide.None) return false;
+            handPickItem = null; handPickFrame = Time.frameCount;
+            HandSide current = HandOf(item);
+            if (current == side) return true;
+
+            twoHandSide = HandSide.None;
+            if (current != HandSide.None) ForceUnequip(SlotOf(current));
+            ForceUnequip(SlotOf(side));
+            equipped[SlotOf(side)] = item;
+            Action<ItemInstance> h = Equipped; if (h != null) h(item);
+            ItemEvents.RaiseEquipped(this, item);
+            Action<InventoryOwner> c = Changed; if (c != null) c(this);
+            return true;
+        }
+
+        /// <summary>Tira o item da mão (ou do slot dele), em qualquer mão.</summary>
+        public void Unequip(ItemInstance item)
+        {
+            if (item == null || item.data == null || !item.data.IsEquippable) return;
+            HandSide side = HandOf(item);
+            if (side != HandSide.None) { ForceUnequip(SlotOf(side)); Action<InventoryOwner> c = Changed; if (c != null) c(this); return; }
+            if (GetEquipped(item.data.equipSlot) == item) ForceUnequip(item.data.equipSlot);
+        }
+
+        /// <summary>
+        /// Segura o item da mão 'side' com as duas mãos (a outra mão guarda o seu); chamar de novo volta para uma mão só.
+        /// Devolve o aviso para mostrar ao jogador.
+        /// </summary>
+        public string ToggleTwoHanded(HandSide side)
+        {
+            if (side == HandSide.None) return "";
+            ItemInstance it = GetHandItem(side);
+            if (it == null) return side == HandSide.Left ? "Mão esquerda vazia." : "Mão direita vazia.";
+            if (twoHandSide == side)
+            {
+                twoHandSide = HandSide.None;
+                RaiseHandsChanged();
+                return "Uma mão: " + it.GetName(this);
+            }
+            twoHandSide = side;
+            RaiseHandsChanged();
+            return "Duas mãos: " + it.GetName(this);
+        }
+
+        // ---- escolher a mão ao equipar pelo atalho: o item fica "pendente" até o jogador clicar (esquerdo = mão esquerda, direito = mão direita)
+        /// <summary>Item esperando o jogador escolher a mão (some sozinho depois de alguns segundos).</summary>
+        public ItemInstance HandPickItem
+        {
+            get
+            {
+                if (handPickItem != null && Time.unscaledTime > handPickUntil) handPickItem = null;
+                return handPickItem;
+            }
+        }
+
+        /// <summary>True enquanto a escolha está aberta e no quadro em que foi resolvida: quem lê esses cliques (ataque, arrastar) deve ignorá-los.</summary>
+        public bool HandPickBlocksInput { get { return HandPickItem != null || handPickFrame == Time.frameCount; } }
+
+        public void BeginHandPick(ItemInstance item, float seconds = 5f)
+        {
+            if (!IsHandItem(item)) return;
+            handPickItem = item;
+            handPickUntil = Time.unscaledTime + Mathf.Max(0.5f, seconds);
+        }
+
+        public void CancelHandPick()
+        {
+            if (handPickItem == null) return;
+            handPickItem = null;
+            handPickFrame = Time.frameCount;
+        }
+
+        /// <summary>Equipa o item pendente na mão escolhida. False se não havia nada pendente.</summary>
+        public bool ResolveHandPick(HandSide side)
+        {
+            ItemInstance it = HandPickItem;
+            if (it == null) return false;
+            return EquipToHand(it, side);
+        }
+
         public ItemInstance GetEquipped(string slot)
         {
             ItemInstance it;
             return slot != null && equipped.TryGetValue(slot, out it) ? it : null;
         }
 
-        public bool IsEquipped(ItemInstance item)
-        {
-            if (item == null || item.data == null || !item.data.IsEquippable) return false;
-            return GetEquipped(item.data.equipSlot) == item;
-        }
-
         public void ToggleEquip(ItemInstance item)
         {
             if (item == null || item.data == null || !item.data.IsEquippable) return;
+            if (IsHandItem(item))
+            {
+                HandSide now = HandOf(item);
+                if (now != HandSide.None) { ForceUnequip(SlotOf(now)); Action<InventoryOwner> cc = Changed; if (cc != null) cc(this); return; }
+                // sem escolha de mão (código, menu antigo): a direita se estiver livre, senão a esquerda se estiver livre, senão troca a direita
+                HandSide pick = GetHandItem(HandSide.Right) == null ? HandSide.Right : (GetHandItem(HandSide.Left) == null ? HandSide.Left : HandSide.Right);
+                EquipToHand(item, pick);
+                return;
+            }
             string slot = item.data.equipSlot;
             if (GetEquipped(slot) == item) { ForceUnequip(slot); return; }
             ForceUnequip(slot);
@@ -560,11 +710,14 @@ namespace HorrorFPS
             ItemInstance old;
             if (!equipped.TryGetValue(slot, out old)) return;
             equipped.Remove(slot);
+            bool resetTwo = twoHandSide != HandSide.None && slot == SlotOf(twoHandSide);
+            if (resetTwo) twoHandSide = HandSide.None;
             if (old != null)
             {
                 Action<ItemInstance> h = Unequipped; if (h != null) h(old);
                 ItemEvents.RaiseUnequipped(this, old);
             }
+            if (resetTwo) { Action hc = HandsChanged; if (hc != null) hc(); }
         }
 
         // ------------------------------------------------------------------ inspecionar
@@ -591,7 +744,7 @@ namespace HorrorFPS
             }
             else if (item.container != null)
             {
-                if (GetEquipped(item.data.equipSlot) == item) ForceUnequip(item.data.equipSlot);
+                Unequip(item);
                 item.container.Remove(item);
             }
             toDrop.hotkey = -1;
@@ -654,6 +807,7 @@ namespace HorrorFPS
             List<string> slots = new List<string>(), uids = new List<string>();
             foreach (KeyValuePair<string, ItemInstance> kv in equipped) { if (kv.Value == null) continue; slots.Add(kv.Key); uids.Add(kv.Value.uid); }
             s.equipSlots = slots.ToArray(); s.equipUids = uids.ToArray();
+            s.twoHand = (int)twoHandSide;
             return JsonUtility.ToJson(s);
         }
 
@@ -675,6 +829,8 @@ namespace HorrorFPS
                 ItemInstance it = FindByUid(s.equipUids[i]);
                 if (it != null && it.data.IsEquippable) { equipped[s.equipSlots[i]] = it; Action<ItemInstance> h = Equipped; if (h != null) h(it); ItemEvents.RaiseEquipped(this, it); }
             }
+            HandSide two = (HandSide)Mathf.Clamp(s.twoHand, 0, 2);
+            if (two != HandSide.None && GetHandItem(two) != null) { twoHandSide = two; RaiseHandsChanged(); }
         }
 
         /// <summary>
@@ -707,6 +863,7 @@ namespace HorrorFPS
             OwnerSave eq = JsonUtility.FromJson<OwnerSave>(CaptureState());
             t.equipSlots = eq != null ? eq.equipSlots : null;
             t.equipUids = eq != null ? eq.equipUids : null;
+            t.twoHand = eq != null ? eq.twoHand : 0;
             return JsonUtility.ToJson(t);
         }
 
@@ -738,7 +895,7 @@ namespace HorrorFPS
             }
 
             OwnerSave eq = new OwnerSave();
-            eq.equipSlots = t.equipSlots; eq.equipUids = t.equipUids;
+            eq.equipSlots = t.equipSlots; eq.equipUids = t.equipUids; eq.twoHand = t.twoHand;
             ApplyEquipment(eq);
 
             Action<InventoryOwner> h = Restored; if (h != null) h(this);
@@ -754,7 +911,7 @@ namespace HorrorFPS
             s.containerStates = new string[containers.Count];
             for (int i = 0; i < containers.Count; i++) { s.containerIds[i] = containers[i].ContainerId; s.containerStates[i] = containers[i].CaptureState(); }
             OwnerSave eq = JsonUtility.FromJson<OwnerSave>(CaptureState());
-            s.equipSlots = eq.equipSlots; s.equipUids = eq.equipUids;
+            s.equipSlots = eq.equipSlots; s.equipUids = eq.equipUids; s.twoHand = eq.twoHand;
             FrameworkBridge.SetString(SessionKey, JsonUtility.ToJson(s));
         }
 

@@ -37,8 +37,11 @@ namespace HorrorFPS
         public InputAction NavDown { get; private set; }
         public InputAction NavLeft { get; private set; }
         public InputAction NavRight { get; private set; }
-        public InputAction UseEquipped { get; private set; }  // acionar o item equipado (fora do inventário): atirar, golpear
-        public InputAction Aim { get; private set; }          // mirar com o item equipado (arma de fogo): segurar
+        public InputAction UseEquipped { get; private set; }  // qualquer botão de mão (esquerdo ou direito): aciona a ação principal de itens sem comportamento próprio
+        public InputAction UseLeft { get; private set; }      // mão esquerda: botão esquerdo do mouse / LT (atirar, golpear com o item da mão esquerda)
+        public InputAction UseRight { get; private set; }     // mão direita: botão direito do mouse / RT
+        public InputAction TwoHand { get; private set; }      // G: toque = item da mão direita nas duas mãos; segurar = item da mão esquerda
+        public InputAction Aim { get; private set; }          // mirar com a arma de fogo (segurar): Q / botão Select do controle
         public InputAction Scroll { get; private set; }       // roda do mouse
         public InputAction HotbarPrev { get; private set; }
         public InputAction HotbarNext { get; private set; }
@@ -107,10 +110,15 @@ namespace HorrorFPS
             NavDown = Button("NavDown", "<Keyboard>/downArrow", "<Keyboard>/s", "<Gamepad>/dpad/down");
             NavLeft = Button("NavLeft", "<Keyboard>/leftArrow", "<Keyboard>/a", "<Gamepad>/dpad/left");
             NavRight = Button("NavRight", "<Keyboard>/rightArrow", "<Keyboard>/d", "<Gamepad>/dpad/right");
-            // item equipado: botão esquerdo / RT aciona (atira, golpeia) e botão direito / LT mira. São os mesmos botões do arrastar
-            // objetos, que fica bloqueado enquanto há item equipado que bloqueia o arrastar (ItemEquip.blocksGrab).
-            UseEquipped = Button("UseEquipped", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
-            Aim = Button("Aim", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
+            // itens nas mãos: botão ESQUERDO do mouse / LT usa o item da mão esquerda e botão DIREITO / RT o da mão direita (com duas mãos, qualquer um).
+            // São os mesmos botões do arrastar objetos, que fica bloqueado enquanto há item equipado que bloqueia o arrastar (ItemEquip.blocksGrab).
+            UseLeft = Button("UseLeft", "<Mouse>/leftButton", "<Gamepad>/leftTrigger");
+            UseRight = Button("UseRight", "<Mouse>/rightButton", "<Gamepad>/rightTrigger");
+            UseEquipped = Button("UseEquipped", "<Mouse>/leftButton", "<Mouse>/rightButton", "<Gamepad>/leftTrigger", "<Gamepad>/rightTrigger");
+            // G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da mão esquerda (como no Dark Souls). RB no controle.
+            TwoHand = Button("TwoHand", "<Keyboard>/g", "<Gamepad>/rightShoulder");
+            // a mira (zoom) saiu do botão direito, que agora é da mão direita
+            Aim = Button("Aim", "<Keyboard>/q", "<Gamepad>/select");
 
             // ações de valor (Vector2): forma curta do AddAction (nome, tipo, binding). Os controles já são Vector2,
             // então ReadValue<Vector2>() funciona sem declarar o tipo esperado.

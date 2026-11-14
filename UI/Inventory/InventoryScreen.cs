@@ -237,8 +237,10 @@ namespace HorrorFPS
         void HandleClosed()
         {
             if (FrameworkBridge.IsLockedByOthers(player)) return;
-            if (ItemInput.Pressed(input.Toggle)) { Open(); return; }
-            if (ItemInput.Pressed(input.UseEquipped) && (equipment == null || !equipment.OwnsPrimary))      // com equipamento, o EquipmentController cuida do botão
+            if (ItemInput.Pressed(input.Toggle)) { owner.CancelHandPick(); Open(); return; }
+            HandleHandPick();
+            if (ItemInput.Pressed(input.UseEquipped) && !owner.HandPickBlocksInput && owner.HasAnyEquipped
+                && (equipment == null || !equipment.OwnsPrimary))      // com equipamento, o EquipmentController cuida dos botões
             {
                 InventoryOwner.UseResult er = owner.UseEquipped();
                 if (hud != null && !string.IsNullOrEmpty(er.message)) hud.Flash(er.message);
@@ -253,8 +255,42 @@ namespace HorrorFPS
 
         void UseHotbar(int slot)
         {
+            ItemInstance it = hotbar.GetItem(slot);
+            if (it != null && owner.IsHandItem(it) && owner.HandOf(it) == HandSide.None)
+            {
+                // item de mão que ainda não está equipado: o jogador escolhe a mão com o clique (esquerdo = mão esquerda, direito = mão direita)
+                if (owner.HandPickItem == it) { owner.CancelHandPick(); if (hud != null) hud.Flash("Escolha cancelada."); return; }
+                hotbar.Select(slot);
+                owner.BeginHandPick(it, 5f);
+                if (hud != null) hud.Flash(input.UsesMouse
+                    ? it.GetName(this) + ": clique ESQUERDO = mão esquerda  •  clique DIREITO = mão direita"
+                    : it.GetName(this) + ": LT = mão esquerda  •  RT = mão direita");
+                return;
+            }
+            owner.CancelHandPick();
             InventoryOwner.UseResult r = hotbar.UseSlot(slot);
             if (hud != null) hud.Flash(r.message);
+        }
+
+        /// <summary>Com um item de mão pendente (atalho apertado): o clique esquerdo / LT escolhe a mão esquerda e o direito / RT a mão direita.</summary>
+        void HandleHandPick()
+        {
+            ItemInstance pending = owner.HandPickItem;
+            if (pending == null) return;
+            HandSide side = HandSide.None;
+            if (ItemInput.Pressed(input.UseLeft)) side = HandSide.Left;
+            else if (ItemInput.Pressed(input.UseRight)) side = HandSide.Right;
+            if (side != HandSide.None)
+            {
+                if (owner.ResolveHandPick(side) && hud != null)
+                    hud.Flash((side == HandSide.Left ? "Mão esquerda: " : "Mão direita: ") + pending.GetName(this));
+                return;
+            }
+            if (ItemInput.Pressed(input.Cancel))
+            {
+                owner.CancelHandPick();
+                if (hud != null) hud.Flash("Escolha cancelada.");
+            }
         }
 
         void MoveCursor(float dt)
