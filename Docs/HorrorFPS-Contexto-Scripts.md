@@ -85,6 +85,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
 | `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
 | `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso (ruído e visibilidade) fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` e `Docs/HorrorFPS-Visibilidade.md` | `HorrorFPS` |
+| `Audio/` | música e ambiente por área (`AudioZone`, `AudioDirector`, `AreaAudio`, `AudioProfile`), `FootstepSet` (clipes de passo por piso), rádio (`RadioSet`, `RadioTransmission`, `RadioFx`); `FootstepAudio` (passos do jogador) e `ProceduralAudio.Ambience.cs` ficam em `Body/`; ver `Docs/HorrorFPS-Audio.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
@@ -201,7 +202,7 @@ PlayerDragger:    bool IsDragging; Draggable Held; bool CanDrag(d); bool Begin(d
 PlayerClimber:    Ladder Current; bool IsClimbing, CanGrab; bool BeginClimb(Ladder); void Release(); events ClimbStarted/ClimbEnded(Ladder)
 ```
 
-**Módulos instalados automaticamente** (`PlayerModules.Install`; o `PlayerModulesRunner`, criado sozinho, varre os `PlayerContext` a cada 0,5 s e instala **uma vez** por jogador; desligue com `PlayerModules.AutoInstall = false` ou o símbolo `HORRORFPS_NO_AUTOINSTALL`; só adiciona o que **não** existe, procurando também nos filhos): `ItemInput`, `PlayerOverlay`, `InventoryOwner` (+ `GridContainer` "bag" e listas Chaves/Registros/Mapas), `Hotbar`, `HotbarHUD`, `InventoryScreen`, `EquipmentController`, `EquipmentHUD`, `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector`, `NoiseMeterHUD`, `JournalReader`, `PlayerMotionProbe`, `BreathingComponent`, `HeartbeatComponent`, `DynamicHeadBob`, `DamageReaction`, `SanityComponent`, `SanityFX`, `SanityEffects`, `SanityAudio`, `SanitySubtitles`. O resto do jogador vem do prefab (seção 9).
+**Módulos instalados automaticamente** (`PlayerModules.Install`; o `PlayerModulesRunner`, criado sozinho, varre os `PlayerContext` a cada 0,5 s e instala **uma vez** por jogador; desligue com `PlayerModules.AutoInstall = false` ou o símbolo `HORRORFPS_NO_AUTOINSTALL`; só adiciona o que **não** existe, procurando também nos filhos): `ItemInput`, `PlayerOverlay`, `InventoryOwner` (+ `GridContainer` "bag" e listas Chaves/Registros/Mapas), `Hotbar`, `HotbarHUD`, `InventoryScreen`, `EquipmentController`, `EquipmentHUD`, `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector`, `NoiseMeterHUD`, `VisibilityHUD`, `JournalReader`, `PlayerMotionProbe`, `PlayerVisibility`, `FootstepAudio`, `BreathingComponent`, `HeartbeatComponent`, `DynamicHeadBob`, `DamageReaction`, `SanityComponent`, `SanityFX`, `SanityEffects`, `SanityAudio`, `SanitySubtitles`. O resto do jogador vem do prefab (seção 9).
 
 ### 5.2 Stats e dano — `Stats/`
 
@@ -1042,15 +1043,22 @@ Tipos em arquivo de outro nome:
 - `PlayerAnimState.cs` define enum `HandItem`, enum `PlayerAnimEvent`
 - `PoseFx.cs` define struct `PoseDelta`, interface `IPoseModifier`
 
-**Body/**  (16 arquivos)
+**Audio/**  (8 arquivos)
 
-Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, ProceduralAudio, SoundEmitter, VisibilityZone
+Arquivos: AreaAudio, AudioDirector, AudioProfile, AudioZone, FootstepSet, RadioFx, RadioSet, RadioTransmission
+
+Tipos em arquivo de outro nome: (nenhum). `AreaAudio` e `RadioTransmission` são classes `[Serializable]` (campos dentro de `AudioZone`/`AudioProfile` e de `RadioSet`); `AudioProfile` e `FootstepSet` são `ScriptableObject`.
+
+**Body/**  (18 arquivos)
+
+Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, FootstepAudio, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, ProceduralAudio, ProceduralAudio.Ambience, SoundEmitter, VisibilityZone
 
 Tipos em arquivo de outro nome:
 - `NoiseSystem.cs` define enum `NoiseKind`, struct `NoiseEvent`, interface `INoiseHearer`
 - `PlayerAudio.cs` define enum `AudioMode`
 - `PlayerMotionProbe.cs` define enum `NoiseLevel` (Silent/Quiet/Normal/Loud: o que o medidor de ruído mostra)
 - `PlayerVisibility.cs` define enum `VisibilityLevel` (Hidden/Low/Normal/High: o que o indicador de visibilidade mostra)
+- `ProceduralAudio.Ambience.cs` define enum `AmbienceKind` (None/Room/Wind/Drips/Hum/Rumble) e enum `MusicKind` (None/Calm/Uneasy/Dread); a classe é `partial`
 
 **Characters/**  (6 arquivos)
 

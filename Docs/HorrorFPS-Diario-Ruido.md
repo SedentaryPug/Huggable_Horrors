@@ -91,7 +91,7 @@ O agachar agora é lido **direto do `FirstPersonController`** (vale no instante 
 
 ### `NoiseSurface` (piso que abafa ou denuncia)
 
-Componente no objeto do piso (ou num pai do collider): `Tapete` 0,45, `Grama` 0,6, `Madeira` 1,1, `Concreto` 1, `Cascalho` 1,6, `Metal` 1,7, `Vidro quebrado` 2,2, `Água` 1,4 (ou `Custom` e digite). Para um tapete sobre um piso comum, crie uma **caixa baixa (até uns 0,3 m)** deitada no chão com um Collider marcado como **Trigger** e o componente: vale o piso mais próximo dos pés. O som do passo (clipe) é do seu sistema de áudio; aqui só muda o que a IA ouve.
+Componente no objeto do piso (ou num pai do collider): `Tapete` 0,45, `Grama` 0,6, `Madeira` 1,1, `Concreto` 1, `Cascalho` 1,6, `Metal` 1,7, `Vidro quebrado` 2,2, `Água` 1,4 (ou `Custom` e digite). Para um tapete sobre um piso comum, crie uma **caixa baixa (até uns 0,3 m)** deitada no chão com um Collider marcado como **Trigger** e o componente: vale o piso mais próximo dos pés. O mesmo `Preset` escolhe o **som** do passo (tapete macio, metal ressoando, vidro estalando...) e, se você preencher `Footsteps`, os seus clipes: ver `HorrorFPS-Audio.md` (o som é do `FootstepAudio`; o raio de barulho para a IA continua só deste componente).
 
 ### Medidor de ruído na tela (`NoiseMeterHUD`)
 

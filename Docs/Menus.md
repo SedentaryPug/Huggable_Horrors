@@ -102,6 +102,18 @@ Como usar: [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
 
 Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objetivos-Tutorial.md).
 
+### Audio — música e ambiente por área, passos por piso e rádio
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Audio > Create Audio Zone` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Level Audio (Global Zone)` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Radio` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Footstep Set` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Audio Profile` | `Editor/Audio/AudioMenu.cs` |
+
+Como usar: [`HorrorFPS-Audio.md`](HorrorFPS-Audio.md).
+
 ### Demo — jogo de demonstração e exemplos prontos
 
 | Menu | Arquivo |
