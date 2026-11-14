@@ -5,8 +5,8 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar). Usada no menu de pausa e no
-    /// menu principal; tudo passa pelo GameSettings, que persiste sozinho.
+    /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar) e a subpágina "Áudio" (volume geral,
+    /// música, ambiente). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings, que persiste sozinho.
     /// </summary>
     public class SettingsPanel
     {
@@ -14,6 +14,7 @@ namespace HorrorFPS
         readonly Action onBack, onControls;
 
         public Selectable FirstSelectable { get; private set; }
+        bool showingAudio;
 
         /// <param name="onControls">Se informado, mostra um botão "Controles" (o menu principal usa; a pausa tem o dela).</param>
         public SettingsPanel(RectTransform pageRoot, Action onBack, Action onControls = null)
@@ -21,19 +22,40 @@ namespace HorrorFPS
             this.pageRoot = pageRoot;
             this.onBack = onBack;
             this.onControls = onControls;
-            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 12);
+            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 10);
             col.padding = new RectOffset(20, 20, 10, 0);
             Refresh();
         }
 
-        /// <summary>Recria as linhas com os valores atuais (chame ao abrir a página: outro menu pode ter mudado as opções).</summary>
+        /// <summary>Recria as linhas com os valores atuais (chame ao abrir a página: outro menu pode ter mudado as opções). Abre sempre na página principal.</summary>
         public void Refresh()
+        {
+            showingAudio = false;
+            Build();
+        }
+
+        /// <summary>Troca entre a página principal e a de áudio sem sair do painel, devolvendo o foco do controle à primeira opção.</summary>
+        void SwitchPage(bool audio)
+        {
+            showingAudio = audio;
+            Build();
+            UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null && FirstSelectable != null) es.SetSelectedGameObject(FirstSelectable.gameObject);
+        }
+
+        void Build()
         {
             for (int i = pageRoot.childCount - 1; i >= 0; i--)
             {
                 Transform child = pageRoot.GetChild(i);
                 child.SetParent(null, false);
                 UnityEngine.Object.Destroy(child.gameObject);
+            }
+
+            if (showingAudio)
+            {
+                BuildAudioPage();
+                return;
             }
 
             FirstSelectable = AddSliderRow(pageRoot, UIText.MouseSensitivity, 0.02f, 0.5f, "0.00",
@@ -61,6 +83,10 @@ namespace HorrorFPS
                 delegate { return GameSettings.NoiseIndicator ? UIText.On : UIText.Off; },
                 delegate { GameSettings.NoiseIndicator = !GameSettings.NoiseIndicator; });
 
+            AddCycleRow(pageRoot, UIText.AudioSection,
+                delegate { return UIText.OpenAudio; },
+                delegate { SwitchPage(true); });
+
             if (onControls != null)
             {
                 Button controls = UIFactory.CreateButton(pageRoot, UIText.Controls, new Vector2(300f, 64f),
@@ -73,10 +99,24 @@ namespace HorrorFPS
             UIFactory.SetLayout(back.gameObject, 300f, 68f);
         }
 
+        void BuildAudioPage()
+        {
+            FirstSelectable = AddSliderRow(pageRoot, UIText.MasterVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.MasterVolume; }, delegate (float v) { GameSettings.MasterVolume = v; });
+            AddSliderRow(pageRoot, UIText.MusicVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.MusicVolume; }, delegate (float v) { GameSettings.MusicVolume = v; });
+            AddSliderRow(pageRoot, UIText.AmbienceVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.AmbienceVolume; }, delegate (float v) { GameSettings.AmbienceVolume = v; });
+
+            Button back = UIFactory.CreateButton(pageRoot, UIText.Back, new Vector2(300f, 64f),
+                delegate { SwitchPage(false); });
+            UIFactory.SetLayout(back.gameObject, 300f, 68f);
+        }
+
         static RectTransform NewSettingsRow(RectTransform parent, string label)
         {
             RectTransform row = UIFactory.NewRect("Row", parent);
-            UIFactory.SetLayout(row.gameObject, -1f, 64f);
+            UIFactory.SetLayout(row.gameObject, -1f, 56f);
             Text text = UIFactory.Label(row, "Label", label, 26, TextAnchor.MiddleLeft, UIFactory.TextColor);
             RectTransform rt = text.rectTransform;
             rt.anchorMin = Vector2.zero;

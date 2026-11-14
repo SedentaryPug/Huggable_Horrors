@@ -27,6 +27,9 @@ namespace HorrorFPS
         static HoldMode crouchMode = HoldMode.Hold;
         static bool tips = true;
         static bool noiseIndicator = true;
+        static float masterVolume = 1f;
+        static float musicVolume = 0.8f;
+        static float ambienceVolume = 0.8f;
 
         public static event Action Changed;
 
@@ -49,6 +52,9 @@ namespace HorrorFPS
             crouchMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "CrouchMode", (int)crouchMode);
             tips = PlayerPrefs.GetInt(Prefix + "Tips", tips ? 1 : 0) == 1;
             noiseIndicator = PlayerPrefs.GetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0) == 1;
+            masterVolume = PlayerPrefs.GetFloat(Prefix + "MasterVolume", masterVolume);
+            musicVolume = PlayerPrefs.GetFloat(Prefix + "MusicVolume", musicVolume);
+            ambienceVolume = PlayerPrefs.GetFloat(Prefix + "AmbienceVolume", ambienceVolume);
         }
 
         static void Save()
@@ -61,6 +67,9 @@ namespace HorrorFPS
             PlayerPrefs.SetInt(Prefix + "CrouchMode", (int)crouchMode);
             PlayerPrefs.SetInt(Prefix + "Tips", tips ? 1 : 0);
             PlayerPrefs.SetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0);
+            PlayerPrefs.SetFloat(Prefix + "MasterVolume", masterVolume);
+            PlayerPrefs.SetFloat(Prefix + "MusicVolume", musicVolume);
+            PlayerPrefs.SetFloat(Prefix + "AmbienceVolume", ambienceVolume);
             Changed?.Invoke();
         }
 
@@ -115,6 +124,27 @@ namespace HorrorFPS
         {
             get { EnsureLoaded(); return noiseIndicator; }
             set { EnsureLoaded(); noiseIndicator = value; Save(); }
+        }
+
+        /// <summary>Volume geral do jogo (0..1). Aplicado no AudioListener pelo AudioDirector.</summary>
+        public static float MasterVolume
+        {
+            get { EnsureLoaded(); return masterVolume; }
+            set { EnsureLoaded(); masterVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume da música e da camada de tensão (0..1), multiplicado pelo volume de cada área.</summary>
+        public static float MusicVolume
+        {
+            get { EnsureLoaded(); return musicVolume; }
+            set { EnsureLoaded(); musicVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume do ambiente e dos sons ocasionais (0..1), multiplicado pelo volume de cada área.</summary>
+        public static float AmbienceVolume
+        {
+            get { EnsureLoaded(); return ambienceVolume; }
+            set { EnsureLoaded(); ambienceVolume = Mathf.Clamp01(value); Save(); }
         }
     }
 }
