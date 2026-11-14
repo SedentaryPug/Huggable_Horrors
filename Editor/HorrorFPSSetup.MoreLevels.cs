@@ -330,7 +330,7 @@ namespace HorrorFPS.EditorTools
 
             // ---- o elevador de serviço: o atalho de volta ao Salão, liberado pelo gerador
             GameObject lift = Prim(PrimitiveType.Cube, "Elevador de serviço", new Vector3(7.9f, 1.2f, 2.5f), new Vector3(0.2f, 2.4f, 1.8f), heavy, null, true);
-            new Props(lift.AddComponent<LevelDoor>()).Str("levelId", "hall").Str("spawnId", "from_lift").Str("requiredVariable", GeneratorVariable)
+            new Props(lift.AddComponent<LevelDoor>()).Str("levelId", "hall").Str("spawnId", "from_lift").Str("requiredVariable", GeneratorVariable).Str("lockedText", "Sem energia")
                 .Str("verb", "Subir").Str("objectName", "no elevador de serviço").Enum("iconKind", (int)IconKind.Door).Apply();
 
             BuildPowerAudio();

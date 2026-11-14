@@ -13,6 +13,8 @@ namespace HorrorFPS
         [SerializeField] string spawnId = SpawnPoint.DefaultId;
         [Tooltip("Variável do jogo que precisa estar ligada para abrir (ex.: 'tem_chave'). Vazio = sempre abre.")]
         [SerializeField] string requiredVariable = "";
+        [Tooltip("Texto mostrado enquanto a variável não está ligada (ex.: 'Sem energia'). Vazio = 'Trancado. Procure a chave'.")]
+        [SerializeField] string lockedText = "";
 
         protected override string DefaultVerb { get { return UIText.Enter; } }
 
@@ -22,7 +24,11 @@ namespace HorrorFPS
 
         public override bool CanInteract(PlayerContext player) { return Unlocked && !SceneDirector.IsBusy; }
 
-        public override string GetBlockedReason(PlayerContext player) { return Unlocked ? null : UIText.LockedNeedsKey; }
+        public override string GetBlockedReason(PlayerContext player)
+        {
+            if (Unlocked) return null;
+            return string.IsNullOrEmpty(lockedText) ? UIText.LockedNeedsKey : lockedText;
+        }
 
         public override void Interact(PlayerContext player) { SceneDirector.GoToLevel(levelId, spawnId); }
     }
