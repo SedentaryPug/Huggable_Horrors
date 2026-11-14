@@ -53,6 +53,7 @@ namespace HorrorFPS
             // corpo (a sonda de movimento primeiro: os outros dependem dela)
             Ensure<PlayerMotionProbe>(player);
             Ensure<PlayerVisibility>(player);         // quão fácil de ver (agachado, sombra, lanterna): lido pela visão do perseguidor
+            Ensure<FootstepAudio>(player);            // som dos passos por tipo de piso (NoiseSurface, material, piso da área)
             Ensure<BreathingComponent>(player);
             Ensure<HeartbeatComponent>(player);
             Ensure<HeartbeatHUD>(player);
