@@ -85,11 +85,12 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
 | `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
 | `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso (ruído e visibilidade) fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` e `Docs/HorrorFPS-Visibilidade.md` | `HorrorFPS` |
+| `Lighting/` | `LightFailure`: luz que pisca e apaga por sanidade, medo, variável ou código, por cima do `SwitchableLights`; `World/Shortcut` (atalho que abre de um lado e fica aberto) e `World/Lever` (alavanca que liga uma variável) completam o pacote; ver `Docs/HorrorFPS-Iluminacao-Niveis.md` | `HorrorFPS` |
 | `Audio/` | música e ambiente por área (`AudioZone`, `AudioDirector`, `AreaAudio`, `AudioProfile`), `FootstepSet` (clipes de passo por piso), rádio (`RadioSet`, `RadioTransmission`, `RadioFx`); `FootstepAudio` (passos do jogador) e `ProceduralAudio.Ambience.cs` ficam em `Body/`; ver `Docs/HorrorFPS-Audio.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
-| `Editor/` (raiz) | ferramentas de itens/personagens/jogador e `ProjectPaths` (17 arquivos) e assistente de setup (5 `HorrorFPSSetup*`; os dois `.Showcase*` são a cena completa, menu 27) | `HorrorFPS.ItemsEditor` / `HorrorFPS.EditorTools` (`ProjectPaths`: `HorrorFPS`) |
+| `Editor/` (raiz) | ferramentas de itens/personagens/jogador e `ProjectPaths` (17 arquivos) e assistente de setup (os `HorrorFPSSetup*`: o assistente do jogo de demonstração, dividido em Levels, MoreLevels, NewLevel, Audio, StalkerTest e FullDemo) | `HorrorFPS.ItemsEditor` / `HorrorFPS.EditorTools` (`ProjectPaths`: `HorrorFPS`) |
 | `Editor/Animation`, `Dialogue`, `Props`, `Revive`, `Stalker` | ferramentas por sistema | `HorrorFPS` |
 | `Prefabs/`, `Scenes/`, `Materials/`, `Resources/HorrorFPS/`, `Generated/` | assets (seção 9) | — |
 | `Docs/`, `Explicações de como usar/`, `README.md` | cópias dos docs (o `README.md` é o doc de arquitetura) | — |
@@ -1049,6 +1050,12 @@ Arquivos: AreaAudio, AudioDirector, AudioProfile, AudioZone, FootstepSet, RadioF
 
 Tipos em arquivo de outro nome: (nenhum). `AreaAudio` e `RadioTransmission` são classes `[Serializable]` (campos dentro de `AudioZone`/`AudioProfile` e de `RadioSet`); `AudioProfile` e `FootstepSet` são `ScriptableObject`.
 
+**Lighting/**  (1 arquivo)
+
+Arquivos: LightFailure
+
+Tipos em arquivo de outro nome: (nenhum). `LightFailure` exige um `SwitchableLights` no mesmo objeto (`RequireComponent`) e põe um `SanityLight` em cada luz dele (se `Viewer Sanity Effect`).
+
 **Body/**  (18 arquivos)
 
 Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, FootstepAudio, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, ProceduralAudio, ProceduralAudio.Ambience, SoundEmitter, VisibilityZone
@@ -1257,9 +1264,9 @@ Arquivos: ControlsPanel, GameOverScreen, InfoPanelBase, MainMenu, NoiseMeterHUD,
 
 Arquivos: ContainerView, GridView, HotbarHUD, InspectPanel, InspectStudio, InvUI, InventoryScreen, InventoryScreen.Tabs, InventoryScreen.Window, ItemMenu, ItemVisual, ListView, MapViewer, PlayerOverlay, RecordReader
 
-**World/**  (8 arquivos)
+**World/**  (10 arquivos)
 
-Arquivos: Checkpoint, Door, Draggable, Interactable, Ladder, Pickup, SavePoint, UnityEventInteractable
+Arquivos: Checkpoint, Door, Draggable, Interactable, Ladder, Lever, Pickup, SavePoint, Shortcut, UnityEventInteractable
 
 Tipos em arquivo de outro nome:
 - `Interactable.cs` define enum `IconKind`, enum `PromptModeOverride`, struct `PromptData`

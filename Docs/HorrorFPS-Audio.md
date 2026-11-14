@@ -180,7 +180,7 @@ Os arquivos criados vão para `Generated/Audio` (dentro da pasta do framework). 
 
 ### O que a demonstração completa ganhou
 
-`Tools > Horror FPS > Demo > Create Full Game Demo` agora monta: música e vento no **menu**; no **Salão** madeira, rangidos, música calma, um tapete e um **rádio** numa mesa com duas falas (a segunda só depois de pegar a chave); no **corredor** (atrás das portas) zumbido e música inquieta; no **Porão** gotejar, música sombria, susto musical ao descer e uma poça; no **Anexo** rumor, música inquieta e uma grade de metal.
+`Tools > Horror FPS > Demo > Create Full Game Demo` agora monta: música e vento no **menu**; no **Salão** madeira, rangidos, música calma, um tapete e um **rádio** numa mesa com duas falas (a segunda só depois de pegar a chave); no **corredor** (atrás das portas) zumbido e música inquieta; no **Porão** gotejar, música sombria, susto musical ao descer e uma poça; no **Anexo** rumor, música inquieta e uma grade de metal; nos **Túneis** gotejar, música sombria, uma poça e uma grade; na **Casa de força** zumbido elétrico, música inquieta, piso de metal e outro rádio (ver `HorrorFPS-Iluminacao-Niveis.md`).
 
 ---
 

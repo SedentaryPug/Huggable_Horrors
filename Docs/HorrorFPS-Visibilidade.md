@@ -70,6 +70,7 @@ Os níveis mais atentos (Hunting, Frenzy) têm `confirmSeconds` bem menor: agach
 - Zonas **aninhadas**: vale a de **menor volume** (uma poça de luz dentro de um corredor escuro).
 - Vale o ponto do **centro do corpo** do jogador (o `CharacterController`); a caixa precisa cobrir essa altura.
 - A caixa aparece colorida na Scene View (azul = esconde, amarelo = denuncia).
+- **Seguir uma luz**: arraste um `SwitchableLights` para `Light Source` e a zona acompanha o brilho dele. Com a luz apagada ou falhando (`LightFailure`) vale `Multiplier When Off` (padrão 0,4, escuridão; nunca mais visível que com luz); entre os dois, o brilho decide. Apagar o interruptor do corredor vira esconderijo; ver `HorrorFPS-Iluminacao-Niveis.md`.
 - Também existe `Tools > Horror FPS > Player > Create Noise Surface` (piso que abafa ou denuncia os passos, ver doc de ruído).
 
 ---
@@ -125,7 +126,7 @@ Alterados: `Core/PlayerModules.cs` (instala `PlayerVisibility` e `VisibilityHUD`
 
 ## 8. Limites conhecidos
 
-- **Não há medição automática da luz da cena**: a lanterna e as `VisibilityZone` são regras. Uma sala escura sem zona vale como lugar comum para a IA.
+- **Não há medição automática da luz da cena**: a lanterna e as `VisibilityZone` são regras. Uma sala escura sem zona vale como lugar comum para a IA. A única ligação com luz de verdade é o `Light Source` da zona (acesa/apagada/falhando), que é lido do `SwitchableLights`, não medido na imagem.
 - Só a lanterna **do próprio jogador** denuncia; luz de outros jogadores ou de objetos não entra.
 - No co-op local, cada jogador tem o seu fator; o monstro pondera cada um separadamente.
 - O fator não muda a rapidez com que o monstro **escolhe** quem perseguir (o Diretor); só o que os olhos dele percebem.

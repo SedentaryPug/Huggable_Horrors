@@ -114,6 +114,18 @@ Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objeti
 
 Como usar: [`HorrorFPS-Audio.md`](HorrorFPS-Audio.md).
 
+### Levels — luz que falha, atalhos, alavancas e níveis novos
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Levels > Create Failing Light` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Add Light Failure To Selected` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create Shortcut` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create Lever` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create New Level Scene...` | `Editor/HorrorFPSSetup.NewLevel.cs` |
+
+Como usar: [`HorrorFPS-Iluminacao-Niveis.md`](HorrorFPS-Iluminacao-Niveis.md). A área tem `LevelsOrder = 100` e a `Demo` passou de 100 para 110.
+
 ### Demo — jogo de demonstração e exemplos prontos
 
 | Menu | Arquivo |
