@@ -227,7 +227,7 @@ namespace HorrorFPS
             Vector2 a, b;
             ToTopLeftLocal(layer, new Vector2(c[1].x, c[1].y), out a);
             ToTopLeftLocal(layer, new Vector2(c[3].x, c[3].y), out b);
-            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+            return UnityEngine.Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
         }
 
         public static string Truncate(string s, int max)
