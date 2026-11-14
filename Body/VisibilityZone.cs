@@ -9,6 +9,8 @@ namespace HorrorFPS
     /// Como usar: crie um objeto com um Collider marcado como Trigger cobrindo a área (menu Tools > Horror FPS > Player > Create Visibility Zone)
     /// e escolha o tipo. Zonas podem ficar uma dentro da outra: vale a MENOR (uma poça de luz dentro de um corredor escuro).
     /// A zona não mexe na luz da cena: ela só diz à IA como enxergar. Combine com uma luz de verdade (ou a falta dela).
+    /// Para a zona seguir a luz, ponha o conjunto de luzes em 'Light Source' (SwitchableLights): com as luzes apagadas, ou falhando
+    /// (LightFailure), a zona vale 'Multiplier When Off' (escuro) em vez do multiplicador normal, devagar, junto com o brilho.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Body/Visibility Zone")]
     public class VisibilityZone : MonoBehaviour
@@ -28,9 +30,29 @@ namespace HorrorFPS
         [Tooltip("Multiplica a visibilidade de quem está na zona. 0,5 = metade (o monstro demora o dobro e enxerga de mais perto); 1,5 = fácil de ver.")]
         [SerializeField, Range(0.1f, 3f)] float multiplier = 0.65f;
 
+        [Header("Luz (opcional)")]
+        [Tooltip("Conjunto de luzes que ilumina esta zona. Quando ele apaga ou falha, a zona vira escuridão. Vazio = a zona não depende de luz.")]
+        [SerializeField] SwitchableLights lightSource;
+        [Tooltip("Multiplicador com a luz apagada (0,4 = escuridão). Entre apagada e acesa a zona acompanha o brilho.")]
+        [SerializeField, Range(0.1f, 3f)] float multiplierWhenOff = 0.4f;
+
         static readonly Collider[] buffer = new Collider[16];
 
         public float Multiplier { get { return multiplier; } set { multiplier = Mathf.Clamp(value, 0.1f, 3f); } }
+
+        /// <summary>Conjunto de luzes que a zona segue (nulo = não segue nenhum).</summary>
+        public SwitchableLights LightSource { get { return lightSource; } set { lightSource = value; } }
+
+        /// <summary>Multiplicador de agora: o da zona, ou, se ela segue uma luz, algo entre o de 'luz apagada' e o normal conforme o brilho.</summary>
+        public float Current
+        {
+            get
+            {
+                if (lightSource == null) return multiplier;
+                float off = Mathf.Min(multiplierWhenOff, multiplier);   // sem luz nunca fica MAIS visível que com luz
+                return Mathf.Lerp(off, multiplier, Mathf.Clamp01(lightSource.Level));
+            }
+        }
 
         /// <summary>Multiplicador pronto de cada tipo de zona.</summary>
         public static float PresetValue(Preset p)
@@ -81,7 +103,7 @@ namespace HorrorFPS
                 float volume = Mathf.Max(0.0001f, s.x * s.y * s.z);
                 if (volume >= bestVolume) continue;
                 bestVolume = volume;
-                result = z.multiplier;
+                result = z.Current;
             }
             return result;
         }
