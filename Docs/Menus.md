@@ -125,4 +125,4 @@ Os docs e o histórico do Git antigos citam os menus pelo número. A tabela trad
 |---|---|
 | 27. Create Showcase Scene (Everything) | **Removido** junto com a cena `Level_Showcase`, os materiais `Showcase*` e o código gerador (`HorrorFPSSetup.Showcase*`, `DemoProps`, `PropsDemoBuilder*`). Está no histórico do Git (commit anterior a "Remove a cena Showcase"). |
 | 2. Create Demo Scene · 6. Create Demo Props In Open Scene · 13. Create Dialogue Demo Props · 17. Create Props Demo · 18. Create Stalker Demo | Já não estavam no repositório (repetiam o que a cena completa montava). A bancada do perseguidor continua no código como `StalkerMenu.BuildDemo`, sem menu. |
-| 28 a 30, 33 a 35 | Números que nunca chegaram a este repositório. Os docs antigos de IK das mãos citam 34/36/37 (maçaneta, válvula); esses menus não existem aqui. |
+| 28 a 30, 33 a 35 | Números que nunca chegaram a este repositório. Docs antigos de IK das mãos (maçaneta, válvula) citam menus 34/36/37 que não existem aqui; no repositório, 36 e 37 eram as rotas do perseguidor. |
