@@ -83,6 +83,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Dialogue/` | grafo de diálogo, gerente, visual, ações/condições | `HorrorFPS` |
 | `Stalker/` (+`Tree/`) | IA do perseguidor: cérebro, árvore de comportamento editável, diretor, memória | `HorrorFPS` |
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
+| `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |

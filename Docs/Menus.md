@@ -71,6 +71,23 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Revive > Toggle Revive Debug Keys` | `Editor/Revive/ReviveMenu.cs` |
 | `Tools > Horror FPS > Revive > Revive Diagnostics (Play Mode)` | `Editor/Revive/ReviveMenu.cs` |
 
+### Objectives — objetivos da partida
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Objectives > Create Objective Catalog` | `Editor/Objectives/ObjectivesMenu.cs` |
+| `Tools > Horror FPS > Objectives > Add Objective Actions To Selected` | `Editor/Objectives/ObjectivesMenu.cs` |
+
+### Tutorials — dicas de tutorial
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Tutorials > Create Tutorial Catalog` | `Editor/Tutorials/TutorialsMenu.cs` |
+| `Tools > Horror FPS > Tutorials > Create Tutorial Trigger Volume` | `Editor/Tutorials/TutorialsMenu.cs` |
+| `Tools > Horror FPS > Tutorials > Reset Tips Seen` | `Editor/Tutorials/TutorialsMenu.cs` |
+
+Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objetivos-Tutorial.md).
+
 ### Demo — jogo de demonstração e exemplos prontos
 
 | Menu | Arquivo |
@@ -78,6 +95,7 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Demo > Create Full Game Demo (menu, níveis, save, cutscenes)` | `Editor/HorrorFPSSetup.FullDemo.cs` |
 | `Tools > Horror FPS > Demo > Create Sample Items` | `Editor/SampleItems.cs` |
 | `Tools > Horror FPS > Demo > Create Sample Dialogues` | `Editor/Dialogue/DialogueMenus.cs` |
+| `Tools > Horror FPS > Demo > Create Sample Objectives` | `Editor/Objectives/ObjectivesMenu.cs` |
 
 Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects.
 
