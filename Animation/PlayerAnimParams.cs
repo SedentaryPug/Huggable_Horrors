@@ -4,7 +4,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// CONTRATO entre o gameplay e o Animator do corpo. Todo Animator Controller do corpo deve usar estes nomes
-    /// (o menu Tools > Horror FPS > 15 cria um controller já com tudo). Parâmetros que não existirem no seu controller
+    /// (o menu Tools > Horror FPS > Animation > Create Player Animator Controller cria um controller já com tudo). Parâmetros que não existirem no seu controller
     /// são simplesmente ignorados — dá para começar com poucos e ir acrescentando.
     /// </summary>
     public static class PlayerAnimParams

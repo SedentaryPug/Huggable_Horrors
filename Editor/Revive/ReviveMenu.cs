@@ -13,7 +13,7 @@ namespace HorrorFPS
         static readonly string[] IdNames = { "id", "Id", "itemId", "ItemId", "ID" };
 
         // ------------------------------------------------------------------ 21. perfil + id do kit médico
-        [MenuItem("Tools/Horror FPS/21. Create Revive Profile")]
+        [MenuItem(HorrorFPSMenu.Revive + "Create Revive Profile", false, HorrorFPSMenu.ReviveOrder + 0)]
         static void CreateProfile()
         {
             ReviveProfile prof = AssetDatabase.LoadAssetAtPath<ReviveProfile>(ProfilePath);
@@ -76,13 +76,13 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ 22. teclas de teste
-        [MenuItem("Tools/Horror FPS/22. Toggle Revive Debug Keys")]
+        [MenuItem(HorrorFPSMenu.Revive + "Toggle Revive Debug Keys", false, HorrorFPSMenu.ReviveOrder + 1)]
         static void ToggleDebugKeys()
         {
             ReviveProfile prof = AssetDatabase.LoadAssetAtPath<ReviveProfile>(ProfilePath);
             if (prof == null)
             {
-                EditorUtility.DisplayDialog("Reanimação", "Crie o perfil primeiro (menu 21).", "OK");
+                EditorUtility.DisplayDialog("Reanimação", "Crie o perfil primeiro (menu Revive > Create Revive Profile).", "OK");
                 return;
             }
             prof.debugKeys = !prof.debugKeys;
@@ -92,7 +92,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ 23. diagnóstico
-        [MenuItem("Tools/Horror FPS/23. Revive Diagnostics (Play Mode)")]
+        [MenuItem(HorrorFPSMenu.Revive + "Revive Diagnostics (Play Mode)", false, HorrorFPSMenu.ReviveOrder + 2)]
         static void Diagnose()
         {
             if (!Application.isPlaying)

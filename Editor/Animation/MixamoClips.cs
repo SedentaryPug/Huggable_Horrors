@@ -35,8 +35,8 @@ namespace HorrorFPS
 
     /// <summary>
     /// Reconhece clipes do Mixamo pelo nome ("walking", "sneaking left", "run to stop"...), prepara o importador dos FBX
-    /// (Humanoid + root motion fora do pose + loops) e acha os clipes já importados. Usado pela janela do menu 31 e pelo
-    /// construtor do controller (menu 15 / janela).
+    /// (Humanoid + root motion fora do pose + loops) e acha os clipes já importados. Usado pela janela do menu Animation > Mixamo: Humanoid + Locomotion Controller e pelo
+    /// construtor do controller (menu Animation > Create Player Animator Controller / janela).
     /// </summary>
     public static class MixamoClips
     {

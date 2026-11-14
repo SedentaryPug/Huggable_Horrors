@@ -409,7 +409,7 @@ namespace HorrorFPS
         static void OnLevelLoaded(int index) { OnLevelLoaded(); }
         static void OnLevelLoaded(object level) { OnLevelLoaded(); }
 
-        // ------------------------------------------------------------------ diagnóstico (tecla F10 ou menu 23)
+        // ------------------------------------------------------------------ diagnóstico (tecla F10 ou menu Revive > Revive Diagnostics (Play Mode))
         public static string Diagnose(PlayerContext p, ReviveProfile prof)
         {
             StringBuilder sb = new StringBuilder();
@@ -426,7 +426,7 @@ namespace HorrorFPS
             List<string> known2 = new List<string>();
             for (int i = 0; i < prof.medkitItemIds.Length; i++)
                 if (!string.IsNullOrEmpty(prof.medkitItemIds[i]) && ItemDatabase.Find(prof.medkitItemIds[i]) != null) known2.Add(prof.medkitItemIds[i]);
-            sb.AppendLine("  ids que o ItemDatabase conhece: " + (known2.Count > 0 ? string.Join(", ", known2.ToArray()) : "NENHUM (confira o id do kit no perfil: menu 21)"));
+            sb.AppendLine("  ids que o ItemDatabase conhece: " + (known2.Count > 0 ? string.Join(", ", known2.ToArray()) : "NENHUM (confira o id do kit no perfil: menu Revive > Create Revive Profile)"));
 
             sb.AppendLine("  corpo animado: PlayerAnimDriver " + (Cached(p, "PlayerAnimDriver") != null ? "ok" : "ausente (sem pose de caído; o resto funciona)"));
             sb.AppendLine("  câmera do jogador: " + (CameraOf(p) != null ? "ok" : "NÃO ACHEI (sem vinheta nem dica)"));

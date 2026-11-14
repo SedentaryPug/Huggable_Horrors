@@ -5,14 +5,14 @@ using UnityEngine.Rendering;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 14. Add Animation Rig To Player Prefab (placeholder body)
+    /// Tools > Horror FPS > Animation > Add Animation Rig To Player Prefab (placeholder body)
     /// Instala no jogador o driver de animação, o adaptador de itens, a visibilidade por câmera e um corpo de TESTE feito de
     /// primitivas (cabeça, torso, braços, pernas) já ligado ao estado. Dá para ver, no split-screen, as pernas e o torso do
     /// próprio jogador, a cabeça escondida só para ele, e o corpo inteiro na câmera do outro — sem nenhum modelo ou clipe.
     /// </summary>
     public static class PlaceholderBodyBuilder
     {
-        [MenuItem("Tools/Horror FPS/14. Add Animation Rig To Player Prefab (placeholder body)")]
+        [MenuItem(HorrorFPSMenu.Animation + "Add Animation Rig To Player Prefab (placeholder body)", false, HorrorFPSMenu.AnimationOrder + 0)]
         public static void Run()
         {
             AnimationEditorUtil.WithPlayer(Build);

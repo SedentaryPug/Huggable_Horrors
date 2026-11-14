@@ -1,7 +1,7 @@
 namespace HorrorFPS
 {
     /// <summary>
-    /// Árvores prontas para começar (menus 25 e 26 e o botão "Árvore padrão" da janela). A "padrão" reproduz EXATAMENTE o que o
+    /// Árvores prontas para começar (os dois menus Stalker > Create Stalker Tree... e o botão "Árvore padrão" da janela). A "padrão" reproduz EXATAMENTE o que o
     /// perseguidor faz sem árvore editável; a do rugido é um exemplo que usa condições, variáveis e um decorador "Sempre falha".
     /// </summary>
     public static class StalkerTreeTemplates

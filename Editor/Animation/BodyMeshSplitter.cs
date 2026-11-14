@@ -8,21 +8,21 @@ using UnityEngine.Rendering;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 32. Split Head From Selected Player Body
+    /// Tools > Horror FPS > Animation > Split Head From Selected Player Body
     /// Modelos como o Y Bot do Mixamo vêm com o corpo inteiro num mesh só, então não dá para esconder só a cabeça do dono
     /// (BodyVisibility trabalha por renderer). Esta ferramenta divide cada SkinnedMeshRenderer em dois pelos PESOS DO SKIN: o triângulo cujos
     /// vértices pertencem (na média, pelo menos metade do peso) ao osso da cabeça ou a ossos abaixo dele vai para um mesh novo, "..._Head"
     /// (BodyPart = Head); o resto fica no renderer original (BodyPart = Torso, visível ao dono). Os dois usam os mesmos ossos e materiais, então
     /// animam igual e o corte não aparece. Os meshes novos são salvos em Generated/Animation/Meshes; o FBX original não é alterado
     /// (só ganha Read/Write ligado, necessário para ler vértices e pesos).
-    /// O menu 16 chama isto sozinho quando o modelo não tem nenhuma cabeça separada. Rodar de novo não faz nada (idempotente).
+    /// O menu Animation > Setup Selected Model As Player Body chama isto sozinho quando o modelo não tem nenhuma cabeça separada. Rodar de novo não faz nada (idempotente).
     /// </summary>
     public static class BodyMeshSplitter
     {
         /// <summary>Fração mínima (média dos 3 vértices) do peso do skin em ossos da cabeça para o triângulo ser "cabeça".</summary>
         const float HeadWeightThreshold = 0.5f;
 
-        [MenuItem("Tools/Horror FPS/32. Split Head From Selected Player Body")]
+        [MenuItem(HorrorFPSMenu.Animation + "Split Head From Selected Player Body", false, HorrorFPSMenu.AnimationOrder + 4)]
         public static void Run()
         {
             GameObject sel = Selection.activeGameObject;
@@ -30,7 +30,7 @@ namespace HorrorFPS
             {
                 EditorUtility.DisplayDialog("Selecione o corpo na cena",
                     "Selecione o modelo do corpo que está DENTRO do jogador (na cena ou aberto no modo Prefab) e rode de novo.\n" +
-                    "Para um FBX no Project, use o menu 16: ele separa a cabeça sozinho.", "OK");
+                    "Para um FBX no Project, use o menu Animation > Setup Selected Model As Player Body: ele separa a cabeça sozinho.", "OK");
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace HorrorFPS
             if (anim == null || !anim.isHuman)
             {
                 EditorUtility.DisplayDialog("Precisa de um corpo Humanoid",
-                    "Não achei um Animator Humanoid em '" + sel.name + "'. Importe o FBX como Humanoid (menu 31, passo 1) e instale-o no jogador (menu 16).", "OK");
+                    "Não achei um Animator Humanoid em '" + sel.name + "'. Importe o FBX como Humanoid (menu Animation > Mixamo: Humanoid + Locomotion Controller, passo 1) e instale-o no jogador (menu Animation > Setup Selected Model As Player Body).", "OK");
                 return;
             }
 

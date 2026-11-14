@@ -5,7 +5,7 @@ namespace HorrorFPS
     /// <summary>
     /// Instalador dos módulos novos (itens/inventário, sanidade, corpo) em cada jogador. Sem configurar nada, todo PlayerContext
     /// que aparecer em cena ganha o que lhe faltar, com valores padrão. Quem prefere montar no prefab usa o menu
-    /// Tools > Horror FPS > 4. Add Item, Sanity and Body modules to Player Prefab — o instalador só completa o que não existir.
+    /// Tools > Horror FPS > Player > Add Item, Sanity and Body Modules To Player Prefab — o instalador só completa o que não existir.
     /// Para desligar o automático: PlayerModules.AutoInstall = false (cedo, ex.: em Awake de um objeto da cena Core) ou o símbolo
     /// de compilação HORRORFPS_NO_AUTOINSTALL.
     /// </summary>

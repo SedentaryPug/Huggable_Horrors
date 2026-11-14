@@ -581,7 +581,7 @@ namespace HorrorFPS
             runner = StalkerRouteRunner.Of(Brain);
             if (runner == null)
             {
-                StalkerWorldBridge.WarnOnce("noRunner", "O nó 'Usar rota' precisa do componente Stalker Route Runner no monstro (menu Tools > Horror FPS > 36).");
+                StalkerWorldBridge.WarnOnce("noRunner", "O nó 'Usar rota' precisa do componente Stalker Route Runner no monstro (menu Tools > Horror FPS > Stalker > Add Route Runner To Selected Stalker).");
                 failed = true;
                 return;
             }
@@ -647,7 +647,7 @@ namespace HorrorFPS
             runner = StalkerRouteRunner.Of(Brain);
             if (runner == null)
             {
-                StalkerWorldBridge.WarnOnce("noRunner", "O nó 'Emboscada' precisa do componente Stalker Route Runner no monstro (menu Tools > Horror FPS > 36).");
+                StalkerWorldBridge.WarnOnce("noRunner", "O nó 'Emboscada' precisa do componente Stalker Route Runner no monstro (menu Tools > Horror FPS > Stalker > Add Route Runner To Selected Stalker).");
                 failed = true;
                 return;
             }

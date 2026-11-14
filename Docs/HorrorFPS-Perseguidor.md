@@ -39,10 +39,10 @@ Assets/HorrorFPS/Stalker/
   StalkerWorld.cs        concilia a cena com o elenco       StalkerSchedule.cs  chegada, chamado e recuo
   StalkerSpawner.cs      escolhe onde aparece              StalkerSpawnPoint.cs  pontos de aparição
   StalkerSummonTrigger.cs  gatilho de roteiro (chamar, dispensar, desligar)
-Assets/HorrorFPS/Editor/Stalker/StalkerMenu.cs   menus 18, 19 e 20
+Assets/HorrorFPS/Editor/Stalker/StalkerMenu.cs   menus Stalker > Add Stalker To Selected Object e Create Stalker Definition From Selected (a bancada `BuildDemo` ficou sem menu)
   -- árvore editável (doc "Árvore de comportamento") --
 Assets/HorrorFPS/Stalker/Tree/   9 arquivos: base dos nós, asset, nós prontos (fluxo, ações, condições), modelos, variáveis, rastro ao vivo
-Assets/HorrorFPS/Editor/Stalker/StalkerTreeWindow.cs, StalkerTreeMenu.cs, StalkerTreeAssetEditor.cs   janela e menus 24, 25 e 26
+Assets/HorrorFPS/Editor/Stalker/StalkerTreeWindow.cs, StalkerTreeMenu.cs, StalkerTreeAssetEditor.cs   janela e menus Stalker > Stalker Tree Editor e Create Stalker Tree...
 ```
 Requisitos: os do framework + **NavMesh** na cena (o módulo `AI` do Unity, já incluso por padrão).
 
@@ -53,10 +53,10 @@ Requisitos: os do framework + **NavMesh** na cena (o módulo `AI` do Unity, já 
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. Abra a cena de teste (ex.: a `HorrorDemo`) e use **Tools > Horror FPS > 18. Create Stalker Demo In Open Scene**: cria `[Stalker Demo]` (4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor vermelho **com `Stalker Finisher` e uma cutscene de teste**, um **rádio isca** verde) e tenta gerar o NavMesh sozinho. Se avisar que não conseguiu: *Window > AI > Navigation > Bake*.
+2. Abra uma cena com chão e faça o *Bake* do NavMesh (*Window > AI > Navigation > Bake*). (A bancada pronta `[Stalker Demo]` — 4 salas, pontos de ronda e de aparição, monstro com `Stalker Finisher`, rádio isca — era criada pelo antigo menu 18 e hoje não tem menu: o método `StalkerMenu.BuildDemo` continua no código e pode ser chamado por script do Editor.)
 3. Play. O painel no canto mostra modo, atenção, pista e memória. Experimente: ficar parado no escuro à vista dele (demora a notar), correr (nota rápido), fazer barulho longe, entrar num esconderijo **vendo-o vendo você**, ficar perto do rádio sem ser visto várias vezes (ele aprende que é isca) e **deixá-lo bater até o último golpe** (ele para, a cutscene de teste toca por 2,5 s e você morre).
 
-Para o seu monstro: selecione-o e use **19. Add Stalker To Selected Object** (NavMeshAgent, collider, `Stalker Senses`, `Stalker Brain`; arraste a cabeça para `Eyes`). A finalização é um componente à parte (`Add Component > HorrorFPS > Stalker > Traits > Finisher`, seção 10). Para ele **seguir entre cenas** e ser **chamado**: **20. Create Stalker Definition From Selected** (salva o prefab em `Assets/Prefabs/Stalkers`, se faltar, e cria a `StalkerDefinition` em `Assets/Resources/HorrorFPS/Stalkers`). O monstro da bancada do menu 18 **não** tem definição: rode o menu 20 nele para testar a troca de cena.
+Para o seu monstro: selecione-o e use **Stalker > Add Stalker To Selected Object** (NavMeshAgent, collider, `Stalker Senses`, `Stalker Brain`; arraste a cabeça para `Eyes`). A finalização é um componente à parte (`Add Component > HorrorFPS > Stalker > Traits > Finisher`, seção 10). Para ele **seguir entre cenas** e ser **chamado**: **Stalker > Create Stalker Definition From Selected** (salva o prefab em `Assets/Prefabs/Stalkers`, se faltar, e cria a `StalkerDefinition` em `Assets/Resources/HorrorFPS/Stalkers`). O monstro da bancada `BuildDemo` **não** tem definição: rode o menu `Stalker > Create Stalker Definition From Selected` nele para testar a troca de cena.
 
 Teste rápido da troca de cena: na definição, `Follow > Chance = 1` e `Min Attention = Calm`; passe para outro nível (pela porta ou gatilho de troca do seu jogo) com ele por perto: ele chega depois de 3–8 s. Para o chamado: `Summon > First Delay = 10`, `Base Chance = 1` **e** `Max Chance = 1`, e fique 10 s num nível onde ele não está.
 
@@ -84,7 +84,7 @@ Prioridade da árvore (reavaliada a cada quadro; um ramo de maior prioridade int
 | 5 | Search / 500 | depois de investigar/perder o jogador | N paradas aleatórias no raio da pista; revista esconderijos ao alcance |
 | 6 | Patrol / 900 | nada acontecendo | próximo `PatrolPoint` por peso, distância, tempo desde a última visita e **mapa de calor** |
 
-**Editar a árvore sem código:** a tabela acima é a árvore padrão. Ela também pode ser um **asset** (campo `Tree` do `StalkerBrain` ou da `StalkerDefinition`), editado na janela do **menu 24** com sequências, condições, recargas e nós seus. O nó "Ramo padrão" reaproveita estes seis ramos (e os que os traços criam). Veja o doc *Árvore de comportamento*.
+**Editar a árvore sem código:** a tabela acima é a árvore padrão. Ela também pode ser um **asset** (campo `Tree` do `StalkerBrain` ou da `StalkerDefinition`), editado na janela do **menu `Stalker > Stalker Tree Editor` com sequências, condições, recargas e nós seus. O nó "Ramo padrão" reaproveita estes seis ramos (e os que os traços criam). Veja o doc *Árvore de comportamento*.
 
 ## 4. Atenção
 
@@ -327,7 +327,7 @@ Se o golpe final já matar a vítima, ela morre sem cena. Se algo der errado (o 
 
 **Avisar o fim.** O último passo da cutscene deve ser um `EventStep` chamando **`StalkerFinisherEnd.Signal()`** (componente no mesmo objeto). Sem ele o fim é detectado pela própria sequência, se ela expõe `IsPlaying` (lido por reflexão), e por último pelo `Max Seconds` (30 s). **`Allow Skip`**: desligue, ou garanta que o `EventStep` final dispare também ao pular. `StalkerFinisherEnd.KillNow()` mata a vítima na hora (para a morte acontecer no meio da cena e o resto ser só fade).
 
-O menu **18** já monta tudo isso numa cena de teste (cutscene de 2,5 s com `WaitStep` + `EventStep` ligado ao `Signal`).
+O método `StalkerMenu.BuildDemo` (sem menu hoje) já montava tudo isso numa cena de teste (cutscene de 2,5 s com `WaitStep` + `EventStep` ligado ao `Signal`).
 
 ### 10.4 Opções
 
@@ -400,7 +400,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 | `GameSession.GetString(string)` / `SetString(string, string)` (guardadas no save, zeradas em Novo jogo) | erro em `GetString/SetString` (nada persiste) |
 | **Opcional:** a classe `HorrorFPS.ReviveApi` (módulo de reanimação) com `static bool IsDowned(Component)` e `static void AllowDeath(Component, float)`, ligadas por **reflexão** (`StalkerBridge.IsDowned/AllowDeath`) | sem o módulo, ninguém está "caído" e `Kill(..., final)` é igual a `Kill`; nada quebra e nada precisa ser editado |
 | `FindFirstObjectByType` / `FindObjectsByType` (Unity 2022.3 ou 6) | trocar por `FindObjectOfType/FindObjectsOfType` |
-| `SoundEmitter` com campos `noiseRadius`, `repeatSeconds`, `repeatJitter`, `playOnEnable`, `noiseKind` e a `CutsceneSequence` / `EventStep` / `WaitStep` (só a bancada do menu 18, por reflexão) | a bancada fica com os padrões ou sem a cutscene de teste; ajuste no Inspector |
+| `SoundEmitter` com campos `noiseRadius`, `repeatSeconds`, `repeatJitter`, `playOnEnable`, `noiseKind` e a `CutsceneSequence` / `EventStep` / `WaitStep` (só a bancada `StalkerMenu.BuildDemo`, por reflexão) | a bancada fica com os padrões ou sem a cutscene de teste; ajuste no Inspector |
 
 ## 14. Limitações
 
@@ -435,7 +435,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 | Aparece à vista / colado em mim | sem `StalkerSpawnPoint` (cai no NavMesh a 14–34 m); `Min Player Distance` baixa; `Follow > Require Unseen` desligado (é de propósito no seguir) |
 | O monstro aparece duas vezes / some | dois objetos com o mesmo `Id`: o elenco guarda a sobra; um `Id` mudou (renomear "esquece" onde ele estava) |
 | **Destruí o monstro e ele voltou** | o elenco é a fonte da verdade e o recria; use `StalkerManager.Dismiss(id)` ou `SetDisabled(id, true)` |
-| A finalização nunca começa | o módulo `Stalker Finisher` não está no monstro (o menu 19 não o adiciona); `Hits To Kill` alto, `Only When Last Alive` com outro vivo, ou vida não legível (aviso "Não consegui ler a vida" e conta golpes) |
+| A finalização nunca começa | o módulo `Stalker Finisher` não está no monstro (o menu `Stalker > Add Stalker To Selected Object` não o adiciona); `Hits To Kill` alto, `Only When Last Alive` com outro vivo, ou vida não legível (aviso "Não consegui ler a vida" e conta golpes) |
 | A finalização acaba na hora, sem cena | `Play Once` ligado na `CutsceneSequence`, ou a sequência não tem passos |
 | A finalização trava até `Max Seconds` | falta o `EventStep` final com `StalkerFinisherEnd.Signal()` e a sequência não expõe `IsPlaying`; ou `Allow Skip` pulou o `EventStep` |
 | A câmera da cutscene fica no lugar errado | o referencial é a origem no monstro e +Z para a vítima, não o mundo; ponha os marcadores num objeto em `Anchor` |
@@ -455,5 +455,5 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 9. **Curva de dificuldade**: o `Skill` dirigir a velocidade de ganho de atenção por capítulo, e um modo "calmo" para tutorial; `Max Active` e as chances de seguir/chamar por capítulo.
 10. **Tempo fora de cena**: ao voltar a um nível, reposicionar o monstro em função do tempo que passou (ele "andou"), em vez de reaparecer onde parou.
 11. **Finalizações por contexto**: `PickPrefab` escolhendo a cena pelo lugar (no armário, de costas, no escuro, em dupla com outro monstro) e `Hit Before Scene` com o ferimento visível na cena.
-12. **Depuração**: gizmo do raio de audição, histórico de decisões, botão de zerar a memória e o elenco na janela do Editor, e uma janela que lista o elenco e permite `Summon`/`Dismiss` em Play. (A árvore ao vivo já existe na janela do menu 24.)
+12. **Depuração**: gizmo do raio de audição, histórico de decisões, botão de zerar a memória e o elenco na janela do Editor, e uma janela que lista o elenco e permite `Summon`/`Dismiss` em Play. (A árvore ao vivo já existe na janela do menu `Stalker > Stalker Tree Editor`.)
 13. **Árvore em canvas de grafo** (`GraphView`) sobre os mesmos assets, e teste da árvore sem Play com um `Knowledge` simulado: seção 12 do doc *Árvore de comportamento*.

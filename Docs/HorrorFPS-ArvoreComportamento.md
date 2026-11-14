@@ -29,7 +29,7 @@ Assets/HorrorFPS/Stalker/Tree/
   StalkerNodeExamples.cs    dois nós-modelo: uma ação (Rugir) e uma condição (Perto de casa)
 Assets/HorrorFPS/Editor/Stalker/
   StalkerTreeWindow.cs      a janela de edição
-  StalkerTreeMenu.cs        menus 24, 25, 26 e Assets > Create > HorrorFPS (script de nó), duplo clique no asset
+  StalkerTreeMenu.cs        menus Stalker > Stalker Tree Editor / Create Stalker Tree... e Assets > Create > HorrorFPS (script de nó), duplo clique no asset
   StalkerTreeAssetEditor.cs inspetor do asset (resumo, problemas, botão "Abrir")
 Arquivos que MUDARAM (sobrescreva): Stalker/StalkerBrain.cs, StalkerDefinition.cs, StalkerModule.cs, StalkerActions.cs
 ```
@@ -38,10 +38,10 @@ Sem `asmdef`, igual ao resto do framework. O que mudou nos quatro arquivos: o `S
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. Selecione o monstro (o da bancada do menu 18 serve) e use **Tools > Horror FPS > 25. Create Stalker Tree (Default)**. Ele cria o asset em `Assets/Resources/HorrorFPS/StalkerTrees`, **liga ao campo `Tree` do monstro selecionado se estiver vazio** e abre a janela. Se o campo já tinha uma árvore, ele avisa no Console e não troca; arraste o asset para lá.
+2. Selecione o monstro (qualquer monstro com `Stalker Brain` serve) e use **Tools > Horror FPS > Stalker > Create Stalker Tree (Default)**. Ele cria o asset em `Assets/Resources/HorrorFPS/StalkerTrees`, **liga ao campo `Tree` do monstro selecionado se estiver vazio** e abre a janela. Se o campo já tinha uma árvore, ele avisa no Console e não troca; arraste o asset para lá.
 3. A árvore padrão é **exatamente** o que o monstro já fazia: um Seletor com os seis ramos (Attack, Chase, CheckHiding, Investigate, Search, Patrol). Dê Play: o resultado deve ser igual ao de antes.
 4. Com o Play ligado, a janela mostra **ao vivo** o que o monstro está fazendo (bolinhas verdes, azuis, vermelhas, cinzas). Fique à vista dele e olhe a janela.
-5. Experimente o **26. Create Stalker Tree (Example: Roar On Spot)**: ele para, encara e manda a mensagem `OnRoar` ao avistar você, uma vez por perseguição. Ponha no monstro um componente com um método `void OnRoar()` para tocar o som (sem ele a mensagem é ignorada, e o resto funciona).
+5. Experimente o **Stalker > Create Stalker Tree (Example: Roar On Spot)**: ele para, encara e manda a mensagem `OnRoar` ao avistar você, uma vez por perseguição. Ponha no monstro um componente com um método `void OnRoar()` para tocar o som (sem ele a mensagem é ignorada, e o resto funciona).
 
 Duplo clique em qualquer `StalkerTreeAsset` abre a janela. Para a árvore vazia: **Create > HorrorFPS > Stalker Behavior Tree** (aí use o botão "Árvore padrão" da janela para ter um ponto de partida).
 
@@ -69,7 +69,7 @@ Duplo clique em qualquer `StalkerTreeAsset` abre a janela. Para a árvore vazia:
 
 **Em jogo:** `brain.SetTree(outroAsset)` troca a árvore (ex.: fase 2 de um chefe); `brain.RebuildTree()` remonta a atual (zera o estado interno dos nós; a memória adaptativa e o conhecimento ficam).
 
-## 4. A janela (Tools > Horror FPS > 24. Stalker Tree Editor)
+## 4. A janela (Tools > Horror FPS > Stalker > Stalker Tree Editor)
 
 ```
 [asset] [Novo] [Árvore padrão] [Validar] [Expandir] [Recolher]        (Play: [monstro] [Aplicar ao editar] [Aplicar agora]) [Travar]
@@ -275,7 +275,7 @@ Se `Attack` assumir no meio, a investida é interrompida e a recarga começa (op
 ```
 Ao chegar a menos de 12 m de casa a condição "NÃO Perto de casa" cai e a árvore segue para os ramos de baixo.
 
-**3. Rugidos variados** (o monstro ruge ao avistar, de um jeito sorteado; é o exemplo do menu 26 com um Sorteio). O `Definir variável` é sempre o **último** passo, porque a condição `rugiu <= 0` do Sorteio deixa de valer assim que ele roda:
+**3. Rugidos variados** (o monstro ruge ao avistar, de um jeito sorteado; é o exemplo do menu `Stalker > Create Stalker Tree (Example: Roar On Spot)` com um Sorteio). O `Definir variável` é sempre o **último** passo, porque a condição `rugiu <= 0` do Sorteio deixa de valer assim que ele roda:
 ```
 ├─ Sorteio "Reação ao avistar"    se Vê um jogador, Variável rugiu <= 0
 │    ├─ Sequência: Parar, Animator "Roar1", Esperar 2 s, Definir variável rugiu = 1

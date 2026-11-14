@@ -22,7 +22,7 @@ namespace HorrorFPS.EditorTools
         static string AnnexScenePath { get { return Root + "/Scenes/Level_Annex.unity"; } }
         static string CatalogPath { get { return Root + "/Resources/HorrorFPS/GameCatalog.asset"; } }
 
-        [MenuItem("Tools/Horror FPS/3. Create Full Game Demo (menu, níveis, save, cutscenes)")]
+        [MenuItem(HorrorFPSMenu.Demo + "Create Full Game Demo (menu, níveis, save, cutscenes)", false, HorrorFPSMenu.DemoOrder + 0)]
         public static void CreateFullDemoMenu()
         {
             GameObject prefab = EnsurePlayerPrefab(false);
