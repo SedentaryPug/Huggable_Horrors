@@ -4,7 +4,7 @@ namespace HorrorFPS
     /// Onde cada menu do framework mora em Tools > Horror FPS. Todo [MenuItem] do projeto usa estas constantes,
     /// então a árvore de menus inteira é decidida AQUI, em um lugar só.
     ///
-    /// Menu novo: escolha a área (Player, Items, Dialogue, Animation, Stalker, Hurtbox, Revive, Demo), use o caminho dela e
+    /// Menu novo: escolha a área (Player, Items, Dialogue, Animation, Stalker, Hurtbox, Revive, Objectives, Demo), use o caminho dela e
     /// some um número à ordem da área para o item ficar na posição certa:
     ///     [MenuItem(HorrorFPSMenu.Stalker + "Meu Menu Novo", false, HorrorFPSMenu.StalkerOrder + 10)]
     /// Área nova: acrescente o caminho e uma ordem aqui (de 10 em 10 as áreas se mantêm juntas, sem separadores soltos).
@@ -24,6 +24,7 @@ namespace HorrorFPS
         public const string Stalker   = Root + "Stalker/";     // perseguidor, árvore de comportamento, rotas
         public const string Hurtbox   = Root + "Hurtbox/";     // zonas de dano
         public const string Revive    = Root + "Revive/";      // reanimação em co-op
+        public const string Objectives = Root + "Objectives/"; // objetivos da partida (catálogo, ações em cena)
         public const string Demo      = Root + "Demo/";        // jogo de demonstração e exemplos prontos
 
         // ------------------------------------------------------------------ ordem das áreas (3º argumento do [MenuItem])
@@ -34,6 +35,7 @@ namespace HorrorFPS
         public const int StalkerOrder   = 50;   // 50 a 59
         public const int HurtboxOrder   = 60;
         public const int ReviveOrder    = 70;
-        public const int DemoOrder      = 80;
+        public const int ObjectivesOrder = 80;
+        public const int DemoOrder      = 100;
     }
 }

@@ -148,5 +148,20 @@ namespace HorrorFPS
         public const string Open = "Abrir";
         public const string Close = "Fechar";
         public const string DeviceLost = "Controle desconectado";
+
+        // Objetivos
+        public const string ObjectivesButton = "Objetivos";
+        public const string ObjectivesTitle = "OBJETIVOS";
+        public const string ObjectivesHeader = "OBJETIVOS";
+        public const string ObjectiveNew = "NOVO OBJETIVO";
+        public const string ObjectiveDone = "OBJETIVO CONCLUÍDO";
+        public const string ObjectiveFailed = "OBJETIVO FALHOU";
+        public const string ObjectiveOptionalTag = "(opcional) ";
+        public const string ObjectivesMore = "+{0} objetivo(s)";
+        public const string NoObjectives = "Nenhum objetivo no momento";
+        public const string ObjectivesActive = "EM ANDAMENTO";
+        public const string ObjectivesDone = "CONCLUÍDOS";
+        public const string ObjectivesFailedSection = "FALHARAM";
+        public const string ObjectivesEmpty = "Nenhum objetivo ainda.";
     }
 }
