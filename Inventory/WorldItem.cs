@@ -175,6 +175,15 @@ namespace HorrorFPS
             return w;
         }
 
+        /// <summary>Dá velocidade e giro a um item que já está no cenário (a arma arrancada da mão pelo coice, por exemplo).</summary>
+        public void Throw(Vector3 velocity, Vector3 spin)
+        {
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb == null || rb.isKinematic) return;
+            SetVelocity(rb, velocity);
+            rb.angularVelocity = spin;
+        }
+
         static WorldItem Build(ItemInstance inst, Vector3 position, Quaternion rotation)
         {
             if (inst == null || inst.data == null) return null;

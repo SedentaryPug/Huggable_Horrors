@@ -44,20 +44,31 @@ namespace HorrorFPS.ItemsEditor
 
                 case EquipPreset.Pistol:
                     Gun(e, 35f, 60f, 55f, 3f, false, 1, 0.6f, 9, 1.6f, 0.7f);
+                    Precision(e, 0.7f, 2.5f, 4f, 1.4f, 1f, 1f, 0f);            // leve: uma mão só sem penalidade
                     d.equipSlot = "mao";
                     break;
 
                 case EquipPreset.Shotgun:
                     Gun(e, 12f, 25f, 80f, 0.9f, false, 8, 5f, 6, 2.8f, 1f);
+                    Precision(e, 1f, 2f, 3f, 1.5f, 1.8f, 2f, 0.25f);            // pesada: uma mão só = dispersão x1,8, coice x2 e 25% de a arma escapar
                     d.equipSlot = "mao";
                     break;
 
                 case EquipPreset.Automatic:
                     Gun(e, 14f, 60f, 60f, 9f, true, 1, 1.4f, 30, 2.2f, 0.35f);
+                    Precision(e, 0.35f, 4f, 5f, 1.8f, 2f, 1.8f, 0.12f);        // pesada (automática): abre rápido atirando em rajada
                     d.equipSlot = "mao";
                     break;
             }
             d.equip = e;
+        }
+
+        /// <summary>Fase 3: dispersão dinâmica (tiros seguidos e movimento) e o que muda numa arma pesada segurada com uma mão só.</summary>
+        static void Precision(ItemEquip e, float bloomPerShot, float bloomMax, float bloomRecover, float moveSpread,
+                              float oneHandSpread, float oneHandRecoil, float oneHandDropChance)
+        {
+            e.bloomPerShot = bloomPerShot; e.bloomMax = bloomMax; e.bloomRecover = bloomRecover; e.moveSpread = moveSpread;
+            e.oneHandSpreadMultiplier = oneHandSpread; e.oneHandRecoilMultiplier = oneHandRecoil; e.oneHandDropChance = oneHandDropChance;
         }
 
         static void Gun(ItemEquip e, float damage, float range, float noise, float sps, bool auto, int pellets, float spread, int mag, float reload, float recoil)
