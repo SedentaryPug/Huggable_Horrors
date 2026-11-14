@@ -146,11 +146,11 @@ Para eventos, `Delay` é a espera depois do evento.
 | `Tutorials/HowToPlayPanel.cs`, `UI/InfoPanelBase.cs` | página "Como jogar" do menu de pausa (e a base das páginas de leitura) |
 | `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
 
-Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 56 em vez de 64, para caberem 9), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
+Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 54 em vez de 64, para caberem 10 com o Diário), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
 
 ## 4. Limites conhecidos
 
 - O **menu principal** (antes de começar a partida) não tem a página "Como jogar": as dicas existem dentro do jogo, no menu de pausa.
 - A tecla de objetivos (**J / R3**) vive no `ItemInput` e, como as outras ações dele, não aparece no painel de remapeamento (para mudar, edite os caminhos em `ItemInput.Build()`).
 - Se o jogador trocar de teclado para controle no meio de uma dica, o cartão já aberto não muda de texto (a lista Como jogar, ao ser aberta, já mostra os botões do dispositivo atual).
-- Um diário/caderno de notas (reler documentos achados) é um passo futuro e ainda não existe.
+- O diário (reler notas, diários e gravações achados) existe em **Pausa > Diário**: ver `HorrorFPS-Diario-Ruido.md`.
