@@ -1,16 +1,11 @@
-using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Events;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace HorrorFPS
 {
     /// <summary>
     /// Menu de exemplo do sistema de diálogos:
     ///   Tools > Horror FPS > 12. Create Sample Dialogues             (cria 2 grafos prontos em &lt;raiz do framework&gt;/Generated/Dialogues)
-    /// O NPC, a barreira, a luz e o gatilho já ligados aos exemplos vêm na cena completa (menu 27), por BuildDemoProps.
     /// </summary>
     public static class DialogueMenus
     {
@@ -255,90 +250,6 @@ namespace HorrorFPS
             DialogueGraphWindow.AutoLayout(g);
             EditorUtility.SetDirty(g);
             return g;
-        }
-
-        /// <summary>Garante os dois grafos de exemplo criando só o que falta (o que já existe não é tocado) e sem abrir diálogo.</summary>
-        public static bool EnsureSamples(out DialogueGraph zelador, out DialogueGraph pensamento)
-        {
-            zelador = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ZeladorPath);
-            pensamento = AssetDatabase.LoadAssetAtPath<DialogueGraph>(PensamentoPath);
-            if (zelador == null) zelador = BuildZelador();
-            if (pensamento == null) pensamento = BuildPensamento();
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return zelador != null && pensamento != null;
-        }
-
-        /// <summary>
-        /// Monta o NPC, a barreira, a luz de alarme e o gatilho de pensamento em 'origin', já ligados aos grafos de exemplo.
-        /// Não registra undo, não seleciona nada e não abre diálogo (quem chama decide; a cena completa, menu 27, usa isto).
-        /// </summary>
-        public static GameObject BuildDemoProps(Vector3 origin, DialogueGraph zelador, DialogueGraph pensamento)
-        {
-            GameObject root = new GameObject("Dialogue Demo");
-            root.transform.position = origin;
-
-            // ---- NPC
-            GameObject npc = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            npc.name = "Zelador (Demo)";
-            npc.transform.SetParent(root.transform, false);
-            npc.transform.localPosition = new Vector3(0f, 1f, 0f);
-
-            DialogueActor actor = npc.AddComponent<DialogueActor>();
-            actor.actorId = "zelador";
-            actor.displayName = "Zelador";
-
-            DialogueInteractable talk = npc.AddComponent<DialogueInteractable>();
-            talk.dlgActor = actor;
-            DialogueInteractable.Entry entry = new DialogueInteractable.Entry();
-            entry.graph = zelador;
-            talk.dlgEntries.Add(entry);
-
-            // ---- barreira que o diálogo abre (evento "abrir_passagem")
-            GameObject barrier = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            barrier.name = "Barreira (Demo)";
-            barrier.transform.SetParent(root.transform, false);
-            barrier.transform.localPosition = new Vector3(3.5f, 1.25f, 0f);
-            barrier.transform.localScale = new Vector3(3f, 2.5f, 0.3f);
-
-            // ---- luz de alarme (evento "alarme", disparado no susto)
-            GameObject lampGo = new GameObject("Luz de alarme (Demo)");
-            lampGo.transform.SetParent(root.transform, false);
-            lampGo.transform.localPosition = new Vector3(0f, 3f, 0f);
-            Light lamp = lampGo.AddComponent<Light>();
-            lamp.type = LightType.Point;
-            lamp.color = new Color(1f, 0.1f, 0.05f);
-            lamp.range = 9f;
-            lamp.intensity = 3f;
-            lampGo.SetActive(false);
-
-            // ---- relé: liga eventos do diálogo a objetos da cena
-            DialogueEventRelay relay = npc.AddComponent<DialogueEventRelay>();
-
-            DialogueEventRelay.Entry open = new DialogueEventRelay.Entry();
-            open.eventId = "abrir_passagem";
-            UnityEventTools.AddBoolPersistentListener(open.onRaised, barrier.SetActive, false);
-            relay.entries.Add(open);
-
-            DialogueEventRelay.Entry alarm = new DialogueEventRelay.Entry();
-            alarm.eventId = "alarme";
-            UnityEventTools.AddBoolPersistentListener(alarm.onRaised, lampGo.SetActive, true);
-            relay.entries.Add(alarm);
-
-            // ---- gatilho de pensamento (modo Legenda: o jogador continua andando)
-            GameObject trig = new GameObject("Gatilho Pensamento (Demo)");
-            trig.transform.SetParent(root.transform, false);
-            trig.transform.localPosition = new Vector3(-5f, 1.5f, 0f);
-            BoxCollider box = trig.AddComponent<BoxCollider>();
-            box.isTrigger = true;
-            box.size = new Vector3(4f, 3f, 4f);
-            DialogueTrigger dt = trig.AddComponent<DialogueTrigger>();
-            dt.mode = DialogueTrigger.Mode.OnEnter;
-            dt.graph = pensamento;
-            dt.playOnce = true;
-            dt.id = "demo.pensamento";
-
-            return root;
         }
     }
 }

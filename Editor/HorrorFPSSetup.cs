@@ -7,9 +7,9 @@ using UnityEngine.Rendering;
 namespace HorrorFPS.EditorTools
 {
     /// <summary>
-    /// Tools &gt; Horror FPS: cria o prefab do jogador, o jogo completo de demonstração (menu principal, níveis, save, cutscenes)
-    /// e a cena completa com todos os sistemas (menu 27) sem você montar nada à mão.
-    /// O jogo completo está em HorrorFPSSetup.FullDemo.cs e a cena completa em HorrorFPSSetup.Showcase*.cs (mesma classe, dividida em arquivos).
+    /// Tools &gt; Horror FPS: cria o prefab do jogador e o jogo completo de demonstração (menu principal, níveis, save, cutscenes)
+    /// sem você montar nada à mão.
+    /// O jogo completo está em HorrorFPSSetup.FullDemo.cs e os níveis em HorrorFPSSetup.Levels.cs (mesma classe, dividida em arquivos).
     /// </summary>
     public static partial class HorrorFPSSetup
     {
