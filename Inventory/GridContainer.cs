@@ -44,17 +44,27 @@ namespace HorrorFPS
             // se havia itens (mudança de tamanho em tempo de execução), recoloca todos
             if (items.Count > 0)
             {
+                // quem tem atalho na hotbar é recolocado primeiro (fica); quem não coube vai para o dono realocar ou jogar no chão
                 List<ItemInstance> old = new List<ItemInstance>(items);
                 items.Clear();
-                for (int i = 0; i < old.Count; i++)
-                {
-                    ItemInstance it = old[i];
-                    it.container = null;
-                    if (!TryPlaceAt(it, it.gridPos, it.rotation) && !AutoPlace(it))
-                        Debug.LogWarning("[HorrorFPS] '" + it + "' não coube após redimensionar a grade.");
-                }
+                List<ItemInstance> ordered = new List<ItemInstance>(old.Count);
+                for (int i = 0; i < old.Count; i++) { old[i].container = null; if (old[i].hotkey >= 0) ordered.Add(old[i]); }
+                for (int i = 0; i < old.Count; i++) if (old[i].hotkey < 0) ordered.Add(old[i]);
+
+                List<ItemInstance> moved = new List<ItemInstance>();
+                for (int i = 0; i < ordered.Count; i++)
+                    if (!TryPlaceAt(ordered[i], ordered[i].gridPos, ordered[i].rotation)) moved.Add(ordered[i]);
+
+                List<ItemInstance> lost = null;
+                for (int i = 0; i < moved.Count; i++)
+                    if (!AutoPlace(moved[i])) { if (lost == null) lost = new List<ItemInstance>(); lost.Add(moved[i]); }
+
+                if (lost != null)
+                    for (int i = 0; i < lost.Count; i++) RaiseOverflow(lost[i], "após redimensionar a grade");
             }
         }
+
+        public override void Revalidate() { EnsureBuilt(); }
 
         protected override void OnCleared()
         {
@@ -260,6 +270,20 @@ namespace HorrorFPS
             }
             NotifyChanged();
             return true;
+        }
+
+        /// <summary>
+        /// Define o tamanho da grade (colunas x fileiras) como se você tivesse editado o inspetor: o que não couber mais é realocado
+        /// pelo dono e, se não houver lugar, jogado no chão. Para recusar a mudança quando algo não coubesse, use Resize.
+        /// </summary>
+        public void SetSize(int columns, int rows)
+        {
+            columns = Mathf.Max(1, columns);
+            rows = Mathf.Max(1, rows);
+            if (columns == width && rows == height) return;
+            width = columns; height = rows;
+            EnsureBuilt();                  // detecta a mudança, refaz as células e recoloca os itens (o excedente vai para o dono)
+            NotifyChanged();
         }
 
         /// <summary>Muda o tamanho da grade (ex.: mochila maior). Falha, sem mudar nada, se algum item não couber.</summary>

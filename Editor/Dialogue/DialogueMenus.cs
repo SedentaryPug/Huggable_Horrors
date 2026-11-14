@@ -8,15 +8,15 @@ using UnityEngine.SceneManagement;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Menus de exemplo do sistema de diálogos:
-    ///   Tools > Horror FPS > 12. Create Sample Dialogues             (cria 2 grafos prontos em Assets/HorrorFPS/Generated/Dialogues)
-    ///   Tools > Horror FPS > 13. Create Dialogue Demo Props In Open Scene  (NPC, barreira, luz e gatilho já ligados aos exemplos)
+    /// Menu de exemplo do sistema de diálogos:
+    ///   Tools > Horror FPS > 12. Create Sample Dialogues             (cria 2 grafos prontos em &lt;raiz do framework&gt;/Generated/Dialogues)
+    /// O NPC, a barreira, a luz e o gatilho já ligados aos exemplos vêm na cena completa (menu 27), por BuildDemoProps.
     /// </summary>
     public static class DialogueMenus
     {
-        const string Dir = "Assets/HorrorFPS/Generated/Dialogues";
-        const string ZeladorPath = Dir + "/Sample_Zelador.asset";
-        const string PensamentoPath = Dir + "/Sample_Pensamento.asset";
+        static string Dir { get { return ProjectPaths.Folder("Generated/Dialogues"); } }
+        static string ZeladorPath { get { return Dir + "/Sample_Zelador.asset"; } }
+        static string PensamentoPath { get { return Dir + "/Sample_Pensamento.asset"; } }
 
         // ================================================================== helpers de montagem
         static void EnsureFolder(string path)
@@ -257,35 +257,25 @@ namespace HorrorFPS
             return g;
         }
 
-        // ================================================================== 13. props de demonstração
-        [MenuItem("Tools/Horror FPS/13. Create Dialogue Demo Props In Open Scene")]
-        public static void CreateDemoProps()
+        /// <summary>Garante os dois grafos de exemplo criando só o que falta (o que já existe não é tocado) e sem abrir diálogo.</summary>
+        public static bool EnsureSamples(out DialogueGraph zelador, out DialogueGraph pensamento)
         {
-            DialogueGraph zelador = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ZeladorPath);
-            DialogueGraph pensamento = AssetDatabase.LoadAssetAtPath<DialogueGraph>(PensamentoPath);
-            if (zelador == null || pensamento == null)
-            {
-                CreateSamples();
-                zelador = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ZeladorPath);
-                pensamento = AssetDatabase.LoadAssetAtPath<DialogueGraph>(PensamentoPath);
-                if (zelador == null || pensamento == null) return;
-            }
+            zelador = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ZeladorPath);
+            pensamento = AssetDatabase.LoadAssetAtPath<DialogueGraph>(PensamentoPath);
+            if (zelador == null) zelador = BuildZelador();
+            if (pensamento == null) pensamento = BuildPensamento();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return zelador != null && pensamento != null;
+        }
 
-            Scene scene = SceneManager.GetActiveScene();
-            if (!scene.IsValid() || !scene.isLoaded)
-            {
-                Debug.LogWarning("[Dialogue] Abra uma cena antes de criar os props de demonstração.");
-                return;
-            }
-
-            SceneView sv = SceneView.lastActiveSceneView;
-            Vector3 origin = sv != null ? sv.pivot : Vector3.zero;
-            RaycastHit hit;
-            if (Physics.Raycast(origin + Vector3.up * 5f, Vector3.down, out hit, 60f)) origin = hit.point;
-            origin.y += 0.0f;
-
+        /// <summary>
+        /// Monta o NPC, a barreira, a luz de alarme e o gatilho de pensamento em 'origin', já ligados aos grafos de exemplo.
+        /// Não registra undo, não seleciona nada e não abre diálogo (quem chama decide; a cena completa, menu 27, usa isto).
+        /// </summary>
+        public static GameObject BuildDemoProps(Vector3 origin, DialogueGraph zelador, DialogueGraph pensamento)
+        {
             GameObject root = new GameObject("Dialogue Demo");
-            Undo.RegisterCreatedObjectUndo(root, "Criar demo de diálogo");
             root.transform.position = origin;
 
             // ---- NPC
@@ -348,9 +338,7 @@ namespace HorrorFPS
             dt.playOnce = true;
             dt.id = "demo.pensamento";
 
-            Selection.activeGameObject = root;
-            EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log("[Dialogue] Props de demonstração criados em '" + scene.name + "'. Se o jogador não conseguir interagir com o NPC, ajuste a Layer do capsule para a layer de interação do framework.", root);
+            return root;
         }
     }
 }

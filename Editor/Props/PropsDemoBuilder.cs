@@ -8,28 +8,29 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 17. Create Props Demo In Open Scene
-    /// Monta, na cena aberta, uma bancada com um exemplar de cada prop (feitos de primitivas, sem modelos):
+    /// Bancada de props (a cena completa, menu 27, usa isto): um exemplar de cada prop (feitos de primitivas, sem modelos):
     /// guarda-roupas (1 e 2 vagas), cômoda com gavetas (uma trancada), barris em cadeia, caixas, vaso, interruptor com lâmpada e armadilha de urso,
     /// e (lote 2) espelho com vultos, porta de botão duplo e portão de proximidade.
     /// </summary>
     public static partial class PropsDemoBuilder
     {
-        const string MaterialFolder = "Assets/HorrorFPS/Generated/Props";
+        static string MaterialFolder { get { return ProjectPaths.Folder("Generated/Props"); } }
         static readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
 
-        [MenuItem("Tools/Horror FPS/17. Create Props Demo In Open Scene")]
-        static void Build()
+        /// <summary>
+        /// Monta a bancada de props (uma faixa de ~70 m no eixo X, a frente de tudo é o +Z) sob um objeto novo em 'origin'.
+        /// Não seleciona nada, não registra undo e não escreve no Console: a cena completa (menu 27) usa isto.
+        /// 'withFloor' desenha o chão da bancada (desligue se a cena já tem um).
+        /// </summary>
+        public static GameObject BuildAt(Vector3 origin, bool withFloor)
         {
             materials.Clear();
             GameObject root = new GameObject("[Props Demo]");
-            Undo.RegisterCreatedObjectUndo(root, "Create Props Demo");
-            Vector3 origin = SceneView.lastActiveSceneView != null ? SceneView.lastActiveSceneView.pivot : Vector3.zero;
-            origin.y = 0f;
             root.transform.position = origin;
             Transform r = root.transform;
 
-            Prim(PrimitiveType.Cube, "Props Floor", r, new Vector3(32f, -0.06f, 6f), new Vector3(100f, 0.1f, 20f), new Color(0.22f, 0.22f, 0.22f));
+            if (withFloor)
+                Prim(PrimitiveType.Cube, "Props Floor", r, new Vector3(32f, -0.06f, 6f), new Vector3(100f, 0.1f, 20f), new Color(0.22f, 0.22f, 0.22f));
 
             Wardrobe(r, new Vector3(-6f, 0f, 6f), 1);
             Wardrobe(r, new Vector3(-2.5f, 0f, 6f), 2);
@@ -49,10 +50,7 @@ namespace HorrorFPS
             CoopDoorStation(r, new Vector3(46f, 0f, 6f));
             ProximityGate(r, new Vector3(64f, 0f, 6f));
 
-            Selection.activeGameObject = root;
-            EditorSceneManager.MarkSceneDirty(root.scene);
-            Debug.Log("[Props] Bancada criada em [Props Demo]. Para a gaveta trancada, ligue a variável 'tem_chave' (Pickup da chave do jogo completo). "
-                      + "Espelho: baixe a sanidade para ver os vultos. Botão duplo: dois jogadores, um em cada pedestal, dentro de 2 s.");
+            return root;
         }
 
         // ------------------------------------------------------------ materiais e primitivas

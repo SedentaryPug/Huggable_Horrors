@@ -60,9 +60,22 @@ namespace HorrorFPS
 
         void OnDisable() { Release(); }
 
+        InventoryOwner inventory;
+
+        /// <summary>Item equipado que bloqueia o arrastar (arma na mão, por exemplo): o botão de agarrar passa a ser do item.</summary>
+        bool GrabBlockedByEquipment
+        {
+            get
+            {
+                if (inventory == null) inventory = PlayerRef.Find<InventoryOwner>(this);
+                return inventory != null && inventory.BlocksGrab;
+            }
+        }
+
         public bool CanDrag(Draggable d)
         {
             if (d == null || d.Body == null || d.IsHeld || active || d.Body.isKinematic) return false;
+            if (GrabBlockedByEquipment) return false;
             if (ctx.Climber != null && ctx.Climber.IsClimbing) return false;
             return maxMass <= 0f || d.Body.mass <= maxMass;
         }
@@ -124,7 +137,7 @@ namespace HorrorFPS
         void Update()
         {
             if (!active) return;
-            if (held == null || ctx.IsDead) { Release(); return; }
+            if (held == null || ctx.IsDead || GrabBlockedByEquipment) { Release(); return; }       // equipou algo enquanto arrastava: solta
             if (Time.frameCount == beginFrame) return; // ignora o aperto que iniciou o arrasto
 
             bool release = GameSettings.GrabMode == HoldMode.Hold ? !input.GrabHeld : input.GrabPressed;

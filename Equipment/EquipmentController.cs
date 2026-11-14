@@ -8,25 +8,30 @@ namespace HorrorFPS
     /// Faz o que o item EQUIPADO faz de verdade (ItemData.equip): mostra o modelo na mão, liga a lanterna, golpeia, atira, recarrega.
     /// Um por jogador. A "mão" segura uma arma (branca ou de fogo) e a lanterna fica à parte (os dois ao mesmo tempo).
     ///
-    /// Controles (só com o inventário fechado): usar equipado (botão direito / LT) golpeia ou atira • R / D-pad baixo recarrega •
+    /// Controles (só com o inventário fechado): usar equipado (botão esquerdo / RT) golpeia ou atira • botão direito / LT mira (arma de fogo,
+    /// segurando: zoom, menos dispersão, arma no centro) • R / D-pad baixo recarrega •
     /// F / D-pad cima liga e desliga a lanterna (equipa uma, se não houver).
     /// Dano: vai para quem tiver IDamageable (StatsComponent do framework) e/ou IItemHittable (HitTarget, seus scripts).
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment Controller")]
     [PlayerModule("Equipamento", 0)]
-    public class EquipmentController : MonoBehaviour, IItemUseHandler
+    [RequireComponent(typeof(ItemInput))]
+    public class EquipmentController : MonoBehaviour, IItemUseHandler, ICameraModifier
     {
         [Tooltip("Camadas que golpes e tiros acertam.")]
         [SerializeField] LayerMask hitMask = ~0;
         [SerializeField] float muzzleFlashSeconds = 0.05f;
         [Tooltip("Empurrão (impulso) que um acerto dá em objetos com Rigidbody, por ponto de dano.")]
         [SerializeField] float hitImpulsePerDamage = 0.12f;
+        [Tooltip("As mãos tremem com o batimento (ItemTremor): a mira deriva, o golpe desvia, a lanterna balança, recarregar demora mais.")]
+        [SerializeField] bool heartTremor = true;
 
         PlayerContext player;
         InventoryOwner owner;
         ItemInput input;
         InventoryScreen screen;
         HotbarHUD hud;
+        ItemTremor tremor;
         Camera cam;
         AudioSource audioSrc;
         bool ready;
@@ -38,6 +43,7 @@ namespace HorrorFPS
         float batteryAcc, lampSeed;
 
         bool busy, reloading;
+        float aimT;                 // 0 = arma baixa, 1 = mirando
         float nextAttack, nextSync;
         float swingT = -1f, reloadT = -1f, kick;
         Coroutine action;
@@ -47,6 +53,9 @@ namespace HorrorFPS
         public ItemInstance Hand { get { return hand; } }
         public ItemInstance Lamp { get { return lamp; } }
         public bool IsReloading { get { return reloading; } }
+        /// <summary>0..1: quanto o jogador já está mirando (arma de fogo). Use para HUD, mira, sons...</summary>
+        public float AimAmount { get { return aimT; } }
+        public bool IsAiming { get { return aimT > 0.5f; } }
         public float ReloadProgress { get { return reloadT < 0f ? 0f : reloadT; } }
         /// <summary>O controlador cuida do botão de usar equipado (o jeito antigo — ação principal do item — fica desligado).</summary>
         public bool OwnsPrimary { get { return hand != null || lamp != null; } }
@@ -62,8 +71,14 @@ namespace HorrorFPS
             screen = PlayerRef.Find<InventoryScreen>(this);
             hud = PlayerRef.Find<HotbarHUD>(this);
             lampSeed = Random.value * 50f;
+            if (heartTremor)
+            {
+                tremor = PlayerRef.Find<ItemTremor>(this);
+                if (tremor == null) tremor = gameObject.AddComponent<ItemTremor>();
+            }
             owner.Equipped += OnEquipped;
             owner.Unequipped += OnUnequipped;
+            CameraFx.Register(this);
             ready = true;
             Sync();
             return true;
@@ -71,6 +86,7 @@ namespace HorrorFPS
 
         void OnDestroy()
         {
+            CameraFx.Unregister(this);
             if (owner != null) { owner.Equipped -= OnEquipped; owner.Unequipped -= OnUnequipped; }
         }
 
@@ -122,18 +138,16 @@ namespace HorrorFPS
             if (Time.unscaledTime >= nextSync) { nextSync = Time.unscaledTime + 0.4f; Sync(); }
 
             TickLamp(Time.deltaTime);
+            TickAim(Time.deltaTime);
             TickViewModel(Time.deltaTime);
+            TickLampPose();
             if (muzzle != null && muzzle.enabled && Time.time >= muzzleOffAt) muzzle.enabled = false;
 
             if (!Allowed()) return;
 
             if (ItemInput.Pressed(input.ToggleLight)) ToggleLamp();
 
-            if (hand == null)
-            {
-                if (lamp != null && ItemInput.Pressed(input.UseEquipped)) ToggleLamp();      // só a lanterna na mão: o botão de usar liga/desliga
-                return;
-            }
+            if (hand == null) return;       // só a lanterna: liga e desliga com F / D-pad cima (o botão esquerdo continua livre para arrastar)
 
             ItemEquip eq = hand.data.equip;
             if (eq.kind == EquipKind.Melee)
@@ -146,6 +160,27 @@ namespace HorrorFPS
                 if (fire) TryFire();
                 if (ItemInput.Pressed(input.Reload)) TryReload();
             }
+        }
+
+        /// <summary>Segurar o botão de mirar (arma de fogo na mão): entra e sai da mira suavemente.</summary>
+        void TickAim(float dt)
+        {
+            float target = 0f;
+            float seconds = 0.15f;
+            if (hand != null && hand.data.equip.kind == EquipKind.Firearm)
+            {
+                seconds = Mathf.Max(0.01f, hand.data.equip.aimSeconds);
+                if (!reloading && Allowed() && ItemInput.Held(input.Aim)) target = 1f;
+            }
+            aimT = Mathf.MoveTowards(aimT, target, dt / seconds);
+        }
+
+        /// <summary>Zoom da mira: só na imagem da câmera deste jogador (a lógica do jogo continua vendo a câmera normal).</summary>
+        public void Contribute(Camera c, ref CameraDelta delta)
+        {
+            if (c == null || c != cam || aimT <= 0f || hand == null) return;
+            float fov = hand.data.equip.aimFov;
+            if (fov > 1f) delta.fov += (fov - c.fieldOfView) * aimT;
         }
 
         bool Allowed()
@@ -387,16 +422,17 @@ namespace HorrorFPS
         // ------------------------------------------------------------------ pose do modelo na mão (balanço, golpe, coice, recarga)
         void TickViewModel(float dt)
         {
-            kick = Mathf.MoveTowards(kick, 0f, dt * 7f);
+            kick = Mathf.MoveTowards(kick, 0f, dt * (tremor != null ? tremor.KickRecoverSpeed(7f) : 7f));      // com a mão tremendo, o coice assenta mais devagar
 
             if (handRoot != null && hand != null)
             {
                 ItemEquip eq = hand.data.equip;
-                Vector3 pos = eq.heldPosition;
+                Vector3 pos = Vector3.Lerp(eq.heldPosition, eq.aimPosition, aimT);
                 Quaternion rot = Quaternion.identity;
 
                 float t = Time.time;
-                pos += new Vector3(Mathf.Sin(t * 1.3f) * 0.003f, Mathf.Sin(t * 2.1f) * 0.003f, 0f);     // respiração
+                float sway = 1f - 0.8f * aimT;      // mirando, a arma balança menos
+                pos += new Vector3(Mathf.Sin(t * 1.3f) * 0.003f, Mathf.Sin(t * 2.1f) * 0.003f, 0f) * sway;     // respiração
 
                 if (swingT >= 0f)
                 {
@@ -419,9 +455,28 @@ namespace HorrorFPS
                 pos += new Vector3(0f, 0.012f * kick, -0.07f * kick);
                 rot = rot * Quaternion.Euler(-9f * kick, 0f, 0f);
 
+                if (tremor != null)
+                {
+                    // o modelo inteiro gira em torno do olho: é por onde ele aponta que o tiro sai (ver Fire)
+                    Quaternion q = eq.kind == EquipKind.Firearm ? tremor.FirearmOffset(aimT, eq.pellets) : tremor.Offset(ItemTremor.Channel.Melee);
+                    pos = q * pos;
+                    rot = q * rot;
+                }
+
                 handRoot.localPosition = pos;
                 handRoot.localRotation = rot;
             }
+        }
+
+        /// <summary>A lanterna também é segurada: o feixe acompanha a mão que treme (gira em torno do olho, como a arma).</summary>
+        void TickLampPose()
+        {
+            if (lampRoot == null || lamp == null) return;
+            Vector3 basePos = lamp.data.equip.heldPosition;
+            if (tremor == null) { lampRoot.localPosition = basePos; lampRoot.localRotation = Quaternion.identity; return; }
+            Quaternion q = tremor.Offset(ItemTremor.Channel.Lamp);
+            lampRoot.localPosition = q * basePos;
+            lampRoot.localRotation = q;
         }
 
         // ------------------------------------------------------------------ acertos
@@ -528,14 +583,16 @@ namespace HorrorFPS
         void DoMeleeHit(ItemInstance weapon, ItemEquip eq)
         {
             Transform ct = cam.transform;
+            Vector3 dir = ct.forward;
+            if (tremor != null) dir = ct.rotation * (tremor.MeleeStrike() * Vector3.forward);      // a mão tremendo desvia o golpe
             Emit(eq.noise, NoiseKind.Impact);
             CameraImpulse.Recoil(this, 0.25f, 0.15f);
 
-            RaycastHit[] hits = Physics.SphereCastAll(ct.position, Mathf.Max(0.05f, eq.hitRadius), ct.forward, Mathf.Max(0.3f, eq.range), hitMask, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = Physics.SphereCastAll(ct.position, Mathf.Max(0.05f, eq.hitRadius), dir, Mathf.Max(0.3f, eq.range), hitMask, QueryTriggerInteraction.Ignore);
             RaycastHit best;
             if (!FirstHit(hits, out best)) return;                          // acertou o ar
 
-            ApplyHit(best, ct.forward, eq.damage, weapon, false);
+            ApplyHit(best, dir, eq.damage, weapon, false);
             Play(eq.useSound != null ? eq.useSound : ProceduralAudio.Thud(), 0.9f);
             DynamicHeadBob bob = PlayerRef.Find<DynamicHeadBob>(this);
             if (bob != null) bob.AddTrauma(0.18f);
@@ -581,13 +638,26 @@ namespace HorrorFPS
         {
             Transform ct = cam.transform;
             int pellets = Mathf.Max(1, eq.pellets);
+
+            // para onde a arma realmente aponta: a câmera + a deriva da mão (a mesma que o modelo mostra em TickViewModel)
+            Quaternion aimQ = ct.rotation;
+            float extra = 0f;
+            if (tremor != null)
+            {
+                aimQ = ct.rotation * tremor.FirearmOffset(aimT, pellets);
+                if (pellets == 1) extra = tremor.ExtraSpreadDegrees(aimT);
+            }
+            Vector3 baseDir = aimQ * Vector3.forward;
+            Vector3 baseUp = aimQ * Vector3.up;
+            float spread = eq.spread * Mathf.Lerp(1f, eq.aimSpreadMultiplier, aimT) + extra;
+
             for (int i = 0; i < pellets; i++)
             {
-                Vector3 dir = ct.forward;
-                if (eq.spread > 0.001f)
+                Vector3 dir = baseDir;
+                if (spread > 0.001f)
                 {
-                    Quaternion cone = Quaternion.AngleAxis(Random.Range(0f, 360f), ct.forward) * Quaternion.AngleAxis(Random.Range(0f, eq.spread), ct.up);
-                    dir = cone * ct.forward;
+                    Quaternion cone = Quaternion.AngleAxis(Random.Range(0f, 360f), baseDir) * Quaternion.AngleAxis(Random.Range(0f, spread), baseUp);
+                    dir = cone * baseDir;
                 }
                 RaycastHit[] hits = Physics.RaycastAll(ct.position, dir, Mathf.Max(1f, eq.range), hitMask, QueryTriggerInteraction.Ignore);
                 RaycastHit best;
@@ -627,7 +697,7 @@ namespace HorrorFPS
             busy = true; reloading = true;
             Play(eq.reloadSound != null ? eq.reloadSound : ProceduralAudio.ReloadClack(), 0.9f);
             Emit(Mathf.Min(8f, eq.noise * 0.15f), NoiseKind.Item);
-            float dur = Mathf.Max(0.3f, eq.reloadSeconds);
+            float dur = Mathf.Max(0.3f, eq.reloadSeconds) * (tremor != null ? tremor.ReloadMultiplier : 1f);      // mãos trêmulas encaixam o carregador mais devagar
             float t = 0f;
             while (t < dur)
             {

@@ -13,6 +13,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Sanity/Sanity FX")]
     [PlayerModule("Sanidade", 1)]
+    [RequireComponent(typeof(SanityComponent), typeof(PlayerOverlay))]
     public class SanityFX : MonoBehaviour, ICameraModifier, ISanityListener
     {
         [Serializable] public class FloatEvent : UnityEvent<float> { }

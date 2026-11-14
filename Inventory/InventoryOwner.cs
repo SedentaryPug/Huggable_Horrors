@@ -37,6 +37,13 @@ namespace HorrorFPS
         [SerializeField] Transform dropAnchor;
         [SerializeField] float dropDistance = 1.1f;
 
+        [Header("Tamanho da mochila")]
+        [Tooltip("Colunas da mochila DESTE dono (a grade principal). 0 = usa o tamanho escrito no GridContainer da mochila.")]
+        [SerializeField, Min(0)] int bagColumns = 0;
+        [Tooltip("Fileiras da mochila DESTE dono. 0 = usa o tamanho escrito no GridContainer da mochila.")]
+        [SerializeField, Min(0)] int bagRows = 0;
+
+        bool bagSizeDirty;
         readonly List<ItemContainer> containers = new List<ItemContainer>();
         readonly Dictionary<string, ItemInstance> equipped = new Dictionary<string, ItemInstance>();
         readonly List<ItemInstance> overflowBuffer = new List<ItemInstance>();
@@ -63,7 +70,52 @@ namespace HorrorFPS
         void Awake()
         {
             RefreshContainers();
+            ApplyBagSize();
             sessionSaved = IsPlayer && GetComponentInParent<SaveableEntity>() == null;
+        }
+
+        /// <summary>Mexeu em "Bag Columns" / "Bag Rows" com o jogo rodando: aplica no fim do quadro (jogar itens no chão não pode acontecer dentro do OnValidate).</summary>
+        void OnValidate()
+        {
+            if (Application.isPlaying) bagSizeDirty = true;
+        }
+
+        // ------------------------------------------------------------------ tamanho da mochila
+        /// <summary>Grade principal (aba Mochila) deste dono, ou nula se ele não tem uma.</summary>
+        public GridContainer Bag
+        {
+            get
+            {
+                for (int i = 0; i < containers.Count; i++)
+                {
+                    GridContainer g = containers[i] as GridContainer;
+                    if (g != null && !g.ManualOnly && g.Tab == InventoryTab.Bag) return g;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Muda o tamanho da mochila (colunas x fileiras) e grava nos campos do inspetor. O que não couber mais é realocado e,
+        /// se não houver lugar, jogado no chão (itens com atalho na hotbar são os últimos a sair). Devolve false se não há mochila.
+        /// </summary>
+        public bool SetBagSize(int columns, int rows)
+        {
+            bagColumns = Mathf.Max(0, columns);
+            bagRows = Mathf.Max(0, rows);
+            return ApplyBagSize();
+        }
+
+        bool ApplyBagSize()
+        {
+            bagSizeDirty = false;
+            GridContainer g = Bag;
+            if (g == null) return false;
+            if (bagColumns <= 0 && bagRows <= 0) return true;               // sem override: vale o GridContainer
+            int c = bagColumns > 0 ? bagColumns : g.Width;
+            int r = bagRows > 0 ? bagRows : g.Height;
+            g.SetSize(c, r);
+            return true;
         }
 
         void Start()
@@ -113,6 +165,7 @@ namespace HorrorFPS
 
         void LateUpdate()
         {
+            if (bagSizeDirty) ApplyBagSize();
             if (!equipDirty) return;
             equipDirty = false;
             // equipamento some se o item saiu do inventário
@@ -132,7 +185,20 @@ namespace HorrorFPS
         void RelocateOverflow(ItemInstance item)
         {
             AddInstance(item);                          // tenta os outros contêineres
-            if (item.stack > 0) Drop(item, true);       // não coube em lugar nenhum: vai para o chão
+            if (item.container != null || item.stack <= 0) return;
+            if (item.data != null && item.data.canDrop) { Drop(item, true); return; }      // não coube em lugar nenhum: vai para o chão
+            ListContainer tray = EnsureTray();          // item que não pode ser jogado espera na bandeja, nunca some
+            if (tray == null || !tray.TryAdd(item)) Debug.LogWarning("[HorrorFPS] Sem lugar para '" + item + "' e ele não pode ser jogado fora.");
+        }
+
+        /// <summary>
+        /// Confere o tamanho de cada contêiner (a mochila encolheu, a grade foi editada...). O que não couber mais é realocado e,
+        /// se não houver lugar, jogado no chão; itens com atalho na hotbar são os últimos a sair. A tela de inventário chama ao abrir e ao fechar.
+        /// </summary>
+        public void EnforceSizes()
+        {
+            for (int i = 0; i < containers.Count; i++)
+                if (containers[i] != null) containers[i].Revalidate();
         }
 
         // ------------------------------------------------------------------ consulta
@@ -148,7 +214,7 @@ namespace HorrorFPS
         /// <summary>Primeiro contêiner da aba dada (ou nulo).</summary>
         public ItemContainer FindTabContainer(InventoryTab tab)
         {
-            for (int i = 0; i < containers.Count; i++) if (containers[i] != null && containers[i].Tab == tab) return containers[i];
+            for (int i = 0; i < containers.Count; i++) if (containers[i] != null && !containers[i].ManualOnly && containers[i].Tab == tab) return containers[i];
             return null;
         }
 
@@ -160,7 +226,7 @@ namespace HorrorFPS
 
         public ListContainer FirstList()
         {
-            for (int i = 0; i < containers.Count; i++) { ListContainer l = containers[i] as ListContainer; if (l != null) return l; }
+            for (int i = 0; i < containers.Count; i++) { ListContainer l = containers[i] as ListContainer; if (l != null && !l.ManualOnly) return l; }
             return null;
         }
 
@@ -177,10 +243,115 @@ namespace HorrorFPS
         public bool CanFitAny(ItemData data)
         {
             if (data == null) return false;
+            if (BlocksDuplicate(data)) return false;
+            if (data.IsSpecialTab && FindTabContainer(data.ResolvedTab) == null && CanCreateTab()) return true;   // a lista da aba nasce ao guardar
             ItemInstance probe = new ItemInstance(data, 1);
             for (int i = 0; i < containers.Count; i++)
-                if (containers[i].Accepts(data) && containers[i].CanFit(probe)) return true;
+                if (!containers[i].ManualOnly && containers[i].Accepts(data) && containers[i].CanFit(probe)) return true;
             return false;
+        }
+
+        /// <summary>True se o item não pode repetir (regra do ItemData) e este dono já tem uma unidade dele.</summary>
+        public bool BlocksDuplicate(ItemData data)
+        {
+            return data != null && !data.AllowsDuplicates && CountOf(data.Id) > 0;
+        }
+
+        bool CanCreateTab() { return GetComponentInParent<PlayerContext>() != null; }
+
+        /// <summary>
+        /// Lista da aba especial do dono. Só o jogador cria a lista que falta (ilimitada, não ocupa espaço da mochila);
+        /// assim chaves, registros e mapas nunca caem na mochila por falta da aba.
+        /// </summary>
+        ItemContainer EnsureTabContainer(InventoryTab tab)
+        {
+            ItemContainer c = FindTabContainer(tab);
+            if (c != null || tab == InventoryTab.Bag || !CanCreateTab()) return c;
+
+            GameObject go = new GameObject("[" + InventoryTabs.Label(tab) + "]");
+            go.transform.SetParent(transform, false);
+            ListContainer list = go.AddComponent<ListContainer>();
+            list.ContainerId = tab == InventoryTab.Keys ? "keys" : (tab == InventoryTab.Records ? "records" : "maps");
+            list.DisplayName = InventoryTabs.Label(tab);
+            list.Tab = tab;
+            list.Unlimited = true;
+            RefreshContainers();
+            return list;
+        }
+
+        /// <summary>
+        /// Bandeja de remanejo do jogador: lista ilimitada onde o inventário deixa peças soltas enquanto você reorganiza a mochila.
+        /// Não entra em coleta automática (ManualOnly) e é esvaziada ao fechar a tela (FlushManualContainers).
+        /// </summary>
+        public ListContainer EnsureTray()
+        {
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ListContainer found = containers[i] as ListContainer;
+                if (found != null && found.ManualOnly) return found;
+            }
+            if (!CanCreateTab()) return null;
+
+            GameObject go = new GameObject("[Bandeja]");
+            go.transform.SetParent(transform, false);
+            ListContainer list = go.AddComponent<ListContainer>();
+            list.ContainerId = "tray";
+            list.DisplayName = "Bandeja";
+            list.Tab = InventoryTab.Bag;
+            list.Unlimited = true;
+            list.ManualOnly = true;
+            RefreshContainers();
+            return list;
+        }
+
+        /// <summary>
+        /// Devolve ao inventário o que estiver em contêineres ManualOnly (bandeja): o item vai para a aba/contêiner onde couber;
+        /// se não couber em lugar nenhum e puder ser jogado, cai no chão. O que não pode ser jogado continua na bandeja.
+        /// </summary>
+        public void FlushManualContainers()
+        {
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ItemContainer c = containers[i];
+                if (c == null || !c.ManualOnly || c.Count == 0) continue;
+                List<ItemInstance> list = new List<ItemInstance>(c.Items);
+                for (int k = 0; k < list.Count; k++)
+                {
+                    ItemInstance it = list[k];
+                    if (it == null || it.data == null || it.container != c) continue;
+                    ItemContainer dest = FindAutoDestination(it);
+                    if (dest != null && ItemTransfer.Ok(ItemTransfer.Move(it, dest))) continue;
+                    if (it.data.canDrop) Drop(it, true);
+                }
+            }
+        }
+
+        ItemContainer FindAutoDestination(ItemInstance it)
+        {
+            ItemContainer tabC = FindTabContainer(it.data.ResolvedTab);
+            if (tabC != null && tabC.Accepts(it.data) && tabC.CanFit(it)) return tabC;
+            for (int i = 0; i < containers.Count; i++)
+            {
+                ItemContainer c = containers[i];
+                if (c == null || c.ManualOnly || !c.Accepts(it.data)) continue;
+                if (c.CanFit(it)) return c;
+            }
+            return null;
+        }
+
+        /// <summary>True se há um item equipado que bloqueia o arrastar objetos (ItemEquip.blocksGrab): o botão passa a ser do item.</summary>
+        public bool BlocksGrab
+        {
+            get
+            {
+                foreach (KeyValuePair<string, ItemInstance> kv in equipped)
+                {
+                    ItemInstance it = kv.Value;
+                    if (it == null || it.data == null) continue;
+                    if (it.data.equip == null || it.data.equip.blocksGrab) return true;
+                }
+                return false;
+            }
         }
 
         public ItemInstance FindFirst(string itemId)
@@ -217,7 +388,15 @@ namespace HorrorFPS
         public int AddInstance(ItemInstance inst, string preferContainerId = null)
         {
             if (inst == null || inst.data == null || inst.stack <= 0) return 0;
+            if (BlocksDuplicate(inst.data)) return 0;               // já tem e não pode repetir: nada entra, a instância fica como está
+
+            // sem repetição, só 1 unidade entra; o excedente volta para a instância no fim
+            int extra = 0;
+            if (!inst.data.AllowsDuplicates && inst.stack > 1) { extra = inst.stack - 1; inst.stack = 1; }
+
             int total = inst.stack, added = 0;
+
+            if (inst.data.IsSpecialTab) EnsureTabContainer(inst.data.ResolvedTab);
 
             ItemContainer preferred = string.IsNullOrEmpty(preferContainerId) ? null : GetContainer(preferContainerId);
             if (preferred != null) added += preferred.AddPartial(inst);
@@ -225,17 +404,21 @@ namespace HorrorFPS
             // ordem: 0) contêiner da aba certa que já tem o mesmo item (completa pilhas) • 1) qualquer contêiner da aba certa
             //        • 2) qualquer outro que aceite (ex.: chave sem lista de Chaves vai para a mochila)
             InventoryTab want = inst.data.ResolvedTab;
-            for (int pass = 0; pass < 3 && inst.stack > 0; pass++)
-                for (int i = 0; i < containers.Count && inst.stack > 0; i++)
+            // 'added < total' e não 'inst.stack > 0': quando a instância inteira entra num contêiner ela mesma é o item guardado e
+            // continua com stack > 0; o laço então a colocava de novo em outro contêiner (item duplicado na lista e células fantasmas)
+            for (int pass = 0; pass < 3 && added < total; pass++)
+                for (int i = 0; i < containers.Count && added < total; i++)
                 {
                     ItemContainer c = containers[i];
-                    if (c == preferred || !c.Accepts(inst.data)) continue;
+                    if (c == preferred || c.ManualOnly || !c.Accepts(inst.data)) continue;
                     bool right = c.Tab == want;
+                    if (pass == 2 && want != InventoryTab.Bag && c.Tab == InventoryTab.Bag && CanCreateTab()) continue;   // chave/registro/mapa do jogador nunca vai para a mochila
                     if (pass == 0 && !(right && c.FindFirst(inst.data.Id) != null)) continue;
                     if (pass == 1 && !right) continue;
                     added += c.AddPartial(inst);
                 }
 
+            inst.stack += extra;
             if (added > 0)
             {
                 Action<ItemInstance> h = Picked; if (h != null) h(inst);
@@ -432,8 +615,12 @@ namespace HorrorFPS
                 return null;
             }
 
-            Action<ItemInstance> h = Dropped; if (h != null) h(toDrop);
-            ItemEvents.RaiseDropped(this, toDrop);
+            try
+            {
+                Action<ItemInstance> h = Dropped; if (h != null) h(toDrop);
+                ItemEvents.RaiseDropped(this, toDrop);
+            }
+            catch (Exception e) { Debug.LogException(e); }      // erro num ouvinte não desfaz o descarte nem trava o inventário
             return w;
         }
 
@@ -561,6 +748,7 @@ namespace HorrorFPS
         void OnBeforeSave()
         {
             if (!sessionSaved) return;
+            FlushManualContainers();        // nada fica "no ar" (bandeja) dentro do save
             OwnerSave s = new OwnerSave();
             s.containerIds = new string[containers.Count];
             s.containerStates = new string[containers.Count];

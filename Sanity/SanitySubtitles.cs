@@ -10,6 +10,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Sanity/Subtitles")]
     [PlayerModule("Sanidade", 4)]
+    [RequireComponent(typeof(SanityComponent), typeof(PlayerOverlay))]
     public class SanitySubtitles : MonoBehaviour
     {
         struct Entry { public string speaker, text; public float seconds; public AudioClip voice; }

@@ -8,9 +8,10 @@ namespace HorrorFPS.ItemsEditor
     /// <summary>Utilidades compartilhadas pelas ferramentas do menu Tools > Horror FPS (itens, sanidade e corpo).</summary>
     public static class WizardUtil
     {
-        public const string ItemsFolder = "Assets/HorrorFPS/Resources/HorrorFPS/Items";
-        public const string ModelsFolder = "Assets/HorrorFPS/Generated/ItemModels";
-        public const string MaterialsFolder = "Assets/HorrorFPS/Generated/Materials";
+        // pastas relativas à raiz do framework (ProjectPaths): seguem a pasta renomeada e reaproveitam a antiga "Assets/HorrorFPS" se ela já existe
+        public static string ItemsFolder { get { return ProjectPaths.Folder("Resources/HorrorFPS/Items"); } }
+        public static string ModelsFolder { get { return ProjectPaths.Folder("Generated/ItemModels"); } }
+        public static string MaterialsFolder { get { return ProjectPaths.Folder("Generated/Materials"); } }
 
         // ------------------------------------------------------------------ pastas e assets
         public static void EnsureFolder(string path)

@@ -10,6 +10,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/Sanity/Sanity Audio")]
     [PlayerModule("Sanidade", 3)]
+    [RequireComponent(typeof(SanityComponent))]
     public class SanityAudio : MonoBehaviour
     {
         [SerializeField] AudioMode audioMode = AudioMode.Auto;

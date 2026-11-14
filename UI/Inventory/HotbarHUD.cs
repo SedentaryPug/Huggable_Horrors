@@ -9,6 +9,7 @@ namespace HorrorFPS
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Hotbar HUD")]
     [PlayerModule("Interface", 2)]
+    [RequireComponent(typeof(Hotbar), typeof(PlayerOverlay))]
     public class HotbarHUD : MonoBehaviour
     {
         [SerializeField] float showSeconds = 3.5f;
@@ -29,7 +30,8 @@ namespace HorrorFPS
         bool built;
 
         class SlotUI { public Image back, swatch, icon, selected; public Text number, count; }
-        readonly SlotUI[] slots = new SlotUI[Hotbar.SlotCount];
+        readonly SlotUI[] slots = new SlotUI[Hotbar.MaxSlots];
+        int slotCount;
 
         void Start() { Build(); }
 
@@ -44,12 +46,13 @@ namespace HorrorFPS
             built = true;
 
             RectTransform layer = overlay.NewLayer("Hud");
-            float total = Hotbar.SlotCount * (Slot + Gap) - Gap;
+            slotCount = hotbar.Slots;
+            float total = slotCount * (Slot + Gap) - Gap;
             strip = InvUI.Rect(layer, "Hotbar");
             InvUI.BottomCenter(strip, total, Slot, 14f);
             stripGroup = strip.gameObject.AddComponent<CanvasGroup>();
 
-            for (int i = 0; i < slots.Length; i++)
+            for (int i = 0; i < slotCount; i++)
             {
                 SlotUI s = new SlotUI();
                 RectTransform rt = InvUI.Rect(strip, "slot" + i);
@@ -58,7 +61,7 @@ namespace HorrorFPS
                 s.swatch = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(s.swatch.rectTransform, 6, 6, 6, 6);
                 s.icon = InvUI.Img(rt, "ic", Color.white); s.icon.preserveAspect = true; InvUI.Stretch(s.icon.rectTransform, 4, 4, 4, 4);
                 s.selected = InvUI.Img(rt, "sel", new Color(InvUI.Accent.r, InvUI.Accent.g, InvUI.Accent.b, 0.35f)); InvUI.Stretch(s.selected.rectTransform);
-                s.number = InvUI.Label(rt, "n", (i + 1).ToString(), 11, TextAnchor.UpperLeft, InvUI.Accent);
+                s.number = InvUI.Label(rt, "n", Hotbar.KeyLabel(i), 11, TextAnchor.UpperLeft, InvUI.Accent);
                 InvUI.TopLeft(s.number.rectTransform, 3f, 1f, 20f, 16f);
                 s.count = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
                 InvUI.TopLeft(s.count.rectTransform, 0f, 0f, Slot - 3f, Slot - 1f);
@@ -72,6 +75,19 @@ namespace HorrorFPS
 
             hotbar.Changed += OnHotbarChanged;
             if (owner != null) { owner.Picked += OnPicked; owner.Dropped += OnDropped; owner.Changed += OnOwnerChanged; }
+        }
+
+        /// <summary>Descarta a faixa e monta de novo (a quantidade de atalhos mudou).</summary>
+        void Rebuild()
+        {
+            if (hotbar != null) hotbar.Changed -= OnHotbarChanged;
+            if (owner != null) { owner.Picked -= OnPicked; owner.Dropped -= OnDropped; owner.Changed -= OnOwnerChanged; }
+            if (strip != null) Destroy(strip.gameObject);
+            if (message != null) Destroy(message.gameObject);
+            for (int i = 0; i < slots.Length; i++) slots[i] = null;
+            built = false;
+            dirty = true;
+            Build();
         }
 
         void OnDestroy()
@@ -115,7 +131,8 @@ namespace HorrorFPS
         void Refresh()
         {
             dirty = false;
-            for (int i = 0; i < slots.Length; i++)
+            if (hotbar.Slots != slotCount) { Rebuild(); return; }        // a quantidade de atalhos mudou em jogo: refaz a faixa
+            for (int i = 0; i < slotCount; i++)
             {
                 ItemInstance it = hotbar.GetItem(i);
                 SlotUI s = slots[i];

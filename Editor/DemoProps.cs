@@ -9,11 +9,10 @@ using UnityEngine.Events;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 6. Create Demo Props In Open Scene — monta na cena aberta uma bancada de testes dos sistemas novos:
-    /// baú em grade com itens, itens no chão, zona que drena sanidade, retrato que descreve diferente conforme a sanidade de quem
-    /// olha, coisas que só quem está mal enxerga (ou deixa de enxergar), lâmpada que falha, barril que explode (sacode a cabeça de
-    /// todos no alcance) e um "ouvinte" que vira para o barulho. Tudo sai agrupado num objeto só, e o Ctrl+Z desfaz.
-    /// Cria os itens de exemplo antes, se ainda não existirem.
+    /// Bancada de testes dos sistemas de itens, sanidade e corpo (a cena completa, menu 27, usa isto): baú em grade com itens,
+    /// itens no chão, zona que drena sanidade, retrato que descreve diferente conforme a sanidade de quem olha, coisas que só
+    /// quem está mal enxerga (ou deixa de enxergar), lâmpada que falha, barril que explode (sacode a cabeça de todos no alcance)
+    /// e um "ouvinte" que vira para o barulho. Tudo sai agrupado num objeto só. Os itens de exemplo vêm de SampleItems.EnsureAll.
     /// </summary>
     public static class DemoProps
     {
@@ -24,19 +23,18 @@ namespace HorrorFPS.ItemsEditor
             public Var(float below, string text) { this.below = below; this.text = text; }
         }
 
-        [MenuItem("Tools/Horror FPS/6. Create Demo Props In Open Scene")]
-        static void Menu()
+        /// <summary>
+        /// Monta a bancada inteira (baú, itens no chão, bonecos de treino, zona de sanidade, retrato, alucinações, lâmpada, barril e ouvinte)
+        /// sob um objeto novo em 'origin'. Não abre diálogo, não seleciona nada e não registra undo: a cena completa (menu 27) usa isto.
+        /// 'ensureGround' acrescenta um chão só se não houver nenhum embaixo (consulta a física: desligue se você já fornece o chão).
+        /// </summary>
+        public static GameObject Build(Dictionary<string, ItemData> items, Vector3 origin, Quaternion facing, bool ensureGround)
         {
-            int created;
-            Dictionary<string, ItemData> items = SampleItems.EnsureAll(out created);
-
-            Quaternion facing;
-            Vector3 origin = Origin(out facing);
             GameObject rootGo = new GameObject("[Demo] Itens, Sanidade e Corpo");
             rootGo.transform.SetPositionAndRotation(origin, facing);
             Transform root = rootGo.transform;
 
-            EnsureGround(root, origin);
+            if (ensureGround) EnsureGround(root, origin);
             BuildChest(root, items);
             BuildFloorItems(root, items);
             BuildTargets(root);
@@ -46,32 +44,7 @@ namespace HorrorFPS.ItemsEditor
             BuildLamp(root);
             BuildBarrel(root);
             BuildListener(root);
-
-            Undo.RegisterCreatedObjectUndo(rootGo, "Create Horror FPS demo props");
-            Selection.activeGameObject = rootGo;
-            EditorSceneManager.MarkSceneDirty(rootGo.scene);
-
-            WizardUtil.Msg("Bancada de testes criada na cena aberta (objeto \"" + rootGo.name + "\").\n\n" +
-                           "• Baú: abre a mochila e o baú lado a lado (arraste itens entre os dois).\n" +
-                           "• Itens no chão: lanterna (F liga/desliga), pé de cabra, faca, taco, pistola, espingarda, munição e kit médico.\n" +
-                           "  Equipe pelo inventário (ou atalho 1-9); botão direito golpeia/atira, R recarrega.\n" +
-                           "• Bonecos de treino (vermelhos): mostram o dano na tela e caem ao morrer.\n" +
-                           "• Zona vermelha no chão: drena sanidade. O retrato e a parede mudam conforme a SUA sanidade.\n" +
-                           "• Barril vermelho: Detonar sacode a cabeça, acelera o coração e faz barulho.\n" +
-                           "• O \"ouvinte\" vira para qualquer barulho que você fizer (tiro, passos correndo, batimento alto).\n\n" +
-                           "Dica: sem modificar o prefab do jogador, os módulos entram sozinhos ao dar Play.");
-        }
-
-        // ------------------------------------------------------------------ posição
-        static Vector3 Origin(out Quaternion facing)
-        {
-            SceneView view = SceneView.lastActiveSceneView;
-            Vector3 p = view != null ? view.pivot : Vector3.zero;
-            facing = view != null ? Quaternion.Euler(0f, view.rotation.eulerAngles.y, 0f) : Quaternion.identity;
-            RaycastHit hit;
-            if (Physics.Raycast(p + Vector3.up * 20f, Vector3.down, out hit, 100f)) p = hit.point;
-            else p.y = 0f;
-            return p;
+            return rootGo;
         }
 
         static void EnsureGround(Transform root, Vector3 origin)

@@ -56,8 +56,11 @@ Assets/HorrorFPS
 | **Mover o cursor célula a célula** (sem mouse) | Setas ou WASD | D-pad |
 | Pegar / soltar (teclado) | Enter ou Espaço | A |
 | Menu do item (teclado) | E | X |
+| **Menu aberto: escolher a opção em foco** | E, Enter ou Espaço (ou clique na linha) | A ou X |
+| **Menu aberto: mover o foco** | Setas ou WASD | D-pad |
+| **Menu aberto: fechar** | Botão direito, Backspace ou clique fora | B |
 | Voltar / devolver à origem | Backspace | B |
-| Atalho rápido 1–9 (equipável: **equipa/guarda**; consumível: usa) | Teclas 1 a 9 | D-pad ← / → troca, LB usa |
+| Atalho rápido (equipável: **equipa/guarda**; consumível: usa) | Teclas 1–9, 0, - e = (até 12, ver 17.3) | D-pad ← / → troca, LB usa |
 | **Usar o item equipado** (fora do inventário) | Botão direito do mouse | LT |
 | **Segurar a respiração** | H | R3 (clique do analógico direito) |
 
@@ -174,7 +177,7 @@ API do `InventoryOwner` (para o seu código): `AddItem(data, count, preferContai
 - **Usar / equipar**: menu do item (botão direito) lista as ações do item (indisponíveis ficam desabilitadas com o motivo), **Equipar/Desequipar** quando há `equipSlot`.
 - **Inspecionar**: mostra o modelo 3D e deixa interagir com os hotspots (3.5).
 - **Jogar fora**: arraste para a zona "JOGAR FORA", use **G** sob o cursor ou o menu. O item vira um `WorldItem` no cenário (com física), na frente do jogador; se `canDrop` estiver desligado, não deixa.
-- **Atalhos**: menu > "Atalho…" escolhe uma das 9 teclas (ou remove). A barra de atalhos aparece na tela do jogador e as teclas 1–9 equipam o item (consumíveis são usados); no controle, D-pad ←/→ troca e LB usa. Depois de equipar, o botão de usar equipado aciona o item.
+- **Atalhos**: menu > "Atalho…" escolhe uma das teclas da barra (ou remove); a quantidade de teclas é configurável (17.3). A barra de atalhos aparece na tela do jogador e as teclas (1–9, 0, - e =) equipam o item (consumíveis são usados); no controle, D-pad ←/→ troca e LB usa. Depois de equipar, o botão de usar equipado aciona o item.
 - **Organizar**: a tecla **O** (L3 no controle) junta pilhas iguais e reempacota a grade sob o cursor (ou a mochila), maiores primeiro; se não coubesse tudo, nada é movido. **Dividir pilha**, **Girar** e **Mover para** estão no menu do item.
 
 Itens jogados fora são lembrados pelo `DropRegistry`: somem ao sair do nível, voltam ao entrar e entram no save (variável `drops_v1`). Itens colocados **na cena** (`WorldItem` no editor) usam `SaveableEntity` no mesmo objeto, como qualquer `Pickup`.
@@ -384,11 +387,11 @@ public class BalancoDoBarco : MonoBehaviour, ICameraModifier
 ## 9. Tela do inventário e arrastar
 
 - **Só a mochila aberta**: janela de uma coluna, com células maiores (`maxCellSolo` no `InventoryScreen`, padrão 72 px), a grade centralizada e o painel de informações (nome, descrição, ajuda) embaixo dela. Com baú ou NPC aberto, volta o layout de duas colunas.
-- **Mouse: clique x arrasto**: um **clique rápido** num item abre o menu dele. **Segurar** o botão (0,22 s, `dragHoldSeconds` no `InventoryScreen`) ou arrastar uns pixels (`dragMovePixels`) pega o item: enquanto espera, uma barrinha enche junto do ponteiro, e quando pega a peça "levanta" e passa a seguir o ponteiro. Soltar o botão larga onde estiver; se não couber ou soltar fora de tudo, o item volta ao lugar de onde saiu. Arrastar para a zona **JOGAR FORA** joga no mundo e para um slot da barra de atalhos atalha. O botão direito e a tecla E continuam abrindo o menu na hora. No teclado (Enter) e no controle (A) continua pegar/soltar.
+- **Mouse: clique x arrasto**: um **clique rápido** num item abre o menu dele. **Segurar** o botão (0,4 s, `dragHoldSeconds` no `InventoryScreen`) ou arrastar uns pixels (`dragMovePixels`) pega o item: depois de uma espera de 0,18 s (`dragChargeDelay`) uma barrinha começa a encher junto do ponteiro — um clique rápido nunca a mostra — e quando pega a peça "levanta" e passa a seguir o ponteiro (17.4). Soltar o botão larga onde estiver; se não couber ou soltar fora de tudo, o item volta ao lugar de onde saiu. Arrastar para a zona **JOGAR FORA** joga no mundo e para um slot da barra de atalhos atalha. O botão direito e a tecla E abrem o menu na hora; com o menu aberto, o E (ou Enter/Espaço, ou A/X no controle) **escolhe a opção em foco** em vez de clicar no item de novo (17.1). No teclado (Enter) e no controle (A) continua pegar/soltar.
 - **Onde o item cai ao ser jogado fora**: na frente do jogador, na direção em que ele olha (olhar para baixo não enterra o item no chão). O jogo varre uma esfera do olho até o ponto, confere o volume inteiro do item e recua se bater em parede, móvel ou chão; se nem junto do jogador couber, solta aos pés dele. O item usa colisão contínua, não colide com quem o soltou por 0,8 s e uma rede de segurança o traz de volta se mesmo assim cair para fora do mundo. Com o caminho bloqueado ele só cai (sem o empurrãozinho para frente).
 - **Pegar pela célula**: o arrasto começa exatamente na célula clicada (um T pego pela base continua sendo segurado pela base). Girar com R gira a peça em torno dessa célula. Itens pegos de uma lista são centrados no cursor.
 - O nome do item não aparece mais dentro da grade; ele fica no painel de informações. Não existe peso.
-- **Só teclado ou só controle**: o cursor também anda por passos. Setas/WASD (teclado) e D-pad (controle) movem uma célula; com a mão vazia, um passo atravessa o item inteiro; na borda o cursor pula para o contêiner vizinho (mochila → baú). Enter/Espaço pega e solta, E abre o menu do item (o cursor já cai na primeira opção; setas escolhem). O menu "Atalho…" substitui o arrastar para a barra de atalhos, e "Jogar fora" (ou G) substitui a zona de descarte. Na inspeção, as setas giram o modelo; clicar nos pontos interativos exige mouse ou o analógico esquerdo.
+- **Só teclado ou só controle**: o cursor também anda por passos. Setas/WASD (teclado) e D-pad (controle) movem uma célula; com a mão vazia, um passo atravessa o item inteiro; na borda o cursor pula para o contêiner vizinho (mochila → baú). Enter/Espaço pega e solta, E abre o menu do item (o foco já cai na primeira opção habilitada; setas movem o foco e E/Enter/Espaço escolhem). O menu "Atalho…" substitui o arrastar para a barra de atalhos, e "Jogar fora" (ou G) substitui a zona de descarte. Na inspeção, as setas giram o modelo; clicar nos pontos interativos exige mouse ou o analógico esquerdo.
 
 ## 10. Itens iniciais no Inspector
 
@@ -619,3 +622,73 @@ Por código, sem componente: `SoundEmitter.PlayAt(clip, posição, raio, NoiseKi
 - `NoiseSystem.GlobalScale` — escala todos os raios (dificuldade, vento).
 - `NoiseSystem.DebugDraw = true` — desenha a esfera de cada barulho (amarela) e linhas até quem foi avisado (laranja) por 1,5 s, com **Gizmos** ligados na Game view.
 - Um monstro sem collider no corpo só é avisado se tiver `NoiseListener` (ou um filho com collider/trigger e o `INoiseHearer` no pai). Pés/passos do jogador, tiros (`Gunshot`), golpes (`Impact`) e itens já emitem sozinhos.
+
+## 17. Inventário: menu por foco, animações, sons, tamanhos e arrasto
+
+Tudo isto vive na tela do inventário de cada jogador (`InventoryScreen`, no filho `[Inventory]`/overlay do jogador) e nos módulos `Hotbar` e `InventoryOwner`.
+
+### 17.1 Menu do item: o E escolhe a opção
+
+O menu do item (Usar, Equipar, Inspecionar, Atalho…, Jogar fora…) tem **sempre uma opção em foco**: a primeira habilitada ao abrir, com uma barrinha e um destaque que desliza de uma linha para a outra.
+
+| Entrada | O que faz com o menu aberto |
+|---|---|
+| **E**, Enter, Espaço (teclado) • **A** ou **X** (controle) | ativa a opção **em foco** (não clica no item de baixo) |
+| Setas/WASD • D-pad | move o foco; pula opções bloqueadas e dá a volta nas pontas |
+| Mouse | o foco acompanha o ponteiro **só quando ele anda** (ponteiro parado não rouba o foco do teclado); clique na linha ativa essa linha; clique fora fecha |
+| Botão direito • Backspace • B | fecha sem escolher |
+
+Opção bloqueada (aparece com o motivo): o E só **balança a linha** e toca o som `MenuDenied`. O menu consome toda a entrada enquanto está aberto, então nenhuma tecla vaza para o item que está por baixo. A dica no rodapé do menu muda com o dispositivo ("E escolhe • Setas movem • Botão dir. fecha" no teclado; "A/X escolhe • D-pad move • B volta" no controle). A lógica fica em `ItemMenu.cs` (`MoveFocus`, `PickFocused`, `Click`, `UpdatePointer`) e na ação `MenuPick` do `ItemInput`.
+
+**Por que não o EventSystem/navegação da Unity?** O sistema de navegação da Unity (`Selectable`, `EventSystem`) tem **uma única seleção global**; o inventário daqui é **um por jogador** (split-screen, cada um com os próprios dispositivos), é desenhado por código com um cursor virtual e tem grade de formato livre com arrastar e soltar. Para usá-lo seria preciso um `MultiplayerEventSystem` + módulo de entrada por jogador, e a grade ainda teria de ser feita à mão. O problema real era o menu não ter o conceito de "opção em foco", e foi isso que se resolveu (o mesmo modelo do `Selectable`, dentro do `ItemMenu`). O EventSystem continua nos menus **globais** (menu principal, pausa, game over, slots de save, controles, opções), onde há um só jogador navegando.
+
+### 17.2 Animações
+
+Ligadas por padrão; ajustáveis no `InventoryScreen`, seção **Animações**:
+
+| Campo | Para quê |
+|---|---|
+| `animations` | liga/desliga tudo (desligado = tudo instantâneo) |
+| `animationSpeed` | 0,5 a 3 (1 = normal; 2 = o dobro de rápido) |
+| `shakePixels` | quanto a peça/atalho balança de um lado ao outro quando **não cabe** (0 = não balança) |
+
+| Momento | Animação |
+|---|---|
+| **Encaixou** | cada célula ocupada pisca em **verde**, uma moldura se expande em volta da peça e um "eco" dela assenta (cresce e some) |
+| **Juntou pilha** | pisca em **azul** e sobe um "+N" |
+| **Trocou de lugar** com outra peça | pisca em **amarelo** |
+| **Não coube** (ocupado, fora da grade, contêiner não aceita) | pisca em **vermelho**, a peça na mão balança e depois **voa de volta** ao lugar de origem |
+| **Cancelou** (Backspace/B, ou o botão de abrir/fechar o inventário) | a peça voa de volta à origem |
+| **Soltou na barra de atalhos** | o slot pulsa e ganha moldura (balança em vermelho se recusar); a peça voa até ele |
+| **Jogar fora / bandeja** | a peça voa até a zona ou a bandeja; a zona pisca |
+| **Organizar (O)** | as peças da grade pulsam |
+| **Menu do item** | brota do ponteiro, o destaque desliza, some com um piscar ao escolher |
+| **Abrir/fechar a janela** | fade da janela e do fundo escurecido |
+
+Os efeitos são desenhados numa camada própria (`fxLayer`) acima da janela e abaixo do menu e do cursor, então sobrevivem quando as grades se redesenham. O código está em `InvFx.cs` (motor de efeitos: `Flash`, `Frame`, `Settle`, `Fly`, `ShakeOut`, `Punch`, `Shake`, `Float`) e `InventoryScreen.Fx.cs` (quando cada um dispara). Para um efeito novo, escreva um método `Fx...` ali e chame-o onde o momento acontece.
+
+### 17.3 Sons (deixado pronto)
+
+Cada momento chama `Play(InvSound)`:
+
+- O evento **`InventoryScreen.SoundPlayed`** (`Action<InvSound>`) é disparado **sempre**, mesmo sem nenhum clipe — dá para ligar FMOD, Wwise ou o seu sistema de áudio sem mexer no inventário.
+- Se quiser só arrastar clipes: campo **Sounds** do `InventoryScreen` (`InventorySounds`): um clipe por momento (todos opcionais) e `volume` geral. Toca em 2D num `AudioSource` criado sozinho.
+
+Momentos (`InvSound`): `Open`, `Close`, `TabSwitch`, `PickUp`, `Rotate`, `DropFit` (encaixou), `DropMerge` (juntou pilha), `DropSwap` (trocou), `DropReject` (não coube), `DropHotbar`, `HotbarClear`, `DropWorld` (jogou fora), `DropTray`, `ReturnToOrigin`, `Organize`, `MenuOpen`, `MenuMove`, `MenuPick`, `MenuDenied`, `MenuClose`.
+
+> No split-screen o som 2D é **compartilhado** (só existe um `AudioListener`): se os dois jogadores mexerem no inventário ao mesmo tempo, os sons se somam. Cada jogador tem a própria tela (e o próprio evento `SoundPlayed`), então quem precisar separar os sons por jogador consegue pelo evento (`InventoryScreen.Player` diz de quem é a tela).
+
+### 17.4 Arrasto: espera antes da barrinha
+
+Com o mouse, a barrinha que enche ao segurar um item só aparece depois de `dragChargeDelay` (padrão 0,18 s); um clique mais rápido que isso (que abre o menu) nunca a mostra. Ela enche entre `dragChargeDelay` e `dragHoldSeconds` (padrão 0,4 s), e o item é pego ao terminar. Se `dragHoldSeconds` for menor que `dragChargeDelay + 0,15 s`, vale `dragChargeDelay + 0,15 s` (o enchimento nunca dura menos de 0,15 s). Atenção: um prefab que já salvou `dragHoldSeconds = 0,22` continua com esse valor no Inspector — o efetivo vira 0,33 s; ajuste no Inspector para o 0,4 s novo.
+
+### 17.5 Quantidade de atalhos (hotbar) e tamanho da mochila
+
+**Atalhos.** As teclas são 1–9, 0, - e = (**até 12**, `Hotbar.MaxSlots`). A quantidade vem de:
+- `GameCatalog` > **Hotbar Slots** (1–12): o padrão de todo jogador;
+- `Hotbar` do jogador > **Slots Override** (0 = usa o padrão; 1–12 = só este jogador);
+- por código: `jogador.GetComponent<Hotbar>().SetSlots(6)`.
+
+A barra na tela e o texto das dicas se adaptam à quantidade (os slots encolhem para caber). Para mais de 12, aumente `Hotbar.MaxSlots` e acrescente teclas em `Hotbar.KeyPath()`/`KeyLabel()`; o controle (D-pad) já escolhe qualquer slot, com ou sem tecla.
+
+**Mochila.** No `InventoryOwner` do jogador, seção **Tamanho da mochila**: `Bag Columns` e `Bag Rows` (0 = usa o tamanho escrito no `GridContainer` da mochila). Por código: `owner.SetBagSize(10, 8)` (ou `GridContainer.SetSize(colunas, fileiras)` direto). Ao mudar, a grade é redimensionada: o que não couber mais é realocado e, se ainda sobrar, jogado no chão (a mesma conferência que roda ao abrir/fechar o inventário).

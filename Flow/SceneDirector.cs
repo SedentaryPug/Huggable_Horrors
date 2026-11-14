@@ -424,7 +424,7 @@ namespace HorrorFPS
             if (LocalPlayerManager.Instance != null) return; // cena standalone que já traz os próprios jogadores
 
             string name = SceneManager.GetActiveScene().name;
-            if (name == MainMenuScene || name == CoreScene) return;
+            if (GameCatalog.Instance.IsNoPlayerScene(name)) return;      // menu, Core e as cenas fixadas no GameCatalog
             if (!Application.CanStreamedLevelBeLoaded(CoreScene)) return;
 
             GameRuntime.Run(AutoBootRoutine(name));

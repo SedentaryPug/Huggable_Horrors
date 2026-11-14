@@ -7,34 +7,27 @@ using UnityEngine.Rendering;
 namespace HorrorFPS.EditorTools
 {
     /// <summary>
-    /// Tools &gt; Horror FPS: cria o prefab do jogador, uma cena de demonstração simples (escadas, objetos arrastáveis, portas,
-    /// split-screen) e o jogo completo de demonstração (menu principal, níveis, save, cutscenes) sem você montar nada à mão.
-    /// O jogo completo está em HorrorFPSSetup.FullDemo.cs (mesma classe, dividida em dois arquivos).
+    /// Tools &gt; Horror FPS: cria o prefab do jogador, o jogo completo de demonstração (menu principal, níveis, save, cutscenes)
+    /// e a cena completa com todos os sistemas (menu 27) sem você montar nada à mão.
+    /// O jogo completo está em HorrorFPSSetup.FullDemo.cs e a cena completa em HorrorFPSSetup.Showcase*.cs (mesma classe, dividida em arquivos).
     /// </summary>
     public static partial class HorrorFPSSetup
     {
-        const string Root = "Assets/Huggable Horrors";
-        const string InputPath = Root + "/Input/HorrorControls.inputactions";
-        const string PrefabPath = Root + "/Prefabs/Player.prefab";
-        const string ScenePath = Root + "/Scenes/HorrorDemo.unity";
+        // A pasta-raiz vem de ProjectPaths (onde o framework está no projeto): não depende do nome da pasta ("HorrorFPS", "Huggable Horrors"...).
+        static string Root { get { return ProjectPaths.Root; } }
+        static string InputPath { get { return Root + "/Input/HorrorControls.inputactions"; } }
+        static string PrefabPath { get { return Root + "/Prefabs/Player.prefab"; } }
 
         [MenuItem("Tools/Horror FPS/1. Create Player Prefab")]
         public static void CreatePlayerPrefabMenu()
         {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null
+                && !EditorUtility.DisplayDialog("Horror FPS",
+                    "O prefab do jogador já existe em " + PrefabPath + ".\n\nRecriar APAGA o que você configurou nele (módulos, modelo, ajustes) e volta ao prefab básico. Continuar?",
+                    "Recriar", "Cancelar"))
+                return;
             GameObject prefab = EnsurePlayerPrefab(true);
             if (prefab != null) EditorGUIUtility.PingObject(prefab);
-        }
-
-        [MenuItem("Tools/Horror FPS/2. Create Demo Scene")]
-        public static void CreateDemoSceneMenu()
-        {
-            GameObject prefab = EnsurePlayerPrefab(false);
-            if (prefab == null) return;
-            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-            BuildDemoScene(prefab);
-            EditorUtility.DisplayDialog("Horror FPS",
-                "Cena criada em " + ScenePath + ".\n\nDê Play: o jogador 1 usa teclado e mouse; aperte um botão em um controle para o jogador 2 entrar (split-screen).",
-                "OK");
         }
 
         // ------------------------------------------------------------------ prefab do jogador
@@ -50,7 +43,7 @@ namespace HorrorFPS.EditorTools
             InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputPath);
             if (actions == null)
             {
-                Debug.LogError("[HorrorFPS] Não achei " + InputPath + ". Mantenha a pasta Assets/HorrorFPS como veio no pacote.");
+                Debug.LogError("[HorrorFPS] Não achei " + InputPath + ". Mantenha a pasta do framework inteira (Input/HorrorControls.inputactions e a pasta Editor).");
                 return null;
             }
 
@@ -100,79 +93,6 @@ namespace HorrorFPS.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log("[HorrorFPS] Prefab do jogador criado em " + PrefabPath);
             return saved;
-        }
-
-        // ------------------------------------------------------------------ cena de demonstração
-
-        static void BuildDemoScene(GameObject playerPrefab)
-        {
-            EnsureFolder(Root + "/Scenes");
-            EnsureFolder(Root + "/Materials");
-            UnityEngine.SceneManagement.Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
-            Material floor = Mat("Floor", new Color(0.18f, 0.18f, 0.2f));
-            Material wall = Mat("Wall", new Color(0.3f, 0.28f, 0.27f));
-            Material wood = Mat("Wood", new Color(0.35f, 0.22f, 0.12f));
-            Material metal = Mat("Metal", new Color(0.45f, 0.47f, 0.5f));
-            Material heavy = Mat("Heavy", new Color(0.5f, 0.12f, 0.1f));
-
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.045f, 0.05f, 0.065f);
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.Exponential;
-            RenderSettings.fogColor = new Color(0.03f, 0.035f, 0.045f);
-            RenderSettings.fogDensity = 0.035f;
-
-            // sala
-            Prim(PrimitiveType.Cube, "Floor", new Vector3(0f, -0.5f, 0f), new Vector3(30f, 1f, 30f), floor, null, true);
-            Prim(PrimitiveType.Cube, "Wall N", new Vector3(0f, 3f, 15f), new Vector3(30f, 6f, 0.5f), wall, null, true);
-            Prim(PrimitiveType.Cube, "Wall S", new Vector3(0f, 3f, -15f), new Vector3(30f, 6f, 0.5f), wall, null, true);
-            Prim(PrimitiveType.Cube, "Wall E", new Vector3(15f, 3f, 0f), new Vector3(0.5f, 6f, 30f), wall, null, true);
-            Prim(PrimitiveType.Cube, "Wall W", new Vector3(-15f, 3f, 0f), new Vector3(0.5f, 6f, 30f), wall, null, true);
-
-            // luzes fracas (clima)
-            MakeLight("Lamp A", new Vector3(0f, 3.5f, 0f), new Color(1f, 0.75f, 0.5f), 9f, 1.4f);
-            MakeLight("Lamp B", new Vector3(-6f, 5.5f, -6f), new Color(0.6f, 0.75f, 1f), 8f, 1.2f);
-            MakeLight("Lamp C", new Vector3(8f, 5.5f, -6f), new Color(1f, 0.6f, 0.45f), 8f, 1.2f);
-
-            // plataforma com ESCADA FIXA (só sobe olhando para ela). Face voltada para +X em x = -3.
-            Prim(PrimitiveType.Cube, "Platform", new Vector3(-6f, 1.25f, -6f), new Vector3(6f, 2.5f, 6f), metal, null, true);
-            MakeLadder("Ladder (Fixed)", new Vector3(-3f, 0f, -6f), 90f, LadderMode.Fixed, new Vector2(0.8f, 2.5f), false, metal);
-
-            // torre com ESCALADA LIVRE (todas as direções). Face voltada para +X em x = 4. Dica só com ícone.
-            Prim(PrimitiveType.Cube, "Tower", new Vector3(6f, 2f, -6f), new Vector3(4f, 4f, 4f), metal, null, true);
-            MakeLadder("Climb Net (Free)", new Vector3(4f, 0f, -6f), 90f, LadderMode.Free, new Vector2(3f, 4f), true, wood);
-
-            // objetos arrastáveis
-            MakeDraggable("Caixa", PrimitiveType.Cube, new Vector3(0f, 0.4f, 4f), new Vector3(0.8f, 0.8f, 0.8f), 8f, 0, wood);
-            MakeDraggable("Barril", PrimitiveType.Cylinder, new Vector3(-3f, 0.5f, 4f), new Vector3(0.6f, 0.5f, 0.6f), 12f, 0, metal);
-            MakeDraggable("Armário", PrimitiveType.Cube, new Vector3(3f, 1f, 4f), new Vector3(1.2f, 2f, 0.7f), 35f, 1, wood);
-            MakeDraggable("Cofre", PrimitiveType.Cube, new Vector3(6f, 0.5f, 2f), new Vector3(1f, 1f, 1f), 120f, 0, heavy);
-
-            // portas
-            MakeDoor("Porta", new Vector3(-2f, 0f, 9f), false, wood);
-            MakeDoor("Porta trancada", new Vector3(2f, 0f, 9f), true, heavy);
-
-            // pontos de spawn e gerenciador de jogadores locais
-            Transform s1 = new GameObject("Spawn P1").transform;
-            s1.position = new Vector3(0f, 0.05f, -3f);
-            Transform s2 = new GameObject("Spawn P2").transform;
-            s2.position = new Vector3(2f, 0.05f, -3f);
-
-            GameObject players = new GameObject("LocalPlayers");
-            GetOrAdd<PlayerInputManager>(players);
-            LocalPlayerManager lpm = GetOrAdd<LocalPlayerManager>(players);
-            SerializedObject so = new SerializedObject(lpm);
-            so.FindProperty("playerPrefab").objectReferenceValue = playerPrefab;
-            SerializedProperty points = so.FindProperty("spawnPoints");
-            points.arraySize = 2;
-            points.GetArrayElementAtIndex(0).objectReferenceValue = s1;
-            points.GetArrayElementAtIndex(1).objectReferenceValue = s2;
-            so.ApplyModifiedPropertiesWithoutUndo();
-
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            AddToBuildSettings(ScenePath);
-            AssetDatabase.Refresh();
         }
 
         static void MakeLadder(string name, Vector3 position, float yaw, LadderMode mode, Vector2 size, bool grid, Material mat)

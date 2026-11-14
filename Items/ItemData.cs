@@ -72,6 +72,10 @@ namespace HorrorFPS
         [Tooltip("Auto: Mapa vai para a aba Mapa; Documento para Registros; Chave/Missão para Chaves; o resto para a Mochila. Itens de aba especial não ocupam espaço da mochila.")]
         public ItemTabRule tabRule = ItemTabRule.Auto;
 
+        [Header("Repetição")]
+        [Tooltip("Auto: itens de aba especial (Chaves, Registros, Mapa) que não empilham só podem ser coletados uma vez; os da Mochila podem repetir. Permitir/Proibir forçam a regra. Com Proibir, 'Pegar' fica bloqueado (\"Você já tem isto\") enquanto o jogador tiver o item.")]
+        public ItemDuplicateRule duplicates = ItemDuplicateRule.Auto;
+
         [Header("Leitura (aba Registros)")]
         [Tooltip("Texto completo de diários, notas e gravações. Vazio = usa a descrição. Aceita variantes por sanidade/variáveis, como a descrição.")]
         public ItemTextSet readText = new ItemTextSet { text = "" };
@@ -127,6 +131,20 @@ namespace HorrorFPS
                 if ((category & ItemCategory.Document) != 0) return InventoryTab.Records;
                 if ((category & (ItemCategory.Key | ItemCategory.Quest)) != 0) return InventoryTab.Keys;
                 return InventoryTab.Bag;
+            }
+        }
+
+        /// <summary>True se o item vive numa aba especial (Chaves, Registros ou Mapa) e por isso nunca ocupa espaço da mochila.</summary>
+        public bool IsSpecialTab { get { return ResolvedTab != InventoryTab.Bag; } }
+
+        /// <summary>False se o jogador só pode ter uma unidade (regra de repetição já resolvida).</summary>
+        public bool AllowsDuplicates
+        {
+            get
+            {
+                if (duplicates == ItemDuplicateRule.Allow) return true;
+                if (duplicates == ItemDuplicateRule.Forbid) return false;
+                return !IsSpecialTab || stackable;
             }
         }
 

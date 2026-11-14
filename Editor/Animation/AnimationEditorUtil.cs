@@ -9,7 +9,7 @@ namespace HorrorFPS
     /// <summary>Utilidades comuns das ferramentas de animação do editor.</summary>
     public static class AnimationEditorUtil
     {
-        public const string Dir = "Assets/HorrorFPS/Generated/Animation";
+        public static string Dir { get { return ProjectPaths.Folder("Generated/Animation"); } }
 
         public static void EnsureFolder(string path)
         {

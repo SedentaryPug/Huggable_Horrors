@@ -9,6 +9,7 @@ namespace HorrorFPS
         static Sprite whiteSprite;
         static Font font;
         static Sprite arrowSprite;
+        static Sprite heartSprite;
 
         public static readonly Color Panel = new Color(0.05f, 0.055f, 0.06f, 0.94f);
         public static readonly Color PanelLight = new Color(0.11f, 0.12f, 0.125f, 0.96f);
@@ -22,7 +23,7 @@ namespace HorrorFPS
         public static readonly Color TextDim = new Color(0.62f, 0.64f, 0.6f, 1f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { whiteSprite = null; font = null; arrowSprite = null; }
+        static void ResetStatics() { whiteSprite = null; font = null; arrowSprite = null; heartSprite = null; }
 
         public static Sprite White
         {
@@ -73,6 +74,42 @@ namespace HorrorFPS
                     arrowSprite.hideFlags = HideFlags.HideAndDontSave;
                 }
                 return arrowSprite;
+            }
+        }
+
+        /// <summary>Coração simples desenhado por código (branco: pinte com Image.color). Substituto até haver um ícone de verdade.</summary>
+        public static Sprite Heart
+        {
+            get
+            {
+                if (heartSprite == null)
+                {
+                    const int n = 64;
+                    Texture2D t = new Texture2D(n, n, TextureFormat.RGBA32, false);
+                    Color32[] px = new Color32[n * n];
+                    for (int y = 0; y < n; y++)
+                        for (int x = 0; x < n; x++)
+                        {
+                            // curva clássica do coração: (x² + y² - 1)³ - x²·y³ <= 0, com bordas suavizadas por amostragem 3x3
+                            float cover = 0f;
+                            for (int sy = 0; sy < 3; sy++)
+                                for (int sx = 0; sx < 3; sx++)
+                                {
+                                    float u = ((x + (sx + 0.5f) / 3f) / n * 2f - 1f) * 1.25f;
+                                    float v = ((y + (sy + 0.5f) / 3f) / n * 2f - 1f) * 1.25f + 0.1f;
+                                    float a = u * u + v * v - 1f;
+                                    if (a * a * a - u * u * v * v * v <= 0f) cover += 1f / 9f;
+                                }
+                            px[y * n + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(cover * 255f));
+                        }
+                    t.SetPixels32(px);
+                    t.Apply();
+                    t.filterMode = FilterMode.Bilinear;
+                    t.hideFlags = HideFlags.HideAndDontSave;
+                    heartSprite = Sprite.Create(t, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f);
+                    heartSprite.hideFlags = HideFlags.HideAndDontSave;
+                }
+                return heartSprite;
             }
         }
 
@@ -176,6 +213,21 @@ namespace HorrorFPS
             Rect r = rt.rect;
             Vector3 world = rt.TransformPoint(new Vector3(local.x + r.xMin, r.yMax - local.y, 0f));
             return new Vector2(world.x, world.y);
+        }
+
+        /// <summary>
+        /// Retângulo de um elemento medido dentro de uma camada (origem no canto superior esquerdo da camada, y para baixo).
+        /// Serve para os efeitos desenharem em cima de qualquer elemento, mesmo com a janela redimensionada.
+        /// </summary>
+        public static Rect RectInLayer(RectTransform layer, RectTransform rt)
+        {
+            if (layer == null || rt == null) return new Rect();
+            Vector3[] c = new Vector3[4];
+            rt.GetWorldCorners(c);              // 0 = inferior esquerdo, 1 = superior esquerdo, 2 = superior direito, 3 = inferior direito
+            Vector2 a, b;
+            ToTopLeftLocal(layer, new Vector2(c[1].x, c[1].y), out a);
+            ToTopLeftLocal(layer, new Vector2(c[3].x, c[3].y), out b);
+            return UnityEngine.Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
         }
 
         public static string Truncate(string s, int max)

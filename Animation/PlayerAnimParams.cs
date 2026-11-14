@@ -40,6 +40,13 @@ namespace HorrorFPS
         public const string ClimbX = "ClimbX";
         /// <summary>Escalada: velocidade vertical (m/s).</summary>
         public const string ClimbY = "ClimbY";
+        /// <summary>
+        /// +1 normal, -1 toca o clipe de trás para frente (andar de costas com o clipe de andar para frente).
+        /// Use como "Multiplier" de velocidade (Speed > Parameter) nos estados Locomotion/Crouch.
+        /// </summary>
+        public const string Dir = "Dir";
+        /// <summary>Escalada: velocidade de reprodução do clipe (-1.5..1.5; 0 = parado no degrau). Multiplicador de velocidade do estado Climb.</summary>
+        public const string ClimbRate = "ClimbRate";
 
         // ---- bools
         public const string Grounded = "Grounded";
@@ -67,6 +74,8 @@ namespace HorrorFPS
         public const string Hit = "Hit";
         public const string Interact = "Interact";
         public const string Gasp = "Gasp";
+        /// <summary>Parada brusca depois de correr (toca o clipe "run to stop").</summary>
+        public const string StopRun = "StopRun";
 
         // ---- layers (por nome)
         public const string LayerUpperBody = "Upper Body";
@@ -85,6 +94,8 @@ namespace HorrorFPS
         public static readonly int HTurnRate = Animator.StringToHash(TurnRate);
         public static readonly int HClimbX = Animator.StringToHash(ClimbX);
         public static readonly int HClimbY = Animator.StringToHash(ClimbY);
+        public static readonly int HDir = Animator.StringToHash(Dir);
+        public static readonly int HClimbRate = Animator.StringToHash(ClimbRate);
         public static readonly int HGrounded = Animator.StringToHash(Grounded);
         public static readonly int HSprint = Animator.StringToHash(Sprint);
         public static readonly int HClimbing = Animator.StringToHash(Climbing);
@@ -104,6 +115,7 @@ namespace HorrorFPS
         public static readonly int HHit = Animator.StringToHash(Hit);
         public static readonly int HInteract = Animator.StringToHash(Interact);
         public static readonly int HGasp = Animator.StringToHash(Gasp);
+        public static readonly int HStopRun = Animator.StringToHash(StopRun);
 
         /// <summary>Lista completa (usada pelo menu que cria o controller e pela checagem de parâmetros ausentes).</summary>
         public static readonly Def[] All = new Def[]
@@ -120,6 +132,8 @@ namespace HorrorFPS
             new Def(TurnRate, AnimatorControllerParameterType.Float),
             new Def(ClimbX, AnimatorControllerParameterType.Float),
             new Def(ClimbY, AnimatorControllerParameterType.Float),
+            new Def(Dir, AnimatorControllerParameterType.Float),
+            new Def(ClimbRate, AnimatorControllerParameterType.Float),
             new Def(Grounded, AnimatorControllerParameterType.Bool),
             new Def(Sprint, AnimatorControllerParameterType.Bool),
             new Def(Climbing, AnimatorControllerParameterType.Bool),
@@ -139,6 +153,7 @@ namespace HorrorFPS
             new Def(Hit, AnimatorControllerParameterType.Trigger),
             new Def(Interact, AnimatorControllerParameterType.Trigger),
             new Def(Gasp, AnimatorControllerParameterType.Trigger),
+            new Def(StopRun, AnimatorControllerParameterType.Trigger),
         };
     }
 }

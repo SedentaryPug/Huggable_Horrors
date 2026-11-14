@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.GameCatalog
   mainMenuScene: MainMenu
   coreScene: Core
+  noPlayerScenes: []
   gameTitle: Huggable Horrors
   firstLevel: hall
   levels:
@@ -29,6 +30,13 @@ MonoBehaviour:
     - Level_Cellar
     defaultSpawn: start
     loadingTip: Use o gravador para salvar o jogo. Checkpoints salvam sozinhos.
+  - id: showcase
+    displayName: Cena completa
+    scenes:
+    - Level_Showcase
+    defaultSpawn: start
+    loadingTip: "Cada zona mostra um sistema do jogo. Siga as estradas coloridas
+      a partir da pra\xE7a."
   loadingTips:
   - "Dois jogadores? Aperte um bot\xE3o no segundo controle para entrar."
   - "Objetos que voc\xEA move continuam onde voc\xEA deixou, mesmo depois de trocar

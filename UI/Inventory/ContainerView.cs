@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace HorrorFPS
@@ -32,6 +33,12 @@ namespace HorrorFPS
         /// <summary>Tenta soltar o item da mão no ponto. Devolve o resultado.</summary>
         public abstract TransferResult DropHeld(ItemInstance held, int heldRotation, Vector2 screenPoint);
 
+        /// <summary>Solta UMA unidade da pilha na mão (botão direito, como no Minecraft/Terraria). A pilha continua na mão com o resto.</summary>
+        public virtual TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            return TransferResult.Invalid;
+        }
+
         /// <summary>
         /// Em qual célula DA PEÇA (na rotação atual dela) o ponto cai. Usado para o arrasto começar exatamente por ali.
         /// Falso se o contêiner não tem células (lista) ou o ponto não está sobre a peça.
@@ -39,6 +46,25 @@ namespace HorrorFPS
         public virtual bool TryGetGrabCell(Vector2 screenPoint, ItemInstance item, out Vector2Int cell)
         {
             cell = Vector2Int.zero;
+            return false;
+        }
+
+        /// <summary>
+        /// Onde a peça cairia se fosse solta no ponto (o mesmo cálculo da prévia verde/vermelha): as células e a caixa que as envolve,
+        /// em coordenadas da camada (origem no canto superior esquerdo, y para baixo). Alimenta as animações de encaixou / não coube.
+        /// Falso se este contêiner não tem células (lista, bandeja).
+        /// </summary>
+        public virtual bool GetDropFootprint(ItemInstance held, int heldRotation, Vector2 screenPoint, RectTransform layer, List<Rect> cells, out Rect box)
+        {
+            cells.Clear();
+            box = new Rect();
+            return false;
+        }
+
+        /// <summary>Retângulo atual de um item deste contêiner, em coordenadas da camada (para a peça "voltar ao lugar"). Falso se não está visível.</summary>
+        public virtual bool GetItemBox(ItemInstance item, RectTransform layer, out Rect box)
+        {
+            box = new Rect();
             return false;
         }
 

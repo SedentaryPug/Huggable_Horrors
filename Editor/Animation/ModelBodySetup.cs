@@ -11,6 +11,8 @@ namespace HorrorFPS
     /// modificadores procedurais e BodyPart em cada renderer (região adivinhada pelo nome — confira depois).
     /// Selecione o FBX/prefab do modelo no Project (ele é instanciado dentro do prefab do jogador) ou um modelo que já esteja
     /// dentro do jogador na cena. O corpo de teste de primitivas ('[Body]') é desligado, não apagado.
+    /// Se o modelo é de um mesh só (ex.: Y Bot do Mixamo), separa a cabeça do corpo pelos pesos do skin (ver BodyMeshSplitter) para o
+    /// dono não enxergar o interior da própria cabeça. Rodar de novo no mesmo modelo reaproveita a instância que já está no jogador.
     /// </summary>
     public static class ModelBodySetup
     {
@@ -34,6 +36,16 @@ namespace HorrorFPS
             }
 
             GameObject payload = sel;
+            if (!HasHeadRenderer(payload))
+            {
+                // o corte da cabeça lê vértices e pesos do mesh: o FBX precisa estar com Read/Write ligado
+                string path = isAsset ? AssetDatabase.GetAssetPath(sel) : null;
+                if (BodyMeshSplitter.EnsureReadable(sel) > 0 && !string.IsNullOrEmpty(path))
+                {
+                    GameObject reloaded = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if (reloaded != null) payload = reloaded;
+                }
+            }
             AnimationEditorUtil.WithPlayer(delegate (GameObject player) { Setup(player, payload, isAsset); }, true);
         }
 
@@ -44,7 +56,11 @@ namespace HorrorFPS
             GameObject model;
             if (isAsset)
             {
-                model = (GameObject)PrefabUtility.InstantiatePrefab(payload, player.transform);
+                model = FindInstanceOf(player, payload);
+                if (model != null)
+                    Debug.Log("[Anim] '" + payload.name + "' já está no jogador: reaproveitei a instância (atualizo controller, regiões e IK em vez de criar outra).");
+                else
+                    model = (GameObject)PrefabUtility.InstantiatePrefab(payload, player.transform);
                 if (model == null)
                 {
                     Debug.LogError("[Anim] Não consegui instanciar '" + payload.name + "' dentro do jogador.");
@@ -87,7 +103,7 @@ namespace HorrorFPS
                 else Debug.Log("[Anim] Ainda não há PlayerBody.controller: rode o menu 15 e arraste no Animator do modelo.");
             }
             if (anim.avatar == null || !anim.avatar.isHuman)
-                Debug.LogWarning("[Anim] '" + model.name + "' não é Humanoid (Import Settings > Rig > Animation Type = Humanoid > Apply). Sem Humanoid os parâmetros funcionam, mas o IK de olhar e de mãos não.");
+                Debug.LogWarning("[Anim] '" + model.name + "' não é Humanoid (Import Settings > Rig > Animation Type = Humanoid > Apply, ou o menu 31, passo 1). Sem Humanoid os parâmetros funcionam, mas o IK de olhar, de mãos e de pés não.");
 
             // presenter + procedurais
             PlayerBodyRig rig = AnimationEditorUtil.GetOrAdd<PlayerBodyRig>(model);
@@ -95,6 +111,14 @@ namespace HorrorFPS
             AnimationEditorUtil.GetOrAdd<PoseBreathing>(model);
             AnimationEditorUtil.GetOrAdd<PoseImpulse>(model);
             AnimationEditorUtil.GetOrAdd<PoseWallAvoid>(model);
+
+            // modelo de um mesh só (ex.: Y Bot do Mixamo): separa a cabeça do corpo para o dono não ver o interior dela
+            if (anim.isHuman && !HasHeadRenderer(model))
+            {
+                int split = BodyMeshSplitter.SplitHead(model, anim);
+                if (split > 0)
+                    Debug.Log("[Anim] Cabeça separada do corpo em " + split + " mesh(es) (assets em " + AnimationEditorUtil.Dir + "/Meshes). O dono não a enxerga; os outros jogadores veem o corpo inteiro.");
+            }
 
             // regiões por renderer
             Renderer[] rs = model.GetComponentsInChildren<Renderer>(true);
@@ -130,6 +154,31 @@ namespace HorrorFPS
 
             Debug.Log("[Anim] Modelo '" + model.name + "' configurado. Regiões por nome — Cabeça: " + counts[0] + ", Torso: " + counts[1] + ", Braços: " + counts[2] +
                       ", Mãos: " + counts[3] + ", Pernas: " + counts[4] + ", Pés: " + counts[5] + ". Confira os BodyPart (Region) e dê Play com 2 jogadores.");
+        }
+
+        /// <summary>Alguma parte do modelo já é a cabeça (BodyPart marcado ou nome reconhecido)?</summary>
+        static bool HasHeadRenderer(GameObject go)
+        {
+            Renderer[] rs = go.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < rs.Length; i++)
+            {
+                if (rs[i] is ParticleSystemRenderer || rs[i] is TrailRenderer || rs[i] is LineRenderer) continue;
+                BodyPart bp = rs[i].GetComponent<BodyPart>();
+                BodyRegion region = bp != null ? bp.region : Guess(rs[i]);
+                if (region == BodyRegion.Head) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Filho direto do jogador que é uma instância do mesmo modelo (evita criar o corpo duas vezes ao rodar de novo).</summary>
+        static GameObject FindInstanceOf(GameObject player, GameObject asset)
+        {
+            for (int i = 0; i < player.transform.childCount; i++)
+            {
+                GameObject child = player.transform.GetChild(i).gameObject;
+                if (PrefabUtility.GetCorrespondingObjectFromSource(child) == asset) return child;
+            }
+            return null;
         }
 
         static int CountMeshRenderers(Renderer[] rs)

@@ -24,12 +24,20 @@ namespace HorrorFPS
         ItemInstance ghostItem;
         int ghostRot = -1;
         float ghostCell = 40f;
+        float rotT = 1f;            // 0..1: animação do giro da peça na mão (1 = parada)
+        [Tooltip("Inércia da peça arrastada: quanto maior, mais ela cola no cursor (0 = sem suavização).")]
+        [SerializeField] float ghostFollow = 24f;
+        [Tooltip("Inclinação da peça arrastada pela velocidade horizontal, em graus por 1000 px/s (0 = não inclina).")]
+        [SerializeField] float ghostTiltPer1000 = 9f;
+        bool ghostSmoothValid;
+        Vector2 ghostSmooth, ghostVel;
+        float ghostTilt;
 
-        readonly RectTransform[] slotRects = new RectTransform[Hotbar.SlotCount];
-        readonly Image[] slotBacks = new Image[Hotbar.SlotCount];
-        readonly Image[] slotSwatches = new Image[Hotbar.SlotCount];
-        readonly Image[] slotIcons = new Image[Hotbar.SlotCount];
-        readonly Text[] slotCounts = new Text[Hotbar.SlotCount];
+        readonly RectTransform[] slotRects = new RectTransform[Hotbar.MaxSlots];
+        readonly Image[] slotBacks = new Image[Hotbar.MaxSlots];
+        readonly Image[] slotSwatches = new Image[Hotbar.MaxSlots];
+        readonly Image[] slotIcons = new Image[Hotbar.MaxSlots];
+        readonly Text[] slotCounts = new Text[Hotbar.MaxSlots];
 
         // ------------------------------------------------------------------ montagem
         void BuildWindow()
@@ -49,13 +57,14 @@ namespace HorrorFPS
                     GridContainer g = owner.Containers[i] as GridContainer;
                     if (g != null && g.Tab == InventoryTab.Bag) gridW = Mathf.Max(gridW, g.Width * maxCellSolo);
                 }
-                winW = Mathf.Max(SoloMinW, gridW + 32f);
-                bagColH = ColumnHeight(owner, winW - 32f, maxCellSolo, (int)InventoryTab.Bag, 6);
+                trayColW = TrayW + 12f;
+                winW = Mathf.Max(SoloMinW, gridW + 32f) + trayColW;
+                bagColH = ColumnHeight(owner, winW - 32f - trayColW, maxCellSolo, (int)InventoryTab.Bag, 6);
                 contentH = bagColH + 4f + SoloInfoH;
                 if (tabList.Count > 1) contentH = Mathf.Max(contentH, 380f);     // espaço para o leitor e o mapa
                 winH = top + contentH + 8f + SoloFooter;
             }
-            else { winW = PairW; winH = PairH; }
+            else { winW = PairW; winH = PairH; trayColW = 0f; }
 
             window = InvUI.Rect(layer, "Window");
             InvUI.Center(window, winW, winH);
@@ -76,6 +85,8 @@ namespace HorrorFPS
             BuildHotbarStrip(16f, winH - 56f, winW - 16f - 190f - 8f);
             BuildDropZone(winW - 16f - 190f, winH - 56f, 190f, 44f);
 
+            BuildFx();          // camada dos efeitos: acima da janela, abaixo do menu e do cursor
+
             popupLayer = InvUI.Rect(layer, "popup");
             InvUI.Stretch(popupLayer);
             BuildCursor();
@@ -86,6 +97,7 @@ namespace HorrorFPS
             float h = 0f;
             for (int i = 0; i < who.Containers.Count; i++)
             {
+                if (who.Containers[i].ManualOnly) continue;
                 if (tabFilter >= 0 && (int)who.Containers[i].Tab != tabFilter) continue;
                 GridContainer g = who.Containers[i] as GridContainer;
                 if (g != null) h += 22f + g.Height * Mathf.Floor(Mathf.Min(cell, width / g.Width)) + 4f + 8f;
@@ -102,6 +114,7 @@ namespace HorrorFPS
             for (int i = 0; i < who.Containers.Count; i++)
             {
                 ItemContainer c = who.Containers[i];
+                if (c.ManualOnly) continue;
                 if (tabFilter >= 0 && (int)c.Tab != tabFilter) continue;
                 ContainerView v = null;
                 GridContainer g = c as GridContainer;
@@ -139,23 +152,30 @@ namespace HorrorFPS
 
         void BuildHotbarStrip(float x, float y, float rightLimit)
         {
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            int n = hotbar != null ? hotbar.Slots : Hotbar.MaxSlots;
+            // com muitos atalhos os quadrados encolhem para a faixa caber (44 px até 9 atalhos; mínimo 28 px)
+            const float gap = 8f;
+            float sz = Mathf.Clamp((Mathf.Max(60f, rightLimit - x) + gap) / n - gap, 28f, 44f);
+            float step = sz + gap;
+            float top = y + (44f - sz) * 0.5f;
+            float inset = Mathf.Round(sz * 0.16f);
+            for (int i = 0; i < n; i++)
             {
                 RectTransform rt = InvUI.Rect(window, "slot" + i);
-                InvUI.TopLeft(rt, x + i * 52f, y, 44f, 44f);
+                InvUI.TopLeft(rt, x + i * step, top, sz, sz);
                 slotRects[i] = rt;
                 slotBacks[i] = InvUI.Img(rt, "back", InvUI.Cell); InvUI.Stretch(slotBacks[i].rectTransform);
-                slotSwatches[i] = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(slotSwatches[i].rectTransform, 7f, 7f, 7f, 7f);
+                slotSwatches[i] = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(slotSwatches[i].rectTransform, inset, inset, inset, inset);
                 slotIcons[i] = InvUI.Img(rt, "ic", Color.white); slotIcons[i].preserveAspect = true; InvUI.Stretch(slotIcons[i].rectTransform, 4f, 4f, 4f, 4f);
-                Text n = InvUI.Label(rt, "n", (i + 1).ToString(), 11, TextAnchor.UpperLeft, InvUI.Accent);
-                InvUI.TopLeft(n.rectTransform, 3f, 1f, 20f, 16f);
+                Text num = InvUI.Label(rt, "n", Hotbar.KeyLabel(i), 11, TextAnchor.UpperLeft, InvUI.Accent);
+                InvUI.TopLeft(num.rectTransform, 3f, 1f, 20f, 16f);
                 slotCounts[i] = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
-                InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, 41f, 43f);
+                InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, sz - 3f, sz - 1f);
             }
-            float capX = x + 9 * 52f + 8f, capW = Mathf.Min(330f, rightLimit - capX);
+            float capX = x + n * step + 8f, capW = Mathf.Min(330f, rightLimit - capX);
             if (capW >= 120f)
             {
-                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas 1-9): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
+                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas " + Hotbar.KeyRange(n) + "): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
                 InvUI.TopLeft(cap.rectTransform, capX, y, capW, 44f);
             }
         }
@@ -186,6 +206,7 @@ namespace HorrorFPS
             DestroyContent();
             tabRects.Clear(); tabBacks.Clear(); tabTexts.Clear();
             DestroyGhost();
+            DestroyFx();
             if (window != null) Destroy(window.gameObject);
             if (popupLayer != null) Destroy(popupLayer.gameObject);
             if (dimObject != null) Destroy(dimObject);
@@ -305,12 +326,20 @@ namespace HorrorFPS
             ghostItem = held;
             ghostRot = heldRot;
             if (cursorRoot != null) cursorRoot.SetAsLastSibling();
+            PositionGhost();        // já nasce sob o cursor: sem o quadro "fantasma" no canto superior esquerdo
         }
 
         void UpdateGhost()
         {
             if (held == null) { DestroyGhost(); return; }
             if (ghost == null || ghostItem != held || ghostRot != heldRot || !Mathf.Approximately(WantedGhostCell(), ghostCell)) RebuildGhost();
+            else PositionGhost();
+        }
+
+        /// <summary>Coloca a peça na mão sob o cursor, com o "pulo" de início de arrasto e o giro suave de 90°.</summary>
+        void PositionGhost()
+        {
+            if (ghost == null || held == null) return;
             Vector2 local;
             InvUI.ToTopLeftLocal(layer, cursor, out local);
             Vector2 size = ghost.sizeDelta;
@@ -319,6 +348,23 @@ namespace HorrorFPS
                 ghost.anchoredPosition = new Vector2(local.x - (grab.x + 0.5f) * ghostCell, -(local.y - (grab.y + 0.5f) * ghostCell));
             else
                 ghost.anchoredPosition = new Vector2(local.x - size.x * 0.5f, -(local.y - size.y * 0.5f));
+
+            // inércia: a peça segue o cursor com um pequeno atraso e se inclina um pouco com a velocidade
+            float dtg = Time.unscaledDeltaTime;
+            Vector2 target = ghost.anchoredPosition;
+            if (!ghostSmoothValid || ghostFollow <= 0f)
+            {
+                ghostSmooth = target; ghostVel = Vector2.zero; ghostTilt = 0f; ghostSmoothValid = true;
+            }
+            else
+            {
+                Vector2 prev = ghostSmooth;
+                ghostSmooth += (target - ghostSmooth) * (1f - Mathf.Exp(-ghostFollow * dtg));
+                ghostVel = Vector2.Lerp(ghostVel, (ghostSmooth - prev) / Mathf.Max(dtg, 0.0001f), 0.35f);
+                float wantTilt = Mathf.Clamp(-ghostVel.x * ghostTiltPer1000 / 1000f, -12f, 12f);
+                ghostTilt = Mathf.Lerp(ghostTilt, wantTilt, 1f - Mathf.Exp(-14f * dtg));
+            }
+            ghost.anchoredPosition = ghostSmooth;
 
             // "levanta" a peça quando o arrasto começa: nasce um pouco maior e assenta, crescendo a partir do ponteiro
             if (popT < 1f)
@@ -330,6 +376,33 @@ namespace HorrorFPS
                 ghost.anchoredPosition = c + (ghost.anchoredPosition - c) * sc;
             }
             else if (ghost.localScale.x != 1f) ghost.localScale = Vector3.one;
+
+            // giro suave (90° até a orientação nova) somado à inclinação da inércia, em torno do ponto que o jogador segura
+            float spin = 0f;
+            if (rotT < 1f)
+            {
+                rotT = Mathf.Min(1f, rotT + Time.unscaledDeltaTime / 0.13f);
+                float e = rotT * rotT * (3f - 2f * rotT);
+                spin = 90f * (1f - e);
+            }
+            float a = spin + ghostTilt;
+            if (Mathf.Abs(a) > 0.01f)
+            {
+                Vector2 c = new Vector2(local.x, -local.y);
+                Vector2 off = ghost.anchoredPosition - c;
+                float rad = a * Mathf.Deg2Rad, cs = Mathf.Cos(rad), sn = Mathf.Sin(rad);
+                ghost.localRotation = Quaternion.Euler(0f, 0f, a);
+                ghost.anchoredPosition = c + new Vector2(off.x * cs - off.y * sn, off.x * sn + off.y * cs);
+            }
+            else if (ghost.localRotation != Quaternion.identity) ghost.localRotation = Quaternion.identity;
+
+            // "não coube": a peça balança de um lado ao outro e assenta (por cima de tudo, depois do giro, para não girar junto)
+            if (shakeT < 1f)
+            {
+                shakeT = Mathf.Min(1f, shakeT + Time.unscaledDeltaTime * animationSpeed / 0.34f);
+                float k = 1f - shakeT;
+                ghost.anchoredPosition += new Vector2(Mathf.Sin(shakeT * 40f) * shakePixels * k * k, 0f);
+            }
         }
 
         // ------------------------------------------------------------------ feedback do "segurar para arrastar" (mouse)
@@ -370,7 +443,7 @@ namespace HorrorFPS
         void DestroyGhost()
         {
             if (ghost != null) Destroy(ghost.gameObject);
-            ghost = null; ghostItem = null; ghostRot = -1;
+            ghost = null; ghostItem = null; ghostRot = -1; rotT = 1f;
         }
 
         // ------------------------------------------------------------------ menu de contexto
@@ -406,8 +479,29 @@ namespace HorrorFPS
             AddMoveEntries(e, item, owner);
             if (other != null) AddMoveEntries(e, item, other);
             if (item.data.canDrop) e.Add(new ItemMenu.Entry("Jogar fora", () => DropToWorld(item)));
-            menu.Show(popupLayer, cursor, item.GetName(this), e);
-            if (!input.UsesMouse) cursor = menu.StepRow(cursor, 1);        // sem mouse: já cai na primeira opção
+            ShowMenu(item.GetName(this), e);
+        }
+
+        /// <summary>
+        /// Abre o menu com a primeira opção habilitada em foco (E / Enter / A já a escolhem). Sem ponteiro de mouse, o cursor virtual
+        /// vai junto para essa opção; com mouse o ponteiro não é mexido.
+        /// </summary>
+        void ShowMenu(string title, List<ItemMenu.Entry> entries)
+        {
+            menu.Animated = animations;
+            menu.Speed = animationSpeed;
+            menu.Show(popupLayer, cursor, title, entries, MenuHint);
+            if (!RealPointer && menu.IsOpen) cursor = overlay.ClampToViewport(menu.FocusPoint());
+        }
+
+        string MenuHint
+        {
+            get
+            {
+                return input != null && input.UsesMouse
+                    ? "E escolhe • Setas movem • Botão dir. fecha"
+                    : "A/X escolhe • D-pad move • B volta";
+            }
         }
 
         void AddMoveEntries(List<ItemMenu.Entry> e, ItemInstance item, InventoryOwner who)
@@ -425,7 +519,8 @@ namespace HorrorFPS
         void MoveTo(ItemInstance item, ItemContainer target)
         {
             TransferResult r = ItemTransfer.Move(item, target);
-            if (!ItemTransfer.Ok(r)) Notify("Não cabe.");
+            if (!ItemTransfer.Ok(r)) { Notify("Não cabe."); Play(InvSound.DropReject); }
+            else Play(r == TransferResult.Merged ? InvSound.DropMerge : InvSound.DropFit);
             dirty = true;
         }
 
@@ -447,16 +542,15 @@ namespace HorrorFPS
         {
             if (hotbar == null) return;
             List<ItemMenu.Entry> e = new List<ItemMenu.Entry>();
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            for (int i = 0; i < hotbar.Slots; i++)
             {
                 int slot = i;
                 ItemInstance cur = hotbar.GetItem(i);
-                string label = "Tecla " + (i + 1) + (cur != null && cur != item ? "   (troca com " + InvUI.Truncate(cur.GetName(this), 16) + ")" : (cur == item ? "   (atual)" : ""));
+                string label = "Tecla " + Hotbar.KeyLabel(i) + (cur != null && cur != item ? "   (troca com " + InvUI.Truncate(cur.GetName(this), 16) + ")" : (cur == item ? "   (atual)" : ""));
                 e.Add(new ItemMenu.Entry(label, () => { hotbar.Assign(slot, item); dirty = true; }));
             }
             e.Add(new ItemMenu.Entry("Remover atalho", () => { hotbar.Assign(-1, item); dirty = true; }, item.hotkey >= 0));
-            menu.Show(popupLayer, cursor, "Atalho de " + item.GetName(this), e);
-            if (!input.UsesMouse) cursor = menu.StepRow(cursor, 1);
+            ShowMenu("Atalho de " + item.GetName(this), e);
         }
     }
 }

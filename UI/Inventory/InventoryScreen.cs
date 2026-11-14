@@ -11,12 +11,14 @@ namespace HorrorFPS
     /// em jogo local não dá para pausar os outros, e a tensão faz parte do jogo.
     ///
     /// Teclado/mouse: Tab/I abre e fecha • clique (ou Enter) pega e solta • R gira • botão direito (ou E) = menu • F inspeciona • G joga fora • O organiza.
+    /// Com o menu do item aberto: setas movem o foco e E / Enter / Espaço escolhem a opção em foco (o clique escolhe a linha sob o ponteiro).
     /// Sem mouse: setas/WASD movem o cursor célula a célula (como o D-pad do controle). Controle: Y abre • A pega/solta • D-pad move •
     /// RB gira • X = menu • LB inspeciona • L3 organiza • B volta. Fora do inventário, o botão de "usar equipado" aciona o item equipado.
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Inventory Screen")]
     [DefaultExecutionOrder(500)]    // depois dos outros: o estado do cursor do mouse (liberado enquanto a mochila está aberta) é decidido por último a cada quadro
     [PlayerModule("Inventário", 2)]
+    [RequireComponent(typeof(PlayerOverlay), typeof(ItemInput))]
     public partial class InventoryScreen : MonoBehaviour
     {
         [Tooltip("Trava o movimento do jogador enquanto o inventário está aberto (o mundo continua rodando).")]
@@ -25,7 +27,10 @@ namespace HorrorFPS
         [SerializeField] float mouseSensitivity = 1f;
         [SerializeField] float stickSpeed = 650f;
         [Tooltip("Mouse: segurar o botão por este tempo (ou arrastar um pouco) pega o item. Um clique mais rápido abre o menu do item.")]
-        [SerializeField] float dragHoldSeconds = 0.22f;
+        [SerializeField] float dragHoldSeconds = 0.4f;
+        [Tooltip("Mouse: a barrinha que enche só aparece depois de segurar o botão por este tempo, para não piscar num clique rápido. " +
+                 "Ela enche entre este tempo e 'Drag Hold Seconds' (se o segundo for menor que este + 0,15 s, vale este + 0,15 s).")]
+        [SerializeField, Min(0f)] float dragChargeDelay = 0.18f;
         [Tooltip("Mouse: quantos pixels (em tela de 1080p) o ponteiro precisa andar com o botão apertado para o arrasto começar na hora.")]
         [SerializeField] float dragMovePixels = 10f;
         [SerializeField] float maxCell = 48f;
@@ -85,8 +90,8 @@ namespace HorrorFPS
             get
             {
                 return input != null && input.UsesMouse
-                    ? "Clique: menu  •  Segure e arraste: mover  •  R: girar  •  F: inspecionar  •  G: jogar fora  •  O: organizar  •  Enter: pegar/soltar  •  Setas: mover" + TabHint()
-                    : "A: pegar/soltar  •  D-pad: mover  •  RB: girar  •  X: menu  •  LB: inspecionar  •  L3: organizar  •  B: voltar" + TabHint();
+                    ? "Clique: menu  •  Segure e arraste: mover (solte fora = bandeja)  •  Botão direito com pilha: soltar 1  •  R: girar  •  F: inspecionar  •  G: jogar fora  •  O: organizar  •  Enter: pegar/soltar  •  Setas: mover" + TabHint()
+                    : "A: pegar/soltar  •  X com pilha na mão: soltar 1  •  D-pad: mover  •  RB: girar  •  X: menu  •  LB: inspecionar  •  L3: organizar  •  B: voltar" + TabHint();
             }
         }
 
@@ -105,6 +110,7 @@ namespace HorrorFPS
             layer = overlay.NewLayer("Inventory");
             inspect = new InspectPanel(this, PlayerRef.IndexOf(this));
             owner.InspectRequested += OnInspectRequested;
+            menu.Sound = Play;
             ready = true;
             return true;
         }
@@ -144,6 +150,7 @@ namespace HorrorFPS
             prevLock = Cursor.lockState;            // antes de travar os controles: é o estado de jogo que será devolvido ao fechar
             prevVisible = Cursor.visible;
             if (lockMovementWhileOpen) FrameworkBridge.LockControls(player);
+            owner.EnforceSizes();                   // mochila encolheu? o que não cabe mais é realocado ou jogado antes de desenhar
             owner.Changed += MarkDirty;
             if (other != null) other.Changed += MarkDirty;
             subscribed = true;
@@ -151,6 +158,7 @@ namespace HorrorFPS
             cursor = overlay.ViewportCenter;
             lastMouse = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
             dirty = true;
+            Play(InvSound.Open);
             return true;
         }
 
@@ -158,10 +166,12 @@ namespace HorrorFPS
         {
             if (!open) return;
             open = false;
+            Play(InvSound.Close);
             CancelPress();
             mouseDragging = false;
             ClearHold();
-            menu.Close();
+            if (owner != null) { owner.FlushManualContainers(); owner.EnforceSizes(); }       // peças soltas na bandeja voltam para a mochila (ou caem no chão)
+            menu.CloseAll();
             if (inspect != null) inspect.Close();
             if (subscribed)
             {
@@ -234,7 +244,7 @@ namespace HorrorFPS
                 if (hud != null && !string.IsNullOrEmpty(er.message)) hud.Flash(er.message);
             }
             if (hotbar == null) return;
-            for (int i = 0; i < Hotbar.SlotCount; i++)
+            for (int i = 0; i < hotbar.Slots; i++)
                 if (ItemInput.Pressed(input.HotbarKeys[i])) UseHotbar(i);
             if (ItemInput.Pressed(input.HotbarPrev)) { hotbar.Cycle(-1); if (hud != null) hud.Flash(); }
             if (ItemInput.Pressed(input.HotbarNext)) { hotbar.Cycle(1); if (hud != null) hud.Flash(); }
@@ -248,6 +258,14 @@ namespace HorrorFPS
         }
 
         void MoveCursor(float dt)
+        {
+            Vector2 before = cursor;
+            MoveCursorRaw(dt);
+            Vector2 v = (cursor - before) / Mathf.Max(dt, 0.0001f);
+            CursorVelocity = Vector2.Lerp(CursorVelocity, v, 0.4f);
+        }
+
+        void MoveCursorRaw(float dt)
         {
             if (RealPointer)
             {
@@ -266,22 +284,20 @@ namespace HorrorFPS
         {
             MoveCursor(dt);
             UpdateCursorVisual();
+            TickFx(dt);
 
             if (inspect.IsOpen) { inspect.Tick(input, cursor, dt); return; }
 
             bool select = ItemInput.Pressed(input.Select);
             if (menu.IsOpen)
             {
-                if (ItemInput.Pressed(input.NavUp)) cursor = overlay.ClampToViewport(menu.StepRow(cursor, -1));
-                else if (ItemInput.Pressed(input.NavDown)) cursor = overlay.ClampToViewport(menu.StepRow(cursor, 1));
-                if (ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.Secondary)) menu.Close();
-                else menu.Tick(cursor, select);
+                HandleMenu(select);
                 return;
             }
 
             if (ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.Cancel))
             {
-                if (held != null) ClearHold(); else Close();
+                if (held != null) ReturnHeld(); else Close();
                 return;
             }
 
@@ -315,6 +331,7 @@ namespace HorrorFPS
             UpdateInfo(held != null ? held : hoverItem);
             UpdateGhost();
             UpdateSlotHover(slot);
+            if (tray != null) tray.Tick(dt);
 
             // rolar listas
             scrollCooldown -= dt;
@@ -342,6 +359,9 @@ namespace HorrorFPS
                         }
                         heldRot = (heldRot + 1) % 4;
                         RebuildGhost();
+                        rotT = 0f;          // começa o giro suave (PositionGhost aplica)
+                        PositionGhost();
+                        Play(InvSound.Rotate);
                     }
                 }
                 else if (hoverItem != null) RotateInPlace(hoverItem);
@@ -361,8 +381,11 @@ namespace HorrorFPS
                 if (grid == null && owner != null) grid = owner.FirstGrid();
                 if (grid != null)
                 {
-                    Notify(grid.Organize() ? "Organizado." : "Não coube tudo; nada foi movido.");
+                    bool organized = grid.Organize();
+                    Notify(organized ? "Organizado." : "Não coube tudo; nada foi movido.");
                     dirty = true;
+                    if (organized) FxOrganized(grid);
+                    else { Play(InvSound.DropReject); }
                 }
                 return;
             }
@@ -393,10 +416,45 @@ namespace HorrorFPS
             // botão secundário
             if (ItemInput.Pressed(input.Secondary))
             {
-                if (held != null) ClearHold();
+                if (held != null)
+                {
+                    if (held.stack > 1 && hv != null) DropOneHeld(hv);        // pilha na mão: deixa 1 unidade aqui e continua com o resto
+                    else ReturnHeld();
+                }
                 else if (hoverItem != null && hv != null) OpenMenu(hoverItem);
-                else if (slot >= 0 && hotbar != null) { hotbar.Clear(slot); dirty = true; }
+                else if (slot >= 0 && hotbar != null)
+                {
+                    if (hotbar.GetItem(slot) != null) Play(InvSound.HotbarClear);
+                    hotbar.Clear(slot);
+                    dirty = true;
+                }
             }
+        }
+
+        // ------------------------------------------------------------------ menu do item aberto
+        /// <summary>
+        /// Com o menu aberto ele consome TODA a entrada: nada chega ao item que está por baixo. Funciona como a navegação por foco da UI:
+        /// setas/D-pad movem o foco; E, Enter, Espaço e X escolhem a opção em foco; o clique do mouse escolhe a linha sob o ponteiro
+        /// (e clicar fora fecha); botão direito, Backspace e B fecham.
+        /// </summary>
+        void HandleMenu(bool select)
+        {
+            menu.UpdatePointer(cursor);
+
+            bool mouseClick = RealPointer && Mouse.current.leftButton.wasPressedThisFrame;
+            bool rightClick = RealPointer && Mouse.current.rightButton.wasPressedThisFrame;
+
+            if (ItemInput.Pressed(input.NavUp)) MoveMenuFocus(-1);
+            else if (ItemInput.Pressed(input.NavDown)) MoveMenuFocus(1);
+
+            if (ItemInput.Pressed(input.Cancel) || rightClick) menu.Dismiss(false);
+            else if (RealPointer ? mouseClick : select) menu.Click(cursor);          // clique de mouse ou botão A com o cursor virtual: a linha sob o cursor
+            else if (ItemInput.Pressed(input.MenuPick) || select) menu.PickFocused();   // E / X / Enter / Espaço: a opção em foco
+        }
+
+        void MoveMenuFocus(int dir)
+        {
+            if (menu.MoveFocus(dir) && !RealPointer) cursor = overlay.ClampToViewport(menu.FocusPoint());     // o cursor virtual acompanha o foco
         }
 
         // ------------------------------------------------------------------ navegação sem mouse
@@ -439,6 +497,9 @@ namespace HorrorFPS
 
         // ------------------------------------------------------------------ item na mão
         /// <summary>Célula da peça na mão que está sob o cursor (para o arrasto "começar" de onde foi pega).</summary>
+        /// <summary>Velocidade do cursor em pixels de tela por segundo, suavizada (usada para "arremessar" a peça na bandeja).</summary>
+        public Vector2 CursorVelocity { get; private set; }
+
         public bool TryGetGrab(ItemInstance item, out Vector2Int cell)
         {
             cell = grabCell;
@@ -477,7 +538,9 @@ namespace HorrorFPS
                 if (IsBrowse(pressView)) return false;                                 // nessas listas não se arrasta item
                 pressTime += dt;
                 bool moved = (cursor - pressCursor).magnitude > dragMovePixels * (Screen.height / 1080f);
-                if (pressTime >= dragHoldSeconds || moved)
+                float chargeFrom = Mathf.Max(0f, dragChargeDelay);                          // a barrinha só aparece depois disto
+                float holdTime = Mathf.Max(dragHoldSeconds, chargeFrom + 0.15f);            // e enche até aqui (pelo menos 0,15 s de enchimento)
+                if (pressTime >= holdTime || moved)
                 {
                     ItemInstance it = pressItem;
                     ContainerView from = pressView;
@@ -487,7 +550,8 @@ namespace HorrorFPS
                     mouseDragging = true;
                     popT = 0f;
                 }
-                else ShowCharge(Mathf.Clamp01(pressTime / dragHoldSeconds));
+                else if (pressTime >= chargeFrom) ShowCharge(Mathf.Clamp01((pressTime - chargeFrom) / (holdTime - chargeFrom)));
+                else ShowCharge(-1f);                                                  // clique rápido: nada de barrinha piscando
                 return false;
             }
 
@@ -498,7 +562,15 @@ namespace HorrorFPS
                 if (held != null)
                 {
                     TryDrop(hv, slot);
-                    if (held != null) ClearHold();      // não coube / soltou fora: o item volta ao lugar de onde saiu
+                    if (held != null)
+                    {
+                        // não coube / soltou fora: vai para a bandeja (sem bandeja, volta ao lugar de onde saiu)
+                        bool rejected = lastDropRejected;
+                        if (rejected) FxRejectEcho(); else FxFlyHeldToTray();
+                        if (SendHeldToTray()) Play(InvSound.DropTray);
+                        else if (rejected) ClearHold();
+                        else ReturnHeld();
+                    }
                 }
             }
             return false;
@@ -509,6 +581,38 @@ namespace HorrorFPS
             if (pressItem == null) return;
             pressItem = null; pressView = null; pressTime = 0f;
             ShowCharge(-1f);
+        }
+
+        /// <summary>Botão direito com uma pilha na mão: solta UMA unidade onde o cursor está (como no Minecraft e no Terraria).</summary>
+        void DropOneHeld(ContainerView hv)
+        {
+            ItemInstance it = held;
+            int rot = heldRot;
+            int stackBefore = it.stack;
+            FxCapture(hv);
+            TransferResult r = hv.DropOne(it, heldRot, cursor);
+            if (ItemTransfer.Ok(r))
+            {
+                RefreshAll();
+                FxPlaced(hv, it, rot, r, stackBefore);
+                Play(r == TransferResult.Merged ? InvSound.DropMerge : InvSound.DropFit);
+                return;
+            }
+            if (r == TransferResult.Rejected) Notify("Isto não cabe aqui.");
+            else if (r == TransferResult.NoSpace) Notify("Sem espaço.");
+            else if (r == TransferResult.Blocked) Notify("Lugar ocupado.");
+            FxRejected(hv);
+        }
+
+        /// <summary>Largou a peça fora de qualquer lugar (ou não coube): ela fica solta na bandeja, que é a área de remanejo.</summary>
+        bool SendHeldToTray()
+        {
+            if (tray == null || held == null) return false;
+            ItemInstance it = held;
+            TransferResult r = tray.Receive(it, heldRot, cursor, CursorVelocity, true);
+            if (!ItemTransfer.Ok(r)) return false;
+            ClearHold();
+            return true;
         }
 
         void BeginHold(ItemInstance item, ContainerView from)
@@ -522,35 +626,66 @@ namespace HorrorFPS
             heldRot = item.rotation;
             hasGrab = from != null && from.TryGetGrabCell(at, item, out grabCell);
             if (!hasGrab) grabCell = Vector2Int.zero;
+            ghostSmoothValid = false;
+            shakeT = 1f;
             RebuildGhost();
             RefreshAll();
+            Play(InvSound.PickUp);
         }
 
         void ClearHold()
         {
             held = null;
             hasGrab = false;
+            ghostSmoothValid = false;
             DestroyGhost();
             if (open) RefreshAll();
         }
 
+        /// <summary>
+        /// Solta a peça da mão onde o cursor está. Cada resultado tem a sua animação e o seu som: encaixou / juntou / trocou
+        /// (flash verde, anel, peça assentando), não coube (flash vermelho, peça balançando), atalho (a peça voa até o número),
+        /// jogar fora (a peça cai na zona). 'lastDropRejected' diz se foi recusado (o chamador usa para decidir o que fazer com a peça).
+        /// </summary>
         void TryDrop(ContainerView hv, int slot)
         {
             if (held == null) return;
             ItemInstance it = held;
+            lastDropRejected = false;
 
             if (slot >= 0)
             {
-                if (hotbar != null && it.container != null && it.container.Owner == owner) { hotbar.Assign(slot, it); ClearHold(); }
-                else Notify("Só dá para atalhar itens seus.");
+                if (hotbar != null && it.container != null && it.container.Owner == owner)
+                {
+                    FxFlyHeldToSlot(slot);          // antes de largar a peça: a cópia nasce da posição dela
+                    hotbar.Assign(slot, it);
+                    ClearHold();
+                    FxSlot(slot, true);
+                    Play(InvSound.DropHotbar);
+                }
+                else
+                {
+                    Notify("Só dá para atalhar itens seus.");
+                    FxSlot(slot, false);
+                    FxShakeHeld();
+                }
                 return;
             }
             if (InvUI.Hit(dropZone, cursor))
             {
-                if (!it.data.canDrop) { Notify("Não dá para jogar isto fora."); return; }
+                if (!it.data.canDrop)
+                {
+                    Notify("Não dá para jogar isto fora.");
+                    FxZone(false);
+                    FxShakeHeld();
+                    return;
+                }
+                FxFlyHeldToZone();
+                FxZone(true);
                 ClearHold();
                 owner.Drop(it);
                 RefreshAll();           // redesenha já: a grade não espera o próximo quadro
+                Play(InvSound.DropWorld);
                 return;
             }
             if (hv == null) return;       // clicou fora: continua com o item na mão
@@ -567,16 +702,30 @@ namespace HorrorFPS
                     {
                         ClearHold();
                         Notify("Guardado em " + tabC.DisplayName + ".");
+                        Play(InvSound.DropFit);
                         return;
                     }
                 }
             }
 
+            int rot = heldRot;
+            int stackBefore = it.stack;
+            FxCapture(hv);                  // onde a peça cairia: guardado ANTES, a grade é redesenhada depois de soltar
             TransferResult r = hv.DropHeld(it, heldRot, cursor);
-            if (ItemTransfer.Ok(r)) ClearHold();
-            else if (r == TransferResult.Rejected) Notify("Isto não cabe aqui.");
+            if (ItemTransfer.Ok(r))
+            {
+                ClearHold();
+                FxPlaced(hv, it, rot, r, stackBefore);
+                if (r == TransferResult.Merged) Play(InvSound.DropMerge);
+                else if (r == TransferResult.Swapped) Play(InvSound.DropSwap);
+                else Play(hv is TrayView ? InvSound.DropTray : InvSound.DropFit);
+                return;
+            }
+
+            if (r == TransferResult.Rejected) Notify("Isto não cabe aqui.");
             else if (r == TransferResult.NoSpace) Notify("Sem espaço.");
             else Notify("Lugar ocupado.");
+            FxRejected(hv);
         }
 
         void RotateInPlace(ItemInstance item)
@@ -588,9 +737,11 @@ namespace HorrorFPS
         void DropToWorld(ItemInstance item)
         {
             if (!item.data.canDrop) { Notify("Não dá para jogar isto fora."); return; }
-            owner.Drop(item);
+            try { owner.Drop(item); }
+            catch (System.Exception e) { Debug.LogException(e); }      // um ouvinte com erro não pode deixar o desenho velho na tela
             RefreshAll();
             dirty = false;
+            Play(InvSound.DropWorld);
         }
 
         void OpenInspect(ItemInstance item)

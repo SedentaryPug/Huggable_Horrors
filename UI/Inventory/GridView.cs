@@ -208,6 +208,80 @@ namespace HorrorFPS
             for (int i = 0; i < previewPool.Count; i++) previewPool[i].gameObject.SetActive(false);
         }
 
+        // ------------------------------------------------------------------ onde a peça cai (para as animações)
+        /// <summary>Retângulo de uma célula medido na camada dos efeitos (origem no canto superior esquerdo, y para baixo).</summary>
+        Rect CellRect(RectTransform layer, int x, int y)
+        {
+            Vector2 a, b;
+            InvUI.ToTopLeftLocal(layer, InvUI.TopLeftToScreen(body, new Vector2(x * cell, y * cell)), out a);
+            InvUI.ToTopLeftLocal(layer, InvUI.TopLeftToScreen(body, new Vector2((x + 1) * cell, (y + 1) * cell)), out b);
+            return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+        }
+
+        public override bool GetDropFootprint(ItemInstance held, int heldRotation, Vector2 screenPoint, RectTransform layer, List<Rect> cells, out Rect box)
+        {
+            cells.Clear();
+            box = new Rect();
+            Vector2Int c;
+            if (held == null || held.data == null || layer == null || !CellAt(screenPoint, out c)) return false;
+
+            Vector2Int origin = OriginFor(held, heldRotation, c);
+            Vector2Int[] shape = held.data.shape.GetCells(heldRotation);
+            float minX = float.MaxValue, minY = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue;
+            for (int i = 0; i < shape.Length; i++)
+            {
+                int px = origin.x + shape[i].x, py = origin.y + shape[i].y;
+                if (px < 0 || py < 0 || px >= grid.Width || py >= grid.Height) continue;      // célula fora da grade: não tem onde desenhar
+                Rect r = CellRect(layer, px, py);
+                cells.Add(r);
+                minX = Mathf.Min(minX, r.xMin); minY = Mathf.Min(minY, r.yMin);
+                maxX = Mathf.Max(maxX, r.xMax); maxY = Mathf.Max(maxY, r.yMax);
+            }
+            if (cells.Count == 0) return false;
+            box = Rect.MinMaxRect(minX, minY, maxX, maxY);
+            return true;
+        }
+
+        public override bool GetItemBox(ItemInstance item, RectTransform layer, out Rect box)
+        {
+            box = new Rect();
+            if (item == null || item.data == null || item.container != grid || layer == null) return false;
+            Vector2Int size = item.data.shape.GetSize(item.rotation);
+            Rect a = CellRect(layer, item.gridPos.x, item.gridPos.y);
+            Rect b = CellRect(layer, item.gridPos.x + size.x - 1, item.gridPos.y + size.y - 1);
+            box = Rect.MinMaxRect(a.xMin, a.yMin, b.xMax, b.yMax);
+            return true;
+        }
+
+        public override TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            Vector2Int c;
+            if (held == null || held.data == null || held.stack < 2 || !CellAt(screenPoint, out c)) return TransferResult.Invalid;
+            if (!grid.Accepts(held.data)) return TransferResult.Rejected;
+
+            Vector2Int origin = OriginFor(held, heldRotation, c);
+            if (!grid.GetOverlaps(held, origin, heldRotation, overlaps)) return TransferResult.Blocked;
+
+            if (overlaps.Count == 0)
+            {
+                // a pilha na mão ainda ocupa o lugar de origem: TryPlaceAt recusa se a nova peça cair sobre ela
+                ItemInstance one = held.Clone(1);
+                if (!grid.TryPlaceAt(one, origin, heldRotation)) return TransferResult.Blocked;
+                held.stack -= 1;
+                held.NotifyModified();
+                return TransferResult.Success;
+            }
+            if (overlaps.Count == 1 && overlaps[0].CanStackWith(held) && overlaps[0].stack < overlaps[0].MaxStack)
+            {
+                overlaps[0].stack += 1;
+                overlaps[0].NotifyModified();
+                held.stack -= 1;
+                held.NotifyModified();
+                return TransferResult.Merged;
+            }
+            return TransferResult.Blocked;
+        }
+
         public override TransferResult DropHeld(ItemInstance held, int heldRotation, Vector2 screenPoint)
         {
             Vector2Int c;

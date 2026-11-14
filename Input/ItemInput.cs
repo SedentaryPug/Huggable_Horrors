@@ -27,6 +27,7 @@ namespace HorrorFPS
         public InputAction RightStick { get; private set; }   // analógico direito: girar/zoom na inspeção, rolar listas
         public InputAction Select { get; private set; }       // pegar / soltar
         public InputAction Secondary { get; private set; }    // menu do item
+        public InputAction MenuPick { get; private set; }     // com o menu do item aberto: escolhe a opção em foco (E / X)
         public InputAction Rotate { get; private set; }       // girar o item na mão
         public InputAction Cancel { get; private set; }       // voltar / soltar na origem
         public InputAction Drop { get; private set; }         // jogar fora o item sob o cursor
@@ -36,7 +37,8 @@ namespace HorrorFPS
         public InputAction NavDown { get; private set; }
         public InputAction NavLeft { get; private set; }
         public InputAction NavRight { get; private set; }
-        public InputAction UseEquipped { get; private set; }  // acionar o item equipado (fora do inventário)
+        public InputAction UseEquipped { get; private set; }  // acionar o item equipado (fora do inventário): atirar, golpear
+        public InputAction Aim { get; private set; }          // mirar com o item equipado (arma de fogo): segurar
         public InputAction Scroll { get; private set; }       // roda do mouse
         public InputAction HotbarPrev { get; private set; }
         public InputAction HotbarNext { get; private set; }
@@ -94,6 +96,8 @@ namespace HorrorFPS
             Toggle = Button("Toggle", "<Keyboard>/tab", "<Keyboard>/i", "<Gamepad>/buttonNorth");
             Select = Button("Select", "<Mouse>/leftButton", "<Gamepad>/buttonSouth", "<Keyboard>/enter", "<Keyboard>/space");
             Secondary = Button("Secondary", "<Mouse>/rightButton", "<Gamepad>/buttonWest", "<Keyboard>/e");
+            // com o menu do item aberto: E (ou X no controle) ATIVA a opção em foco, em vez de reabrir o menu no item. Enter, Espaço e A também ativam (via Select).
+            MenuPick = Button("MenuPick", "<Keyboard>/e", "<Gamepad>/buttonWest");
             Rotate = Button("Rotate", "<Keyboard>/r", "<Gamepad>/rightShoulder");
             Cancel = Button("Cancel", "<Keyboard>/backspace", "<Gamepad>/buttonEast");
             Drop = Button("Drop", "<Keyboard>/g");
@@ -103,8 +107,10 @@ namespace HorrorFPS
             NavDown = Button("NavDown", "<Keyboard>/downArrow", "<Keyboard>/s", "<Gamepad>/dpad/down");
             NavLeft = Button("NavLeft", "<Keyboard>/leftArrow", "<Keyboard>/a", "<Gamepad>/dpad/left");
             NavRight = Button("NavRight", "<Keyboard>/rightArrow", "<Keyboard>/d", "<Gamepad>/dpad/right");
-            // acionar o equipado: botão direito do mouse / LT (o esquerdo e o RT já são do arrastar objetos do framework)
-            UseEquipped = Button("UseEquipped", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
+            // item equipado: botão esquerdo / RT aciona (atira, golpeia) e botão direito / LT mira. São os mesmos botões do arrastar
+            // objetos, que fica bloqueado enquanto há item equipado que bloqueia o arrastar (ItemEquip.blocksGrab).
+            UseEquipped = Button("UseEquipped", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
+            Aim = Button("Aim", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
 
             // ações de valor (Vector2): forma curta do AddAction (nome, tipo, binding). Os controles já são Vector2,
             // então ReadValue<Vector2>() funciona sem declarar o tipo esperado.
@@ -117,9 +123,13 @@ namespace HorrorFPS
             HotbarPrev = Button("HotbarPrev", "<Gamepad>/dpad/left");
             HotbarNext = Button("HotbarNext", "<Gamepad>/dpad/right");
             HotbarUse = Button("HotbarUse", "<Gamepad>/leftShoulder");
-            HotbarKeys = new InputAction[Hotbar.SlotCount];
+            HotbarKeys = new InputAction[Hotbar.MaxSlots];
             for (int i = 0; i < HotbarKeys.Length; i++)
-                HotbarKeys[i] = Button("Hotbar" + (i + 1), "<Keyboard>/" + (i + 1));
+            {
+                string key = Hotbar.KeyPath(i);         // nulo = slot sem tecla (só o D-pad chega nele)
+                if (key != null) HotbarKeys[i] = Button("Hotbar" + (i + 1), key);
+                else HotbarKeys[i] = Button("Hotbar" + (i + 1));
+            }
 
             // equipamentos em jogo (lidos pelo EquipmentController com o inventário fechado)
             Reload = Button("Reload", "<Keyboard>/r", "<Gamepad>/dpad/down");

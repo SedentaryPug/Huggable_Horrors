@@ -94,7 +94,7 @@ namespace HorrorFPS
                 r.swatch.color = it.data.color;
                 string tag = "";
                 if (owner != null && owner.IsEquipped(it)) tag += " <color=#80ff8c>[E]</color>";
-                if (it.hotkey >= 0) tag += " <color=#c79e47>[" + (it.hotkey + 1) + "]</color>";
+                if (it.hotkey >= 0) tag += " <color=#c79e47>[" + Hotbar.KeyLabel(it.hotkey) + "]</color>";
                 if (list.Tab == InventoryTab.Records && !it.HasFlag("read")) tag += " <color=#e8c04a>● novo</color>";
                 r.name.text = it.GetName(screen) + tag;
                 string right = it.stack > 1 ? "x" + it.stack : "";
@@ -109,6 +109,18 @@ namespace HorrorFPS
             if (local.x < 0f || local.x > width || local.y < 0f) return -1;
             int r = Mathf.FloorToInt(local.y / RowH);
             return r >= 0 && r < maxRows ? r : -1;
+        }
+
+        public override bool GetItemBox(ItemInstance item, RectTransform layer, out Rect box)
+        {
+            box = new Rect();
+            if (item == null || layer == null) return false;
+            int idx = -1;
+            for (int i = 0; i < list.Items.Count; i++) if (list.Items[i] == item) { idx = i; break; }
+            int r = idx - scroll;
+            if (idx < 0 || r < 0 || r >= rows.Length) return false;
+            box = InvUI.RectInLayer(layer, rows[r].rt);
+            return true;
         }
 
         public override ItemInstance PickAt(Vector2 screenPoint)
@@ -188,6 +200,12 @@ namespace HorrorFPS
             if (held == null) return TransferResult.Invalid;
             if (held.container == list) return TransferResult.Success;
             return ItemTransfer.Move(held, list);
+        }
+
+        public override TransferResult DropOne(ItemInstance held, int heldRotation, Vector2 screenPoint)
+        {
+            if (held == null || held.stack < 2 || held.container == list) return TransferResult.Invalid;
+            return ItemTransfer.Move(held, list, 1);
         }
 
         public override void Scroll(float amount)
