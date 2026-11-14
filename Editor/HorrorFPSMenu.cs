@@ -27,6 +27,7 @@ namespace HorrorFPS
         public const string Objectives = Root + "Objectives/"; // objetivos da partida (catálogo, ações em cena)
         public const string Journal   = Root + "Journal/";     // diário (catálogo, nota em cena, ações para eventos)
         public const string Tutorials = Root + "Tutorials/";   // dicas de tutorial (catálogo, volumes, reiniciar dicas vistas)
+        public const string Audio    = Root + "Audio/";      // música e ambiente por área, passos por piso, rádio
         public const string Demo      = Root + "Demo/";        // jogo de demonstração e exemplos prontos
 
         // ------------------------------------------------------------------ ordem das áreas (3º argumento do [MenuItem])
@@ -40,6 +41,7 @@ namespace HorrorFPS
         public const int ObjectivesOrder = 80;
         public const int JournalOrder   = 85;   // 85 a 87, entre Objetivos e Dicas
         public const int TutorialsOrder = 90;
+        public const int AudioOrder     = 95;   // 95 a 99, entre Dicas e Demo
         public const int DemoOrder      = 100;
     }
 }

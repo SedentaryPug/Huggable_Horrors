@@ -110,6 +110,8 @@ namespace HorrorFPS.EditorTools
             MainMenu mainMenu = menu.AddComponent<MainMenu>();
             new Props(mainMenu).Obj("controlsAsset", actions).Apply();
 
+            BuildMenuAudio();
+
             EditorSceneManager.SaveScene(scene, MenuScenePath);
         }
 

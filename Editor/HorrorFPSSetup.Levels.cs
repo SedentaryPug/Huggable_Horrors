@@ -102,6 +102,7 @@ namespace HorrorFPS.EditorTools
             new Props(streamBox.gameObject.AddComponent<SceneStreamer>()).Str("sceneName", "Level_Annex").Float("unloadDelay", 3f).Apply();
 
             BuildIntroCutscene(table.transform, lampA, lampB, lampC);
+            BuildHallAudio(wood, metal);
 
             EditorSceneManager.SaveScene(scene, HallScenePath);
         }
@@ -213,6 +214,8 @@ namespace HorrorFPS.EditorTools
             new Props(scareBox.gameObject.AddComponent<CutsceneTrigger>()).Obj("sequence", scare)
                 .Enum("playWhen", (int)CutsceneTrigger.PlayWhen.PlayerEntersTrigger).Apply();
 
+            BuildCellarAudio();
+
             EditorSceneManager.SaveScene(scene, CellarScenePath);
         }
 
@@ -244,6 +247,8 @@ namespace HorrorFPS.EditorTools
             Prim(PrimitiveType.Cube, "Mesa do anexo", new Vector3(25f, 0.45f, 5f), new Vector3(1.4f, 0.9f, 0.9f), wood, null, true);
             MakePickup("Bilhete", "Bilhete rasgado", string.Empty, "notes",
                 PrimitiveType.Cube, new Vector3(25f, 0.93f, 5f), new Vector3(0.3f, 0.05f, 0.22f), paper);
+
+            BuildAnnexAudio();
 
             EditorSceneManager.SaveScene(scene, AnnexScenePath);
         }
