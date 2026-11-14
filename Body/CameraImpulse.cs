@@ -47,7 +47,7 @@ namespace HorrorFPS
             b.Kick(dir, strength);
         }
 
-        /// <summary>Uso de arma pelo jogador 'shooter' (qualquer componente dele). strength 0..1.</summary>
+        /// <summary>Uso de arma pelo jogador 'shooter' (qualquer componente dele). strength 0..1 (até 2 = coice exagerado).</summary>
         public static void Recoil(Component shooter, float strength, float sideways = 0f)
         {
             DynamicHeadBob b = PlayerRef.Find<DynamicHeadBob>(shooter);

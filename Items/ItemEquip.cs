@@ -16,7 +16,7 @@ namespace HorrorFPS
     {
         Auto = 0,   // arma de fogo de vários projéteis ou automática = pesada; o resto = leve
         Light = 1,  // uma mão sem problemas (faca, pistola)
-        Heavy = 2   // espingarda, rifle, taco: com uma mão só não recarrega (e, nas próximas fases, o coice é muito mais forte)
+        Heavy = 2   // espingarda, rifle, taco: com uma mão só não recarrega, o coice é muito mais forte e a arma pode escapar da mão
     }
 
     /// <summary>
@@ -108,6 +108,24 @@ namespace HorrorFPS
         [Range(0f, 1f)] public float aimSpreadMultiplier = 0.3f;
         [Tooltip("Tempo para entrar na mira, em segundos.")]
         public float aimSeconds = 0.15f;
+
+        [Header("Precisão (a mira na tela mostra esta abertura)")]
+        [Tooltip("Dispersão que cada tiro soma, em graus. Atirar em sequência abre a mira; parar de atirar fecha.")]
+        public float bloomPerShot = 0.5f;
+        [Tooltip("Limite da dispersão somada pelos tiros seguidos, em graus.")]
+        public float bloomMax = 3f;
+        [Tooltip("Quanto a dispersão dos tiros seguidos fecha por segundo (graus) depois que para de atirar. A mão tremendo fecha mais devagar.")]
+        public float bloomRecover = 4f;
+        [Tooltip("Dispersão somada correndo, em graus (andando conta cerca de metade, agachado ou parado = 0, no ar = tudo). Mirando conta menos.")]
+        public float moveSpread = 1.2f;
+
+        [Header("Arma pesada com uma mão só")]
+        [Tooltip("A dispersão fica x este valor quando a arma PESADA é segurada com uma mão só (1 = igual).")]
+        public float oneHandSpreadMultiplier = 2f;
+        [Tooltip("O coice fica x este valor com uma mão só. Passando de 1 o coice é exagerado: a câmera e o modelo na mão sobem mais.")]
+        public float oneHandRecoilMultiplier = 2f;
+        [Tooltip("Chance (0..1) de a arma escapar da mão a cada tiro com uma mão só. Sobe até 50% com a mão tremendo. 0 = nunca escapa.")]
+        [Range(0f, 1f)] public float oneHandDropChance = 0.2f;
 
         /// <summary>True se o item é pesado (ver HandGrip): com uma mão só não recarrega.</summary>
         public bool IsHeavy

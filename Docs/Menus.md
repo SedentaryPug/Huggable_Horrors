@@ -49,6 +49,8 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Stalker > Create Stalker Route From Selected Ladder` | `Editor/Stalker/StalkerWorldMenu.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Route (Duct, Vault, Drop...) At Scene View` | `Editor/Stalker/StalkerWorldMenu.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Ambush Spot From Selected` | `Editor/Stalker/StalkerWorldMenu.cs` |
+| `Tools > Horror FPS > Stalker > Create Stalker Test Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
+| `Tools > Horror FPS > Stalker > Create Stalker Test Arena In Open Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
 | `Tools > Horror FPS > Stalker > Add Route Animator Parameters` | `Editor/Stalker/StalkerWorldMenu.cs` |
 
 ### Hurtbox — zonas de dano
@@ -124,5 +126,5 @@ Os docs e o histórico do Git antigos citam os menus pelo número. A tabela trad
 | Antigo | O que aconteceu |
 |---|---|
 | 27. Create Showcase Scene (Everything) | **Removido** junto com a cena `Level_Showcase`, os materiais `Showcase*` e o código gerador (`HorrorFPSSetup.Showcase*`, `DemoProps`, `PropsDemoBuilder*`). Está no histórico do Git (commit anterior a "Remove a cena Showcase"). |
-| 2. Create Demo Scene · 6. Create Demo Props In Open Scene · 13. Create Dialogue Demo Props · 17. Create Props Demo · 18. Create Stalker Demo | Já não estavam no repositório (repetiam o que a cena completa montava). A bancada do perseguidor continua no código como `StalkerMenu.BuildDemo`, sem menu. |
+| 2. Create Demo Scene · 6. Create Demo Props In Open Scene · 13. Create Dialogue Demo Props · 17. Create Props Demo · 18. Create Stalker Demo | Já não estavam no repositório (repetiam o que a cena completa montava). A bancada do perseguidor (18) voltou como `Stalker > Create Stalker Test Scene` e `Stalker > Create Stalker Test Arena In Open Scene`. |
 | 28 a 30, 33 a 35 | Números que nunca chegaram a este repositório. Docs antigos de IK das mãos (maçaneta, válvula) citam menus 34/36/37 que não existem aqui; no repositório, 36 e 37 eram as rotas do perseguidor. |

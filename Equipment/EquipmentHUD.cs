@@ -6,12 +6,28 @@ namespace HorrorFPS
     /// <summary>
     /// Canto inferior direito da tela do jogador: o item de cada mão (balas / durabilidade, "[2 mãos]" quando segura com as duas),
     /// a bateria da lanterna e a barra de recarga. Só aparece quando há algo equipado e o inventário está fechado.
+    /// Também desenha a MIRA na tela quando há arma de fogo na mão: quatro traços cuja abertura é o cone real do próximo tiro
+    /// (abre andando e atirando em sequência, fecha mirando e com as duas mãos) e que acompanham a deriva da mão trêmula.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment HUD")]
     [PlayerModule("Equipamento", 1)]
     [RequireComponent(typeof(PlayerOverlay), typeof(EquipmentController))]
     public class EquipmentHUD : MonoBehaviour
     {
+        public enum CrosshairMode { Always, OnlyWhileAiming, Off }
+
+        [Header("Mira na tela (arma de fogo)")]
+        [Tooltip("Sempre = aparece com arma de fogo na mão; Só mirando = só segurando o botão de mirar (Q); Desligada = nunca (o tiro continua com a mesma dispersão).")]
+        [SerializeField] CrosshairMode crosshair = CrosshairMode.Always;
+        [Tooltip("Afastamento mínimo dos traços do centro (pixels lógicos, tela de 720 de altura): a mira nunca fecha mais que isto.")]
+        [SerializeField] float crosshairMinGap = 4f;
+        [Tooltip("Comprimento e espessura de cada traço (pixels lógicos).")]
+        [SerializeField] Vector2 crosshairTick = new Vector2(11f, 2.5f);
+        [Tooltip("A mira segue por onde a arma realmente aponta quando a mão treme. Desligado: fica parada no centro da tela.")]
+        [SerializeField] bool crosshairFollowsDrift = true;
+        [Tooltip("Suavização da abertura e do movimento da mira (maior = mais rápida).")]
+        [SerializeField] float crosshairSmoothing = 16f;
+
         PlayerOverlay overlay;
         EquipmentController equip;
         InventoryOwner owner;
@@ -22,11 +38,20 @@ namespace HorrorFPS
         string lastRight, lastLeft, lastLamp;
         bool built;
 
+        // mira na tela
+        RectTransform chBox;
+        CanvasGroup chGroup;
+        Image[] chTicks;
+        Camera chCam;
+        float chGap = 4f;
+        Vector2 chPos;
+
         void Update()
         {
             if (!built && !Build()) return;
 
             bool hidden = screen != null && screen.IsOpen;
+            UpdateCrosshair(hidden);
             bool any = equip.RightHand != null || equip.LeftHand != null || equip.Lamp != null;
             group.alpha = (!hidden && any) ? 1f : 0f;
             if (hidden || !any) return;
@@ -94,8 +119,83 @@ namespace HorrorFPS
             bf.offsetMin = bf.offsetMax = Vector2.zero;
             barBack.gameObject.SetActive(false);
 
+            BuildCrosshair();
+
             built = true;
             return true;
+        }
+
+        // ------------------------------------------------------------------ mira na tela
+        void BuildCrosshair()
+        {
+            RectTransform layer = overlay.NewLayer("Crosshair");
+            chBox = InvUI.Rect(layer, "Crosshair");
+            chBox.anchorMin = chBox.anchorMax = new Vector2(0.5f, 0.5f);
+            chBox.pivot = new Vector2(0.5f, 0.5f);
+            chBox.anchoredPosition = Vector2.zero;
+            chBox.sizeDelta = Vector2.zero;
+            chGroup = chBox.gameObject.AddComponent<CanvasGroup>();
+            chGroup.alpha = 0f;
+            chGroup.blocksRaycasts = false;
+            chGroup.interactable = false;
+
+            chTicks = new Image[4];       // 0 cima, 1 baixo, 2 esquerda, 3 direita
+            for (int i = 0; i < 4; i++)
+            {
+                Image t = InvUI.Img(chBox, "tick" + i, Color.white);
+                Outline o = t.gameObject.AddComponent<Outline>();       // contorno escuro: aparece em fundo claro também
+                o.effectColor = new Color(0f, 0f, 0f, 0.55f);
+                o.effectDistance = new Vector2(1f, -1f);
+                t.rectTransform.anchorMin = t.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                t.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                chTicks[i] = t;
+            }
+            chGap = crosshairMinGap;
+        }
+
+        void UpdateCrosshair(bool hidden)
+        {
+            if (chBox == null) return;
+            float dt = Time.unscaledDeltaTime;
+
+            EquipmentController.CrosshairInfo info;
+            bool has = equip.GetCrosshair(out info);
+            bool show = has && !hidden && crosshair != CrosshairMode.Off;
+            if (show && crosshair == CrosshairMode.OnlyWhileAiming && info.aim < 0.05f) show = false;
+
+            chGroup.alpha = Mathf.MoveTowards(chGroup.alpha, show ? 1f : 0f, dt * 8f);
+            if (!show) return;
+
+            if (chCam == null) chCam = PlayerRef.CameraOf(this);
+            float fov = chCam != null ? Mathf.Clamp(chCam.fieldOfView, 10f, 120f) : 70f;
+            float pixelsPerTan = (PlayerOverlay.LogicalHeight * 0.5f) / Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);       // graus -> pixels lógicos, na imagem que o jogador vê
+
+            float k = 1f - Mathf.Exp(-Mathf.Max(1f, crosshairSmoothing) * dt);
+            float gapWanted = Mathf.Clamp(Mathf.Tan(Mathf.Min(info.spreadDegrees, 60f) * Mathf.Deg2Rad) * pixelsPerTan, Mathf.Max(0f, crosshairMinGap), 260f);
+            chGap = Mathf.Lerp(chGap, gapWanted, k);
+
+            Vector2 posWanted = Vector2.zero;
+            if (crosshairFollowsDrift) posWanted = Vector2.ClampMagnitude(info.driftTan * pixelsPerTan, 160f);
+            chPos = Vector2.Lerp(chPos, posWanted, k);
+            chBox.anchoredPosition = chPos;
+
+            float len = Mathf.Max(2f, crosshairTick.x), thick = Mathf.Max(1f, crosshairTick.y);
+            float off = chGap + len * 0.5f;
+            Place(chTicks[0], new Vector2(0f, off), new Vector2(thick, len));
+            Place(chTicks[1], new Vector2(0f, -off), new Vector2(thick, len));
+            Place(chTicks[2], new Vector2(-off, 0f), new Vector2(len, thick));
+            Place(chTicks[3], new Vector2(off, 0f), new Vector2(len, thick));
+
+            // vermelho sem balas no carregador; apagada enquanto recarrega
+            Color c = info.empty ? new Color(0.9f, 0.3f, 0.26f, 0.95f) : new Color(1f, 1f, 1f, 0.85f);
+            if (info.reloading) c.a = 0.3f;
+            for (int i = 0; i < chTicks.Length; i++) chTicks[i].color = c;
+        }
+
+        static void Place(Image tick, Vector2 position, Vector2 size)
+        {
+            tick.rectTransform.anchoredPosition = position;
+            tick.rectTransform.sizeDelta = size;
         }
 
         /// <summary>Uma linha por mão: "Dir  Pistola  7 / 20". Com as duas mãos num item, a outra mão aparece apagada ("guardado").</summary>

@@ -13,6 +13,8 @@ namespace HorrorFPS
     ///  • G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da esquerda; com as duas mãos, qualquer botão usa o item
     ///    e o item da outra mão fica guardado até voltar para uma mão só (apertar G de novo);
     ///  • Q / Select mira (arma de fogo, segurando: zoom, menos dispersão, arma no centro);
+    ///    a dispersão abre andando/correndo e atirando em sequência (a mira na tela, EquipmentHUD, mostra a abertura); com as duas mãos fica menor;
+    ///    arma PESADA com uma mão só: dispersão e coice bem maiores e a arma pode escapar da mão (vira item no chão);
     ///  • R / D-pad baixo recarrega (arma pesada, como espingarda, só recarrega com as duas mãos);
     ///  • F / D-pad cima liga e desliga a lanterna (equipa uma, se não houver).
     /// Quem está em qual mão é decidido pelo InventoryOwner (EquipToHand): este componente só mostra e executa.
@@ -37,6 +39,16 @@ namespace HorrorFPS
         [Tooltip("Com as duas mãos, o item vai para perto do centro da tela: esta fração do afastamento lateral normal (0 = no meio).")]
         [SerializeField, Range(0f, 1f)] float twoHandSideFactor = 0.25f;
 
+        [Header("Precisão e coice")]
+        [Tooltip("Com as duas mãos numa arma de fogo (G), a dispersão fica nesta fração (0,7 = 30% menor).")]
+        [SerializeField, Range(0.1f, 1f)] float twoHandSpreadFactor = 0.7f;
+        [Tooltip("Com as duas mãos numa arma de fogo, o coice fica nesta fração.")]
+        [SerializeField, Range(0.1f, 1f)] float twoHandRecoilFactor = 0.8f;
+        [Tooltip("Velocidade (por segundo) com que a abertura da mira acompanha o movimento: sobe ao andar e correr, fecha ao parar.")]
+        [SerializeField] float moveSpreadFollow = 5f;
+        [Tooltip("Aviso 'segure com as duas mãos' ao atirar com arma pesada numa mão só: no máximo de tantos em tantos segundos (0 = nunca avisa).")]
+        [SerializeField] float oneHandHintSeconds = 25f;
+
         /// <summary>Uma mão: o item que ela segura, o modelo e o estado das animações (golpe, recarga, coice).</summary>
         class HandState
         {
@@ -48,6 +60,7 @@ namespace HorrorFPS
             public bool busy, reloading;
             public float nextAttack;
             public float swingT = -1f, reloadT = -1f, kick;
+            public float bloom;            // dispersão somada pelos tiros seguidos (graus); fecha sozinha quando para de atirar
             public bool charging;          // segurando o botão para o golpe forte (arma branca)
             public float chargeT;          // há quanto tempo segura
             public bool heavyReady;        // já segurou o bastante: soltar dá o golpe forte
@@ -61,6 +74,7 @@ namespace HorrorFPS
         InventoryScreen screen;
         HotbarHUD hud;
         ItemTremor tremor;
+        PlayerMotionProbe motion;
         Camera cam;
         AudioSource audioSrc;
         bool ready;
@@ -73,6 +87,8 @@ namespace HorrorFPS
         float batteryAcc, lampSeed;
 
         float aimT;                 // 0 = arma baixa, 1 = mirando
+        float moveT;                // 0..1: quanto o movimento está abrindo a mira (parado 0, andando ~0,5, correndo/no ar 1)
+        float nextHint;
         float nextSync;
         float twoDown = -1f;        // instante em que G foi apertado (-1 = solto)
         bool twoHoldDone;
@@ -94,6 +110,41 @@ namespace HorrorFPS
         public bool OwnsPrimary { get { return right.item != null || left.item != null || lamp != null; } }
 
         HandSide TwoSide { get { return owner != null ? owner.TwoHandSide : HandSide.None; } }
+
+        /// <summary>O que a mira na tela precisa saber (ver GetCrosshair).</summary>
+        public struct CrosshairInfo
+        {
+            /// <summary>Meio ângulo do cone onde os tiros caem agora, em graus (o mesmo valor que o tiro usa).</summary>
+            public float spreadDegrees;
+            /// <summary>Para onde a arma realmente aponta em relação ao centro da câmera (tangentes: x direita, y cima). Zero sem tremor.</summary>
+            public Vector2 driftTan;
+            /// <summary>0..1: quanto o jogador já está mirando (Q).</summary>
+            public float aim;
+            public bool empty, reloading;
+        }
+
+        /// <summary>
+        /// Dados da mira na tela. False quando não há arma de fogo para mirar na mão (arma branca, mãos vazias, ou o outro item está nas duas mãos).
+        /// A abertura já soma movimento, tiros seguidos, mira, pegada (uma ou duas mãos) e tremor: é exatamente o cone do próximo tiro.
+        /// </summary>
+        public bool GetCrosshair(out CrosshairInfo info)
+        {
+            info = new CrosshairInfo();
+            if (!ready) return false;
+            HandState h = AimHand();
+            if (h == null) return false;
+            ItemEquip eq = h.item.data.equip;
+            info.aim = aimT;
+            info.spreadDegrees = CurrentSpread(h, eq);
+            if (tremor != null)
+            {
+                Vector3 f = tremor.FirearmOffset(aimT, eq.pellets) * Vector3.forward;
+                if (f.z > 0.05f) info.driftTan = new Vector2(f.x / f.z, f.y / f.z);
+            }
+            info.empty = EquipState.AmmoOf(h.item) <= 0;
+            info.reloading = h.reloading;
+            return true;
+        }
 
         HandState Main()
         {
@@ -123,6 +174,7 @@ namespace HorrorFPS
             if (player == null || owner == null || input == null) return false;
             screen = PlayerRef.Find<InventoryScreen>(this);
             hud = PlayerRef.Find<HotbarHUD>(this);
+            motion = PlayerRef.Find<PlayerMotionProbe>(this);
             lampSeed = Random.value * 50f;
             if (heartTremor)
             {
@@ -169,6 +221,7 @@ namespace HorrorFPS
         /// <summary>Confere o que está equipado (restauração de save, item jogado fora, item quebrado) e ajusta as mãos e a lanterna.</summary>
         void Sync()
         {
+            if (motion == null) motion = PlayerRef.Find<PlayerMotionProbe>(this);
             if (lamp != null && (lamp.container == null || !owner.IsEquipped(lamp))) DetachLamp(false);
             SyncHands();
             if (lamp != null) return;
@@ -230,6 +283,7 @@ namespace HorrorFPS
 
             TickLamp(dt);
             TickAim(dt);
+            TickPrecision(dt);
             TickViewModel(right, dt);
             TickViewModel(left, dt);
             TickLampPose();
@@ -334,6 +388,51 @@ namespace HorrorFPS
                 if (!a.reloading && Allowed() && ItemInput.Held(input.Aim)) target = 1f;
             }
             aimT = Mathf.MoveTowards(aimT, target, dt / seconds);
+        }
+
+        /// <summary>Movimento abre a mira (suave) e os tiros seguidos fecham devagar quando o jogador para de atirar.</summary>
+        void TickPrecision(float dt)
+        {
+            float want = 0f;
+            if (motion != null)
+            {
+                want = Mathf.Clamp01(motion.Exertion * 1.5f);       // andando ~0,5, agachado ~0,2, correndo 1
+                if (!motion.Grounded) want = 1f;
+            }
+            moveT = Mathf.MoveTowards(moveT, want, Mathf.Max(0.1f, moveSpreadFollow) * dt);
+            TickBloom(right, dt);
+            TickBloom(left, dt);
+        }
+
+        void TickBloom(HandState h, float dt)
+        {
+            if (h.bloom <= 0f) return;
+            if (h.item == null || !IsFirearm(h)) { h.bloom = 0f; return; }
+            if (Time.time < h.nextAttack) return;                  // ainda dentro do intervalo do tiro: a automática continua abrindo
+            float speed = Mathf.Max(0f, h.item.data.equip.bloomRecover);
+            if (tremor != null) speed = tremor.KickRecoverSpeed(speed);      // mão tremendo firma mais devagar
+            h.bloom = Mathf.MoveTowards(h.bloom, 0f, speed * dt);
+        }
+
+        /// <summary>Pegada: duas mãos firmam a arma de fogo; arma pesada com uma mão só abre muito a dispersão.</summary>
+        float GripSpread(HandState h, ItemEquip eq)
+        {
+            if (TwoHanded(h)) return twoHandSpreadFactor;
+            return eq.IsHeavy ? Mathf.Max(1f, eq.oneHandSpreadMultiplier) : 1f;
+        }
+
+        /// <summary>
+        /// Meio ângulo (graus) do cone onde o tiro da mão 'h' cai agora. É a base da arma, mais o movimento, mais os tiros seguidos;
+        /// mirar (Q) reduz tudo isso (aimSpreadMultiplier), a pegada multiplica, e a mão tremendo soma um pouco nas armas de um projétil.
+        /// Fire usa este valor e a mira na tela (GetCrosshair) mostra o mesmo.
+        /// </summary>
+        float CurrentSpread(HandState h, ItemEquip eq)
+        {
+            float aim = AimFor(h);
+            float steady = Mathf.Lerp(1f, eq.aimSpreadMultiplier, aim);
+            float spread = (eq.spread + Mathf.Max(0f, eq.moveSpread) * moveT + h.bloom) * steady * GripSpread(h, eq);
+            if (tremor != null && eq.pellets <= 1) spread += tremor.ExtraSpreadDegrees(aim);
+            return spread;
         }
 
         /// <summary>Zoom da mira: só na imagem da câmera deste jogador (a lógica do jogo continua vendo a câmera normal).</summary>
@@ -461,7 +560,7 @@ namespace HorrorFPS
             StopAction(h);
             if (h.root != null) Destroy(h.root.gameObject);
             h.root = null; h.muzzle = null; h.item = null;
-            h.swingT = -1f; h.reloadT = -1f; h.kick = 0f;
+            h.swingT = -1f; h.reloadT = -1f; h.kick = 0f; h.bloom = 0f;
         }
 
         void StopAction(HandState h)
@@ -878,18 +977,15 @@ namespace HorrorFPS
             Transform ct = cam.transform;
             int pellets = Mathf.Max(1, eq.pellets);
             float aim = AimFor(h);
+            bool two = TwoHanded(h);
+            bool oneHandHeavy = eq.IsHeavy && !two;
 
             // para onde a arma realmente aponta: a câmera + a deriva da mão (a mesma que o modelo mostra em TickViewModel)
             Quaternion aimQ = ct.rotation;
-            float extra = 0f;
-            if (tremor != null)
-            {
-                aimQ = ct.rotation * tremor.FirearmOffset(aim, pellets);
-                if (pellets == 1) extra = tremor.ExtraSpreadDegrees(aim);
-            }
+            if (tremor != null) aimQ = ct.rotation * tremor.FirearmOffset(aim, pellets);
             Vector3 baseDir = aimQ * Vector3.forward;
             Vector3 baseUp = aimQ * Vector3.up;
-            float spread = eq.spread * Mathf.Lerp(1f, eq.aimSpreadMultiplier, aim) + extra;
+            float spread = CurrentSpread(h, eq);        // movimento, tiros seguidos, mira, pegada e tremor: o mesmo cone que a mira na tela mostra
 
             for (int i = 0; i < pellets; i++)
             {
@@ -904,16 +1000,56 @@ namespace HorrorFPS
                 if (FirstHit(hits, out best)) ApplyHit(best, dir, eq.damage, weapon, true);
             }
 
+            // cada tiro abre a mira para o próximo (o primeiro tiro depois de parar é o mais certeiro)
+            h.bloom = Mathf.Min(Mathf.Max(0f, eq.bloomMax), h.bloom + Mathf.Max(0f, eq.bloomPerShot));
+
             bool heavy = pellets > 1;
             Play(eq.useSound != null ? eq.useSound : (heavy ? ProceduralAudio.ShotgunShot() : ProceduralAudio.Gunshot()), 1f);
             if (h.muzzle != null) { h.muzzle.enabled = true; h.muzzleOffAt = Time.time + muzzleFlashSeconds; }
-            h.kick = 1f;
-            CameraImpulse.Recoil(this, eq.recoil, 0.35f);
+
+            // coice: duas mãos seguram melhor; arma pesada com uma mão só tem o coice exagerado (passa de 1, a câmera e o modelo sobem mais)
+            float recoilMul = two ? twoHandRecoilFactor : (oneHandHeavy ? Mathf.Max(1f, eq.oneHandRecoilMultiplier) : 1f);
+            h.kick = Mathf.Clamp(recoilMul, 0.7f, 2.2f);
+            CameraImpulse.Recoil(this, eq.recoil * recoilMul, oneHandHeavy ? 0.7f : 0.35f);
             DynamicHeadBob bob = PlayerRef.Find<DynamicHeadBob>(this);
-            if (bob != null) bob.AddTrauma(Mathf.Clamp01(0.12f + eq.recoil * 0.2f));
+            if (bob != null) bob.AddTrauma(Mathf.Clamp01(0.12f + eq.recoil * recoilMul * 0.2f));
             HeartbeatComponent heart = PlayerRef.Find<HeartbeatComponent>(this);
             if (heart != null) heart.Boost(6f, 3f);
             Emit(eq.noise, NoiseKind.Gunshot);
+
+            if (oneHandHeavy) OneHandAftermath(h, weapon, eq);      // por último: a arma pode sair da mão e 'h' deixa de ter item
+        }
+
+        /// <summary>Tiro com arma pesada numa mão só: às vezes o coice arranca a arma da mão; senão, de tempos em tempos, lembra do G.</summary>
+        void OneHandAftermath(HandState h, ItemInstance weapon, ItemEquip eq)
+        {
+            float chance = Mathf.Clamp01(eq.oneHandDropChance * (1f + 0.5f * (tremor != null ? tremor.Tremor01 : 0f)));     // mão tremendo segura pior
+            if (chance > 0f && Random.value < chance) { FlingFromHand(h, weapon); return; }
+            if (oneHandHintSeconds > 0f && Time.unscaledTime >= nextHint)
+            {
+                nextHint = Time.unscaledTime + oneHandHintSeconds;
+                Say("Coice forte com uma mão só: segure com as duas (G).");
+            }
+        }
+
+        /// <summary>A arma escapa da mão: sai pelo lado e para cima, cai no chão perto do jogador (e pode ser pega de novo) e o barulho atrai quem estiver por perto.</summary>
+        void FlingFromHand(HandState h, ItemInstance weapon)
+        {
+            string weaponName = weapon.GetName(this);
+            float side = h.side == HandSide.Left ? -1f : 1f;
+            Transform ct = cam.transform;
+            Vector3 ahead = Vector3.ProjectOnPlane(ct.forward, Vector3.up);
+            ahead = ahead.sqrMagnitude > 0.001f ? ahead.normalized : Vector3.forward;
+
+            WorldItem dropped = owner.Drop(weapon);
+            if (dropped != null)
+                dropped.Throw(Vector3.up * 3.4f + ct.right * side * 2.2f + ahead * 0.6f, Random.onUnitSphere * 9f);
+            else
+                owner.Unequip(weapon);          // item que não pode ficar no cenário: só sai da mão e continua na mochila
+
+            Say(weaponName + " escapou da sua mão!");
+            Play(ProceduralAudio.Thud(), 0.9f);
+            Emit(12f, NoiseKind.Item);
         }
 
         int ReserveOf(ItemEquip eq)

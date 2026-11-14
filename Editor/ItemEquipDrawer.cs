@@ -22,6 +22,13 @@ namespace HorrorFPS.ItemsEditor
             "ammoItem", "reloadSeconds", "recoil", "useSound", "emptySound", "reloadSound"
         };
 
+        // Fase 3: só arma de fogo (segunda seção)
+        static readonly string[] GunPrecision =
+        {
+            "aimSpreadMultiplier", "bloomPerShot", "bloomMax", "bloomRecover", "moveSpread",
+            "oneHandSpreadMultiplier", "oneHandRecoilMultiplier", "oneHandDropChance"
+        };
+
         static string[] FieldsOf(EquipKind k)
         {
             switch (k)
@@ -50,6 +57,11 @@ namespace HorrorFPS.ItemsEditor
             h += Heights(property, Held);
             h += line;                                             // subtítulo do tipo
             h += Heights(property, FieldsOf(kind));
+            if (kind == EquipKind.Firearm)
+            {
+                h += line;                                         // subtítulo "Precisão e arma pesada"
+                h += Heights(property, GunPrecision);
+            }
             return h;
         }
 
@@ -90,6 +102,11 @@ namespace HorrorFPS.ItemsEditor
             r = Fields(r, property, Held);
             r = Section(r, kind == EquipKind.Flashlight ? "Lanterna" : kind == EquipKind.Melee ? "Arma branca" : "Arma de fogo");
             r = Fields(r, property, FieldsOf(kind));
+            if (kind == EquipKind.Firearm)
+            {
+                r = Section(r, "Precisão e arma pesada (uma mão só)");
+                r = Fields(r, property, GunPrecision);
+            }
             EditorGUI.EndProperty();
         }
 
