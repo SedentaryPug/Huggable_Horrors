@@ -90,7 +90,7 @@ namespace HorrorFPS
         [Tooltip("Prefab com StalkerBrain + NavMeshAgent + StalkerSenses (e os módulos exclusivos dele). Pode ficar vazio se ele só existe numa cena.")]
         public GameObject prefab;
         public StalkerProfile profile;
-        [Tooltip("Árvore de comportamento editável (Create > HorrorFPS > Stalker Behavior Tree; janela em Tools > Horror FPS > 24). Vazio = a árvore padrão do código. O campo Tree do próprio Stalker Brain tem prioridade sobre este.")]
+        [Tooltip("Árvore de comportamento editável (Create > HorrorFPS > Stalker Behavior Tree; janela em Tools > Horror FPS > Stalker > Stalker Tree Editor). Vazio = a árvore padrão do código. O campo Tree do próprio Stalker Brain tem prioridade sobre este.")]
         public StalkerTreeAsset tree;
         [Tooltip("Mesmo grupo = trocam pistas (precisa de Share Radius > 0 no perfil).")]
         public string group;

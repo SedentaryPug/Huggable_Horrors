@@ -5,7 +5,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// A árvore de comportamento de um perseguidor como ASSET editável: Create &gt; HorrorFPS &gt; Stalker Behavior Tree, ou
-    /// Tools &gt; Horror FPS &gt; 25. Para editar: duplo clique no asset ou Tools &gt; Horror FPS &gt; 24. Stalker Tree Editor.
+    /// Tools &gt; Horror FPS &gt; Stalker &gt; Create Stalker Tree (Default). Para editar: duplo clique no asset ou Tools &gt; Horror FPS &gt; Stalker &gt; Stalker Tree Editor.
     /// Para usar: arraste para o campo Tree do Stalker Brain (ou da Stalker Definition). Sem asset o perseguidor usa a árvore
     /// padrão do código, que é exatamente a que o asset "Árvore padrão" reproduz. Vários perseguidores podem dividir o mesmo asset:
     /// o asset só guarda os DADOS; cada perseguidor monta a sua própria cópia de execução.

@@ -5,10 +5,9 @@ using UnityEngine;
 
 namespace HorrorFPS
 {
-    /// <summary>Menus 41 a 44 do pacote de hurtbox (ficam em Tools > Horror FPS).</summary>
+    /// <summary>Menus da área Hurtbox (Tools > Horror FPS > Hurtbox).</summary>
     public static class HurtboxMenu
     {
-        const string Root = "Tools/Horror FPS/";
 
         // ================================================================== 41: humanoide pelos ossos
         struct Seg
@@ -75,7 +74,7 @@ namespace HorrorFPS
             else l.Add(Sph(foot, lowerLeg, 0.08f, HitZone.Foot, side, "Pé", 0.05f));
         }
 
-        [MenuItem(Root + "41. Add Humanoid Hurtboxes To Selected")]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Add Humanoid Hurtboxes To Selected", false, HorrorFPSMenu.HurtboxOrder + 0)]
         static void AddHumanoid()
         {
             GameObject sel = Selection.activeGameObject;
@@ -85,7 +84,7 @@ namespace HorrorFPS
             if (anim == null || !anim.isHuman)
             {
                 EditorUtility.DisplayDialog("Hurtbox",
-                    "Selecione o inimigo/NPC com um Animator Humanoid (o avatar do modelo precisa ser Humanoid).\n\nPara qualquer outro corpo, use o menu 42 (zonas simples: cabeça, tronco, pernas).", "OK");
+                    "Selecione o inimigo/NPC com um Animator Humanoid (o avatar do modelo precisa ser Humanoid).\n\nPara qualquer outro corpo, use o menu Hurtbox > Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected (zonas simples: cabeça, tronco, pernas).", "OK");
                 return;
             }
 
@@ -134,7 +133,7 @@ namespace HorrorFPS
                 + " ossos ignorados (não existem no avatar). Zona, multiplicador e formato de cada uma são editáveis: selecione um osso e veja o Hurtbox; as formas aparecem coloridas na Scene.", owner);
         }
 
-        [MenuItem(Root + "41. Add Humanoid Hurtboxes To Selected", true)]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Add Humanoid Hurtboxes To Selected", true)]
         static bool AddHumanoidValid() { return Selection.activeGameObject != null; }
 
         /// <summary>0 = ignorado, 1 = colisor novo, 2 = reaproveitou o colisor que o osso já tinha.</summary>
@@ -181,7 +180,7 @@ namespace HorrorFPS
         }
 
         // ================================================================== 42: zonas simples por bounds
-        [MenuItem(Root + "42. Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected")]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected", false, HorrorFPSMenu.HurtboxOrder + 1)]
         static void AddSimple()
         {
             GameObject sel = Selection.activeGameObject;
@@ -212,7 +211,7 @@ namespace HorrorFPS
             Debug.Log("[Hurtbox] '" + sel.name + "': acrescentei Pernas (0–45% da altura), Tronco (45–80%) e Cabeça (80–100%). Ajuste os colisores filhos 'Hurtbox_*' ao seu modelo.", owner);
         }
 
-        [MenuItem(Root + "42. Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected", true)]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected", true)]
         static bool AddSimpleValid() { return Selection.activeGameObject != null; }
 
         static void BuildSimpleZones(Transform parent, Bounds b)
@@ -280,7 +279,7 @@ namespace HorrorFPS
         }
 
         // ================================================================== 43: remover
-        [MenuItem(Root + "43. Remove Hurtboxes From Selected")]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Remove Hurtboxes From Selected", false, HorrorFPSMenu.HurtboxOrder + 2)]
         static void RemoveAll()
         {
             GameObject sel = Selection.activeGameObject;
@@ -319,11 +318,11 @@ namespace HorrorFPS
             Debug.Log("[Hurtbox] Hurtboxes removidas de '" + root.name + "'.");
         }
 
-        [MenuItem(Root + "43. Remove Hurtboxes From Selected", true)]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Remove Hurtboxes From Selected", true)]
         static bool RemoveAllValid() { return Selection.activeGameObject != null; }
 
         // ================================================================== 44: boneco de teste
-        [MenuItem(Root + "44. Create Hurtbox Test Dummy")]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Create Hurtbox Test Dummy", false, HorrorFPSMenu.HurtboxOrder + 3)]
         static void CreateDummy()
         {
             GameObject g = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -356,12 +355,12 @@ namespace HorrorFPS
         // ================================================================== 45: camada 'Hurtbox'
         const string LayerName = "Hurtbox";
 
-        [MenuItem(Root + "45. Create 'Hurtbox' Physics Layer")]
+        [MenuItem(HorrorFPSMenu.Hurtbox + "Create 'Hurtbox' Physics Layer", false, HorrorFPSMenu.HurtboxOrder + 4)]
         static void CreateLayer()
         {
             if (LayerMask.NameToLayer(LayerName) >= 0)
             {
-                EditorUtility.DisplayDialog("Hurtbox", "A camada '" + LayerName + "' já existe. Os menus 41 e 42 já colocam as hurtboxes novas nela.", "OK");
+                EditorUtility.DisplayDialog("Hurtbox", "A camada '" + LayerName + "' já existe. Os menus Add Humanoid Hurtboxes e Add Simple Hurtbox Zones já colocam as hurtboxes novas nela.", "OK");
                 return;
             }
             Object[] assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
@@ -382,7 +381,7 @@ namespace HorrorFPS
                         p.stringValue = LayerName;
                         tm.ApplyModifiedProperties();
                         Debug.Log("[Hurtbox] Camada '" + LayerName + "' criada (índice " + i + "). Passos recomendados: (1) Edit > Project Settings > Physics > Layer Collision Matrix: desmarque 'Hurtbox' contra tudo, para as hurtboxes não empurrarem nem bloquearem ninguém (o raio da arma continua acertando); "
-                            + "(2) confira que a 'hitMask' do EquipmentController inclui 'Hurtbox'; (3) rode o menu 41 ou 42 de novo nos inimigos que já tinham hurtboxes para movê-las para a camada.");
+                            + "(2) confira que a 'hitMask' do EquipmentController inclui 'Hurtbox'; (3) rode o menu Add Humanoid Hurtboxes ou Add Simple Hurtbox Zones de novo nos inimigos que já tinham hurtboxes para movê-las para a camada.");
                         return;
                     }
                 }

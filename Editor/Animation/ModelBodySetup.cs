@@ -6,8 +6,8 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 16. Setup Selected Model As Player Body
-    /// Liga um modelo Humanoid de verdade ao jogador: Animator (com o controller do menu 15, se existir), PlayerBodyRig,
+    /// Tools > Horror FPS > Animation > Setup Selected Model As Player Body
+    /// Liga um modelo Humanoid de verdade ao jogador: Animator (com o controller do menu Animation > Create Player Animator Controller, se existir), PlayerBodyRig,
     /// modificadores procedurais e BodyPart em cada renderer (região adivinhada pelo nome — confira depois).
     /// Selecione o FBX/prefab do modelo no Project (ele é instanciado dentro do prefab do jogador) ou um modelo que já esteja
     /// dentro do jogador na cena. O corpo de teste de primitivas ('[Body]') é desligado, não apagado.
@@ -16,7 +16,7 @@ namespace HorrorFPS
     /// </summary>
     public static class ModelBodySetup
     {
-        [MenuItem("Tools/Horror FPS/16. Setup Selected Model As Player Body")]
+        [MenuItem(HorrorFPSMenu.Animation + "Setup Selected Model As Player Body", false, HorrorFPSMenu.AnimationOrder + 2)]
         public static void Run()
         {
             GameObject sel = Selection.activeGameObject;
@@ -100,10 +100,10 @@ namespace HorrorFPS
             {
                 AnimatorController ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerAnimatorControllerBuilder.ControllerPath);
                 if (ctrl != null) anim.runtimeAnimatorController = ctrl;
-                else Debug.Log("[Anim] Ainda não há PlayerBody.controller: rode o menu 15 e arraste no Animator do modelo.");
+                else Debug.Log("[Anim] Ainda não há PlayerBody.controller: rode o menu Animation > Create Player Animator Controller e arraste no Animator do modelo.");
             }
             if (anim.avatar == null || !anim.avatar.isHuman)
-                Debug.LogWarning("[Anim] '" + model.name + "' não é Humanoid (Import Settings > Rig > Animation Type = Humanoid > Apply, ou o menu 31, passo 1). Sem Humanoid os parâmetros funcionam, mas o IK de olhar, de mãos e de pés não.");
+                Debug.LogWarning("[Anim] '" + model.name + "' não é Humanoid (Import Settings > Rig > Animation Type = Humanoid > Apply, ou o menu Animation > Mixamo: Humanoid + Locomotion Controller, passo 1). Sem Humanoid os parâmetros funcionam, mas o IK de olhar, de mãos e de pés não.");
 
             // presenter + procedurais
             PlayerBodyRig rig = AnimationEditorUtil.GetOrAdd<PlayerBodyRig>(model);

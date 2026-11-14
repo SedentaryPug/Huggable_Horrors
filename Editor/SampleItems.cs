@@ -6,14 +6,14 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 5. Create Sample Items — cria dezoito itens de exemplo em &lt;raiz do framework&gt;/Resources/HorrorFPS/Items,
+    /// Tools > Horror FPS > Demo > Create Sample Items — cria dezoito itens de exemplo em &lt;raiz do framework&gt;/Resources/HorrorFPS/Items,
     /// com formas variadas (inclusive quebradas), descrições que mudam pela sanidade de quem olha, ações com efeitos
     /// (cura, calma, sanidade, coice, barulho), equipamentos que funcionam (lanterna, facas, armas de fogo, ver ItemEquip) e modelos de
     /// inspeção com pontos interativos. Itens que já existem não são tocados, exceto os que ainda não têm equipamento (só pelo menu).
     /// </summary>
     public static class SampleItems
     {
-        [MenuItem("Tools/Horror FPS/5. Create Sample Items")]
+        [MenuItem(HorrorFPSMenu.Demo + "Create Sample Items", false, HorrorFPSMenu.DemoOrder + 1)]
         static void Menu()
         {
             int created;
@@ -61,7 +61,7 @@ namespace HorrorFPS.ItemsEditor
                 made++;
             }
 
-            // equipamento (lanterna, armas...) dos itens recém-criados; os antigos são atualizados pelo menu 5
+            // equipamento (lanterna, armas...) dos itens recém-criados; os antigos são atualizados pelo menu Demo > Create Sample Items
             HashSet<string> touched = new HashSet<string>(fresh);
             UpgradeEquipment(map, fresh, touched);
 

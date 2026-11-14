@@ -18,7 +18,7 @@ namespace HorrorFPS.EditorTools
         static string InputPath { get { return Root + "/Input/HorrorControls.inputactions"; } }
         static string PrefabPath { get { return Root + "/Prefabs/Player.prefab"; } }
 
-        [MenuItem("Tools/Horror FPS/1. Create Player Prefab")]
+        [MenuItem(HorrorFPSMenu.Player + "Create Player Prefab", false, HorrorFPSMenu.PlayerOrder + 0)]
         public static void CreatePlayerPrefabMenu()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null

@@ -51,7 +51,7 @@ namespace HorrorFPS
         [Tooltip("A descrição pode mudar por sanidade, variáveis da história ou estado do item (variantes).")]
         public ItemTextSet description = new ItemTextSet { text = "" };
         public ItemCategory category = ItemCategory.Misc;
-        [Tooltip("Imagem do item na grade. Use Tools > Horror FPS > 10. Item Studio para fotografar o modelo 3D e gerar o sprite.")]
+        [Tooltip("Imagem do item na grade. Use Tools > Horror FPS > Items > Item Studio para fotografar o modelo 3D e gerar o sprite.")]
         public Sprite icon;
         [HideInInspector] public ItemIconShot iconShot = new ItemIconShot();
         public Color color = new Color(0.55f, 0.6f, 0.55f, 1f);

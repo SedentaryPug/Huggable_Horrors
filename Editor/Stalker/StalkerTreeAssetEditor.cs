@@ -6,7 +6,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Inspetor do StalkerTreeAsset: esconde o campo bruto da raiz (o Unity não sabe desenhar nós polimórficos) e mostra um resumo,
-    /// a lista de problemas e o botão que abre a janela de edição (Tools > Horror FPS > 24. Stalker Tree Editor).
+    /// a lista de problemas e o botão que abre a janela de edição (Tools > Horror FPS > Stalker > Stalker Tree Editor).
     /// </summary>
     [CustomEditor(typeof(StalkerTreeAsset))]
     public class StalkerTreeAssetEditor : Editor

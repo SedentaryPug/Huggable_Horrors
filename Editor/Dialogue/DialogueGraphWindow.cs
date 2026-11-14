@@ -5,7 +5,7 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Editor visual de diálogos (IMGUI). Abra com Tools > Horror FPS > 11. Dialogue Editor ou dando dois cliques num Dialogue Graph.
+    /// Editor visual de diálogos (IMGUI). Abra com Tools > Horror FPS > Dialogue > Dialogue Editor ou dando dois cliques num Dialogue Graph.
     ///   Clique no quadradinho à direita de uma saída e depois no nó de destino para ligar · botão direito na saída apaga a ligação
     ///   Botão direito no fundo = novo nó · botão direito num nó = menu · arrastar o fundo (ou botão do meio) = mover a vista
     /// </summary>
@@ -35,7 +35,7 @@ namespace HorrorFPS
         readonly List<string> report = new List<string>();
         GUIStyle titleStyle, textStyle, portStyle;
 
-        [MenuItem("Tools/Horror FPS/11. Dialogue Editor")]
+        [MenuItem(HorrorFPSMenu.Dialogue + "Dialogue Editor", false, HorrorFPSMenu.DialogueOrder + 0)]
         public static void OpenWindow()
         {
             GetWindow<DialogueGraphWindow>("Diálogos").Show();
@@ -291,7 +291,7 @@ namespace HorrorFPS
             if (graph == null)
             {
                 GUILayout.BeginArea(new Rect(10f, Top + 10f, position.width - 20f, 90f));
-                EditorGUILayout.HelpBox("Escolha um Dialogue Graph no campo acima, ou crie um (Create > HorrorFPS > Dialogue > Dialogue Graph; ou Tools > Horror FPS > 12. Create Sample Dialogues).", MessageType.Info);
+                EditorGUILayout.HelpBox("Escolha um Dialogue Graph no campo acima, ou crie um (Create > HorrorFPS > Dialogue > Dialogue Graph; ou Tools > Horror FPS > Demo > Create Sample Dialogues).", MessageType.Info);
                 GUILayout.EndArea();
                 return;
             }

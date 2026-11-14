@@ -7,7 +7,7 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 10. Item Studio
+    /// Tools > Horror FPS > Items > Item Studio
     /// Janela de itens: lista de todos os ItemData, edição dos campos e um estúdio de fotografia 3D.
     /// Mostra o modelo do item (modelo de inspeção ou do mundo), você gira/aproxima/arrasta até achar um bom ângulo e
     /// clica em "Tirar foto": o PNG com fundo transparente é salvo, vira Sprite e é ligado ao campo Icon do item.
@@ -62,7 +62,7 @@ namespace HorrorFPS.ItemsEditor
 
         Editor itemEditor;
 
-        [MenuItem("Tools/Horror FPS/10. Item Studio")]
+        [MenuItem(HorrorFPSMenu.Items + "Item Studio", false, HorrorFPSMenu.ItemsOrder + 0)]
         static void Open()
         {
             ItemStudioWindow w = GetWindow<ItemStudioWindow>("Item Studio");
@@ -601,7 +601,7 @@ namespace HorrorFPS.ItemsEditor
                     Event.current.Use();
                 }
             }
-            if (shown == 0) EditorGUILayout.HelpBox(all.Count == 0 ? "Nenhum item no projeto. Use \"＋ Novo item\" ou Tools > Horror FPS > 5. Create Sample Items." : "Nada encontrado.", MessageType.None);
+            if (shown == 0) EditorGUILayout.HelpBox(all.Count == 0 ? "Nenhum item no projeto. Use \"＋ Novo item\" ou Tools > Horror FPS > Demo > Create Sample Items." : "Nada encontrado.", MessageType.None);
             EditorGUILayout.EndScrollView();
             GUILayout.EndArea();
         }

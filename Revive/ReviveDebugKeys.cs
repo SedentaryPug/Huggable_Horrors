@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Teclas de teste da reanimação (só funcionam com "Debug Keys" ligado no ReviveProfile, menu 22):
+    /// Teclas de teste da reanimação (só funcionam com "Debug Keys" ligado no ReviveProfile, menu Revive > Toggle Revive Debug Keys):
     ///   F6 derruba o J1 · F7 derruba o J2 · F8 levanta os caídos SEM kit · F9 levanta os caídos COM kit
     ///   F10 diagnóstico no Console · F11 dá um kit médico ao J1.
     /// F8/F9 levantam direto (sem reanimador e sem gastar kit); para testar o caminho de verdade, derrube um jogador e reanime
@@ -66,7 +66,7 @@ namespace HorrorFPS
             PlayerContext p = PlayerAt(index);
             if (p == null) { Debug.Log("[Revive] Não há jogador " + (index + 1) + " na cena."); return; }
             bool ok = ReviveBridge.GiveKit(p, prof.medkitItemIds);
-            Debug.Log("[Revive] Kit médico para " + ReviveBridge.Label(p) + ": " + (ok ? "entregue" : "nenhum dos ids de ReviveProfile.medkitItemIds existe no ItemDatabase (menu 21 mostra os itens)"));
+            Debug.Log("[Revive] Kit médico para " + ReviveBridge.Label(p) + ": " + (ok ? "entregue" : "nenhum dos ids de ReviveProfile.medkitItemIds existe no ItemDatabase (menu Revive > Create Revive Profile mostra os itens)"));
         }
 
         static bool Pressed(int n)

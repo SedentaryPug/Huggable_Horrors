@@ -39,7 +39,7 @@ namespace HorrorFPS
 
             if (sel != null && PrefabUtility.IsPartOfPrefabAsset(sel))
             {
-                // quando a seleção é o MODELO a instalar (menu 16), ela não diz qual é o prefab do jogador
+                // quando a seleção é o MODELO a instalar (menu Animation > Setup Selected Model As Player Body), ela não diz qual é o prefab do jogador
                 if (!selectionIsPayload) assetPath = AssetDatabase.GetAssetPath(sel);
             }
             else if (sel != null)

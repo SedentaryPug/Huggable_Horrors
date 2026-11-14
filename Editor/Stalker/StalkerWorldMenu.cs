@@ -5,13 +5,12 @@ using UnityEngine;
 
 namespace HorrorFPS
 {
-    /// <summary>Menus 36 a 40 do pacote "rotas e cenário" (ficam em Tools > Horror FPS).</summary>
+    /// <summary>Menus de rotas e cenário do perseguidor (Tools > Horror FPS > Stalker).</summary>
     public static class StalkerWorldMenu
     {
-        const string Root = "Tools/Horror FPS/";
 
         // ------------------------------------------------------------ 36: Route Runner no monstro
-        [MenuItem(Root + "36. Add Route Runner To Selected Stalker")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Add Route Runner To Selected Stalker", false, HorrorFPSMenu.StalkerOrder + 5)]
         static void AddRunner()
         {
             GameObject go = Selection.activeGameObject;
@@ -27,7 +26,7 @@ namespace HorrorFPS
             Debug.Log("[Stalker] Stalker Route Runner acrescentado a '" + brain.name + "'. Com 'Auto Use' ligado ele já usa rotas sozinho quando o destino só se alcança por elas.");
         }
 
-        [MenuItem(Root + "36. Add Route Runner To Selected Stalker", true)]
+        [MenuItem(HorrorFPSMenu.Stalker + "Add Route Runner To Selected Stalker", true)]
         static bool AddRunnerValid()
         {
             GameObject go = Selection.activeGameObject;
@@ -35,7 +34,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------ 37: rota a partir de uma Ladder
-        [MenuItem(Root + "37. Create Stalker Route From Selected Ladder")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Route From Selected Ladder", false, HorrorFPSMenu.StalkerOrder + 6)]
         static void RouteFromLadder()
         {
             GameObject sel = Selection.activeGameObject;
@@ -60,7 +59,7 @@ namespace HorrorFPS
             Selection.activeGameObject = go;
         }
 
-        [MenuItem(Root + "37. Create Stalker Route From Selected Ladder", true)]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Route From Selected Ladder", true)]
         static bool RouteFromLadderValid()
         {
             GameObject go = Selection.activeGameObject;
@@ -68,7 +67,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------ 38: rota solta (duto, vão, pulo, escada)
-        [MenuItem(Root + "38. Create Stalker Route (Duct, Vault, Drop...) At Scene View")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Route (Duct, Vault, Drop...) At Scene View", false, HorrorFPSMenu.StalkerOrder + 7)]
         static void RouteAtScene()
         {
             GenericMenu menu = new GenericMenu();
@@ -139,7 +138,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------ 39: ponto de emboscada
-        [MenuItem(Root + "39. Create Stalker Ambush Spot From Selected")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Ambush Spot From Selected", false, HorrorFPSMenu.StalkerOrder + 8)]
         static void AddAmbush()
         {
             GameObject sel = Selection.activeGameObject;
@@ -183,13 +182,13 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------ 40: parâmetros e estados no Animator
-        [MenuItem(Root + "40. Add Route Animator Parameters")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Add Route Animator Parameters", false, HorrorFPSMenu.StalkerOrder + 9)]
         static void AddAnimParams()
         {
             AnimatorController ctrl = FindController();
             if (ctrl == null)
             {
-                EditorUtility.DisplayDialog("Animator", "Selecione um AnimatorController (asset) ou um monstro cujo Animator tenha um, ou rode antes o menu 28 (StalkerBody.controller).", "OK");
+                EditorUtility.DisplayDialog("Animator", "Selecione um AnimatorController (asset) ou um monstro cujo Animator tenha um.", "OK");
                 return;
             }
             Undo.RecordObject(ctrl, "Add Route Animator Parameters");

@@ -5,7 +5,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Menu de exemplo do sistema de diálogos:
-    ///   Tools > Horror FPS > 12. Create Sample Dialogues             (cria 2 grafos prontos em &lt;raiz do framework&gt;/Generated/Dialogues)
+    ///   Tools > Horror FPS > Demo > Create Sample Dialogues             (cria 2 grafos prontos em &lt;raiz do framework&gt;/Generated/Dialogues)
     /// </summary>
     public static class DialogueMenus
     {
@@ -96,7 +96,7 @@ namespace HorrorFPS
         }
 
         // ================================================================== 12. exemplos
-        [MenuItem("Tools/Horror FPS/12. Create Sample Dialogues")]
+        [MenuItem(HorrorFPSMenu.Demo + "Create Sample Dialogues", false, HorrorFPSMenu.DemoOrder + 2)]
         public static void CreateSamples()
         {
             bool exists = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ZeladorPath) != null

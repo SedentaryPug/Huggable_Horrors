@@ -19,7 +19,7 @@ namespace HorrorFPS
         public bool showHud;
 
         [Header("Árvore de comportamento")]
-        [Tooltip("Vazio = a árvore padrão do código (tudo como sempre foi). Com um asset: a árvore montada na janela Tools > Horror FPS > 24. Stalker Tree Editor. Se este campo estiver vazio, vale a da Definição.")]
+        [Tooltip("Vazio = a árvore padrão do código (tudo como sempre foi). Com um asset: a árvore montada na janela Tools > Horror FPS > Stalker > Stalker Tree Editor. Se este campo estiver vazio, vale a da Definição.")]
         public StalkerTreeAsset tree;
 
         [Header("Identidade (vários perseguidores e troca de cena)")]
