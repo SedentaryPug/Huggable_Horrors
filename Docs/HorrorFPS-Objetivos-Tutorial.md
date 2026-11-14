@@ -86,13 +86,15 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | Id | Quando aparece |
 |---|---|
 | `move` | 2,5 s depois de o jogador aparecer (some ao se mexer) |
-| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta) |
+| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho |
+| `noise` | a primeira vez que o jogador faz barulho **alto** (correndo, piso barulhento): explica o medidor de ruído |
 | `interact`, `grab` | a primeira vez que aparece uma dica de interação dessa ação |
 | `ladder` | **manual** (volume `Tutorial Trigger` perto da escada) |
 | `hide` | ao entrar num esconderijo |
 | `inventory`, `hotbar` | ao pegar o primeiro item (a segunda ~16 s depois) |
 | `flashlight`, `melee`, `firearm` | ao equipar uma lanterna / arma branca / arma de fogo |
 | `objectives` | quando o primeiro objetivo começa |
+| `journal` | quando o primeiro registro entra no diário (ver `HorrorFPS-Diario-Ruido.md`) |
 | `pause` | 2 minutos de jogo |
 | `hurt`, `low_stamina`, `low_sanity` | primeiro dano / fôlego abaixo de 20% / sanidade abaixo de 40% (avisos: não aparecem na lista Como jogar) |
 
@@ -112,6 +114,8 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | `LowStat` | status abaixo de `Threshold` (0 a 1) | `Health`, `Stamina`, `Sanity`... |
 | `Hid` | entrou num esconderijo | — |
 | `ObjectiveStarted` | um objetivo começou | — |
+| `LoudNoise` | fez barulho alto pela primeira vez (`PlayerMotionProbe.Level` = Alto) | — |
+| `JournalUnlocked` | um registro novo entrou no diário | — |
 
 Para eventos, `Delay` é a espera depois do evento.
 
