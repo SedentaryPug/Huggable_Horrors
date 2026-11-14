@@ -15,24 +15,24 @@ Escolhi Humanoid porque:
 - As **máscaras** do controller (Upper Body, braço esquerdo) e o `PlayerBodyRig` já são Humanoid.
 - **Qualquer modelo Humanoid** futuro toca os mesmos clipes (retarget), sem refazer o controller.
 
-O que o menu 31 faz por você: reimporta o Y Bot e os FBX de animação como Humanoid (o avatar de animação é **copiado do modelo**) e ajusta cada clipe (loop, rotação, altura, deslocamento). **Se você não tem mais os FBX**, baixe de novo no Mixamo: *Format = FBX Binary (.fbx)*, *Skin = Without Skin*, *Frames per second = 30*, *Keyframe Reduction = none*. Ponha na pasta que quiser (os nomes dos arquivos, como `walking.fbx`, `sneaking_left.fbx`, são usados para reconhecer o clipe).
+O que o menu `Animation > Mixamo: Humanoid + Locomotion Controller` faz por você: reimporta o Y Bot e os FBX de animação como Humanoid (o avatar de animação é **copiado do modelo**) e ajusta cada clipe (loop, rotação, altura, deslocamento). **Se você não tem mais os FBX**, baixe de novo no Mixamo: *Format = FBX Binary (.fbx)*, *Skin = Without Skin*, *Frames per second = 30*, *Keyframe Reduction = none*. Ponha na pasta que quiser (os nomes dos arquivos, como `walking.fbx`, `sneaking_left.fbx`, são usados para reconhecer o clipe).
 
 ## 2. Passo a passo
 
-**Tools ▸ Horror FPS ▸ 31. Mixamo: Humanoid + Locomotion Controller** (janela, quatro blocos numerados):
+**Tools > Horror FPS > Animation > Mixamo: Humanoid + Locomotion Controller** (janela, quatro blocos numerados):
 
 0. Arraste o **Y_Bot.fbx** (do Project) em *Modelo*. A *Pasta dos clipes* assume a pasta dele; mude se os FBX de animação estiverem em outro lugar.
 1. **Humanoid — Converter modelo e animações para Humanoid.** Reimporta o Y Bot (Humanoid, avatar próprio) e cada FBX da pasta que tenha um clipe reconhecido (avatar copiado do modelo, ajustes por clipe). Demora uns segundos por arquivo.
 2. **Clipes encontrados — Atualizar lista.** Mostra o clipe achado para cada papel, com duração, velocidade embutida (m/s) e `[Humanoid]` ou `[Generic: não anima]`. Entre um `.anim` Generic e um clipe Humanoid do mesmo papel, vence o Humanoid.
-3. **Controller — Criar PlayerBody.controller com estes clipes.** Monta a layer Base (seção 4); as layers Upper Body / Flashlight / Additive continuam como no menu 15. O slider *Pose de agachado parado* é explicado na seção 4.
-4. **Jogador — Instalar o modelo no jogador** (é o menu 16): instancia o Y Bot no prefab do jogador (ou reaproveita a instância que já estiver lá), liga Animator + `PlayerBodyRig` + procedurais, marca os `BodyPart` e **separa a cabeça do corpo** (seção 6).
+3. **Controller — Criar PlayerBody.controller com estes clipes.** Monta a layer Base (seção 4); as layers Upper Body / Flashlight / Additive continuam como no menu `Animation > Create Player Animator Controller`. O slider *Pose de agachado parado* é explicado na seção 4.
+4. **Jogador — Instalar o modelo no jogador** (é o menu `Animation > Setup Selected Model As Player Body`): instancia o Y Bot no prefab do jogador (ou reaproveita a instância que já estiver lá), liga Animator + `PlayerBodyRig` + procedurais, marca os `BodyPart` e **separa a cabeça do corpo** (seção 6).
 5. Dê Play com 2 jogadores: olhe para baixo (você vê torso, braços e pernas, sem cabeça) e olhe o outro jogador (corpo inteiro).
 
 Se você recriar o controller depois de instalar, o Animator do corpo fica "Missing": rode o bloco 4 de novo.
 
 ## 3. Como cada clipe é importado
 
-O passo 2 aplica por clipe (`Root Transform` no Import Settings ▸ Animation). Com `Apply Root Motion` **desligado** no Animator (o menu 16 já faz), o deslocamento gravado no clipe é descartado e o corpo anda **parado no lugar** — quem move o jogador é o `FirstPersonController`.
+O passo 2 aplica por clipe (`Root Transform` no Import Settings ▸ Animation). Com `Apply Root Motion` **desligado** no Animator (o menu `Animation > Setup Selected Model As Player Body` já faz), o deslocamento gravado no clipe é descartado e o corpo anda **parado no lugar** — quem move o jogador é o `FirstPersonController`.
 
 | Clipe | Papel | Loop | Rotação (*Bake Into Pose*) | Altura (*Bake Into Pose*) |
 |---|---|---|---|---|
@@ -51,7 +51,7 @@ Sempre: *Based Upon = Body Orientation / Feet*, *Position XZ* **fora** do pose. 
 
 Medido nos seus `.anim` (30 fps): `walking` 1,03 s e **1,71 m/s** · `running` 0,70 s e **4,56 m/s** · `sneaking_left` ≈ 1,0 m/s · `sneaking_right` ≈ 1,08 m/s · `sneaking_front` **no lugar** · `idle` 9,9 s · `falling_idle` 0,7 s · `jumping` 0,23 s · `landing` 2,0 s (quadril desce a ~0,49 m) · `run_to_stop` 0,9 s · `left_turn` 1,03 s · `right_turn` 1,0 s.
 
-## 4. A layer Base montada (menu 31)
+## 4. A layer Base montada (menu `Animation > Mixamo: Humanoid + Locomotion Controller`)
 
 Estado sem clipe é **omitido** junto com as transições dele (um estado vazio mostraria o corpo em T).
 
@@ -89,7 +89,7 @@ O corpo gira com a câmera (`bodyYawOffset` = giro das pernas, somado ao yaw da 
 
 Já era assim e **não mudou**: o `BodyVisibility` esconde só a região **Cabeça** na câmera do dono (a sombra continua) e mostra tudo para as outras câmeras. O que faltava era a cabeça ser um **renderer separado**: o Y Bot tem dois meshes de corpo inteiro (`Alpha_Joints`, `Alpha_Surface`).
 
-O **`BodyMeshSplitter`** (menu 32, e automático no menu 16 quando nenhuma parte é a cabeça) divide cada `SkinnedMeshRenderer` pelos **pesos do skin**: o triângulo cujos vértices, na média, têm ≥ 50% do peso no osso da cabeça (e ossos abaixo dele) vai para um mesh novo `..._Head` (`BodyPart` = Head); o resto fica no renderer original (`BodyPart` = Torso). Os dois usam os mesmos ossos, bindposes e materiais — animam igual e o corte não aparece. Os meshes novos ficam em `Generated/Animation/Meshes`; o FBX só ganha *Read/Write* (necessário para ler vértices e pesos). Rodar de novo não faz nada (renderers que já têm `BodyPart` são pulados).
+O **`BodyMeshSplitter`** (menu `Animation > Split Head From Selected Player Body`, e automático no menu `Animation > Setup Selected Model As Player Body` quando nenhuma parte é a cabeça) divide cada `SkinnedMeshRenderer` pelos **pesos do skin**: o triângulo cujos vértices, na média, têm ≥ 50% do peso no osso da cabeça (e ossos abaixo dele) vai para um mesh novo `..._Head` (`BodyPart` = Head); o resto fica no renderer original (`BodyPart` = Torso). Os dois usam os mesmos ossos, bindposes e materiais — animam igual e o corte não aparece. Os meshes novos ficam em `Generated/Animation/Meshes`; o FBX só ganha *Read/Write* (necessário para ler vértices e pesos). Rodar de novo não faz nada (renderers que já têm `BodyPart` são pulados).
 
 ## 7. IK: onde ligar (pés, escada, outros)
 

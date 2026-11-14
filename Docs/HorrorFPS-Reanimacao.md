@@ -34,7 +34,7 @@ Assets/HorrorFPS/Revive/
   ReviveHud.cs           tela do caído, marcadores e dica "com/sem kit" (OnGUI, por metade de tela)
   ReviveApi.cs           fachada estática para o seu código e para o perseguidor
   ReviveDebugKeys.cs     teclas F6 a F11
-Assets/HorrorFPS/Editor/Revive/ReviveMenu.cs   menus 21, 22 e 23
+Assets/HorrorFPS/Editor/Revive/ReviveMenu.cs   menus Revive > Create Revive Profile, Toggle Revive Debug Keys e Revive Diagnostics (Play Mode)
 Alterados no pacote do perseguidor: Stalker/StalkerBridge.cs e Stalker/StalkerFinisher.cs (seção 7)
 ```
 **Não precisa pôr nada na cena.** O gerente nasce sozinho ao iniciar o jogo e coloca o componente em cada jogador. Requisitos: os do framework (inventário, sanidade, `Interactable`, `StatsComponent`).
@@ -42,8 +42,8 @@ Alterados no pacote do perseguidor: Stalker/StalkerBridge.cs e Stalker/StalkerFi
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. **Tools > Horror FPS > 21. Create Revive Profile**: cria `Assets/Resources/HorrorFPS/ReviveProfile` e **procura o id do seu kit médico** entre os `ItemData` (veja o Console; seção 6).
-3. **Tools > Horror FPS > 22. Toggle Revive Debug Keys** (liga as teclas de teste).
+2. **Tools > Horror FPS > Revive > Create Revive Profile**: cria `Assets/Resources/HorrorFPS/ReviveProfile` e **procura o id do seu kit médico** entre os `ItemData` (veja o Console; seção 6).
+3. **Tools > Horror FPS > Revive > Toggle Revive Debug Keys** (liga as teclas de teste).
 4. Play com **2 jogadores** (split-screen). Teclas:
 
 | Tecla | Faz |
@@ -106,7 +106,7 @@ Mensagens na tela (SanitySubtitles): "J2 caiu!" para os outros, "Você caiu. Esp
 
 ## 5. O perfil (`ReviveProfile`)
 
-Menu **21** cria o asset em `Assets/Resources/HorrorFPS/ReviveProfile`. Sem asset, valem os padrões abaixo.
+Menu `Revive > Create Revive Profile` cria o asset em `Assets/Resources/HorrorFPS/ReviveProfile`. Sem asset, valem os padrões abaixo.
 
 | Grupo | Campo | Padrão | Efeito |
 |---|---|---|---|
@@ -133,11 +133,11 @@ Menu **21** cria o asset em `Assets/Resources/HorrorFPS/ReviveProfile`. Sem asse
 | | `Injury Speed Multiplier` / `Injury Tremor` / `Injury Sanity Drain` / `Injury Bleed Per Second` | 0,85 / 0,12 / −0,05 / 0 | ver seção 4 |
 | Textos | `text…`, `msg…` | em português | tudo editável; `{0}` é o nome do jogador (J1, J2…) ou o número |
 | Tela | `Show Hud` / `Show Messages` | ligados | vinheta, marcadores e dica / legendas |
-| | `Debug Keys` | desligado | teclas F6 a F11 (menu 22) |
+| | `Debug Keys` | desligado | teclas F6 a F11 (menu `Revive > Toggle Revive Debug Keys`) |
 
 ## 6. O id do kit médico
 
-O kit é um `ItemData` do seu inventário; o módulo precisa do **id** dele. O menu **21** varre os `ItemData` do projeto procurando por "medkit", "first aid", "kit" + "med/saúde/socorro", "curativo", "bandage", "heal", "cura" (no id ou no nome do asset), escreve os achados em `Medkit Item Ids` (melhor palpite primeiro) e **lista os candidatos no Console**. Se não achar nenhum, abra o perfil e escreva o id do seu kit no campo (é o campo `id` do `ItemData`, o mesmo de `inventory.CountOf("…")`).
+O kit é um `ItemData` do seu inventário; o módulo precisa do **id** dele. O menu `Revive > Create Revive Profile` varre os `ItemData` do projeto procurando por "medkit", "first aid", "kit" + "med/saúde/socorro", "curativo", "bandage", "heal", "cura" (no id ou no nome do asset), escreve os achados em `Medkit Item Ids` (melhor palpite primeiro) e **lista os candidatos no Console**. Se não achar nenhum, abra o perfil e escreva o id do seu kit no campo (é o campo `id` do `ItemData`, o mesmo de `inventory.CountOf("…")`).
 
 Para conferir: **F10** diz se algum id da lista está no inventário do jogador e **quais ids o `ItemDatabase` conhece**. Para itens de cura mais fracos (bandagem) com efeito próprio, deixe-os fora da lista: só os ids listados contam como kit.
 
@@ -220,7 +220,7 @@ ReviveApi.Revive(alvo, ReviveKind.WithKit);   // metade da vida, sem efeito nega
 
 ### 11.2 Diagnóstico
 
-**F10** (com as teclas de teste) ou **menu 23** (Play): uma linha por item para cada jogador:
+**F10** (com as teclas de teste) ou **menu `Revive > Revive Diagnostics (Play Mode)` (Play): uma linha por item para cada jogador:
 
 ```
 [Revive] Diagnóstico de J1 (Player 1)
@@ -268,7 +268,7 @@ Isso também resolve o caso de o `GameOverScreen` **contar eventos `Died`** em v
 | Não aparece "Reanimar" ao mirar no caído | o `PlayerInteractor` não enxerga o corpo: ligue `Reach Box`; confira `holdDuration`/layer no diagnóstico (F10) |
 | Reanimar é instantâneo | o `Interactable` não tem o campo `holdDuration` (aviso no Console) |
 | Levanta com a vida errada | o diagnóstico mostra como a vida foi lida/escrita; sem escrita ele levanta com 1 de vida |
-| O kit nunca é gasto | o id do seu kit não está em `Medkit Item Ids` (menu 21; F10 lista os ids conhecidos) |
+| O kit nunca é gasto | o id do seu kit não está em `Medkit Item Ids` (menu `Revive > Create Revive Profile`; F10 lista os ids conhecidos) |
 | A tela de "você morreu" pisca ao cair | efeito de morte já disparado: instale o gancho exato (11.3) |
 | Câmera tomba para o lado errado ou sobe | inverta o sinal de `Camera Roll`/`Camera Pitch` |
 | O monstro continua batendo no caído | o perseguidor não achou `ReviveApi` (pasta `Revive` não importada ou o código não compilou) |

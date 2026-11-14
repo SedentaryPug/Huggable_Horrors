@@ -12,11 +12,11 @@ Tudo é C# puro, a UI é criada por código e **nada precisa ser configurado** p
 ## 1. Instalação em 3 passos
 
 1. Copie a pasta `Assets/HorrorFPS` por cima da existente e espere compilar. Só entram **arquivos novos** (em `Items`, `Inventory`, `Sanity`, `Body`, `Input`, `UI/Inventory`, `Core`, `Editor` e `Docs`): nenhum arquivo do framework base é alterado ou sobrescrito.
-2. Menu **Tools > Horror FPS > 5. Create Sample Items** — cria 18 itens de exemplo (inclusive lanterna, facas e armas de fogo que funcionam, seção 15) em `Assets/HorrorFPS/Resources/HorrorFPS/Items` (formas variadas, descrições que mudam pela sanidade, ações com efeitos, modelos de inspeção).
-3. Menu **Tools > Horror FPS > 6. Create Demo Props In Open Scene** — monta numa cena aberta uma bancada de testes (baú em grade, itens no chão, zona de sanidade, retrato que descreve diferente, barril que explode, "ouvinte" que vira para o barulho).
+2. Menu **Tools > Horror FPS > Demo > Create Sample Items** — cria 18 itens de exemplo (inclusive lanterna, facas e armas de fogo que funcionam, seção 15) em `Assets/HorrorFPS/Resources/HorrorFPS/Items` (formas variadas, descrições que mudam pela sanidade, ações com efeitos, modelos de inspeção).
+3. (Removido) A bancada de testes que o antigo menu 6 montava (baú em grade, itens no chão, zona de sanidade, retrato, barril, "ouvinte") saiu junto com a cena Showcase. Para testar, arraste os itens de exemplo (passo 2) para uma cena com `WorldItem`.
 
-Opcional: **Tools > Horror FPS > 4. Add Item, Sanity and Body modules to Player Prefab** grava os módulos no prefab do jogador (para ajustar valores no Inspector). Sem isso, o `PlayerModules` instala tudo sozinho em cada `PlayerContext` que aparecer (inclusive os criados pelo `LocalPlayerManager` em tempo de execução).
-Itens iniciais no inventário do jogador: **Tools > Horror FPS > 7. Player Starting Inventory** (seção 10). Vários personagens / troca de prefab durante a história: **8** e **9** (seção 11).
+Opcional: **Tools > Horror FPS > Player > Add Item, Sanity and Body Modules To Player Prefab** grava os módulos no prefab do jogador (para ajustar valores no Inspector). Sem isso, o `PlayerModules` instala tudo sozinho em cada `PlayerContext` que aparecer (inclusive os criados pelo `LocalPlayerManager` em tempo de execução).
+Itens iniciais no inventário do jogador: **Tools > Horror FPS > Player > Starting Inventory** (seção 10). Vários personagens / troca de prefab durante a história: **Player > Character Catalog** e **Player > Add Selected Player Prefab(s) As Characters** (seção 11).
 Para desligar a instalação automática: `PlayerModules.AutoInstall = false` ou o símbolo de compilação `HORRORFPS_NO_AUTOINSTALL`.
 
 Requisitos: os mesmos do framework (Unity 2022.3 LTS ou Unity 6, Input System, uGUI). Sem `.asmdef`, como o resto.
@@ -37,7 +37,7 @@ Assets/HorrorFPS
 │              SanityFX · SanityEffects · SanityAudio · SanityZone · SanitySubtitles/SanityLine · SanityExaminable · SanityDialogueStep
 ├─ Body/       PlayerMotionProbe · HeartbeatComponent · BreathingComponent · DynamicHeadBob · DamageReaction
 │              CameraImpulse/CameraImpulseSource/CameraImpulseInteractable · NoiseSystem/NoiseListener/SoundEmitter · PlayerAudio/ProceduralAudio
-└─ Editor/     ItemShapeDrawer (grade clicável da forma) · menus 4, 5 e 6
+└─ Editor/     ItemShapeDrawer (grade clicável da forma) · menus Player > Add Item, Sanity and Body Modules To Player Prefab e Demo > Create Sample Items
 ```
 
 ---
@@ -372,7 +372,7 @@ public class BalancoDoBarco : MonoBehaviour, ICameraModifier
 
 | Sintoma | Causa provável |
 |---|---|
-| O inventário não abre | Confira *Active Input Handling = Input System*; veja se o jogador tem o filho `[Inventory]` (rode o item 4 do menu ou dê Play e espere meio segundo); a tecla é **Tab/I** (Y no controle). |
+| O inventário não abre | Confira *Active Input Handling = Input System*; veja se o jogador tem o filho `[Inventory]` (rode o menu Player > Add Item, Sanity and Body Modules To Player Prefab ou dê Play e espere meio segundo); a tecla é **Tab/I** (Y no controle). |
 | Item some depois de carregar o save | O `ItemData` não está numa pasta `Resources` (o `ItemDatabase` só acha o que está lá). |
 | A descrição não muda | A condição `SanityBelow` compara a sanidade **de quem olha**; confira prioridades (maior vence) e se o jogador tem `SanityComponent`. |
 | Baú perde o conteúdo ao recarregar | Falta `SaveableEntity` no mesmo objeto do baú. |
@@ -380,7 +380,7 @@ public class BalancoDoBarco : MonoBehaviour, ICameraModifier
 | Barulho não atrai o monstro | O monstro precisa de `NoiseListener` e o raio do barulho precisa alcançá-lo (agachado 1,5 m • andando 5 m • correndo 11 m). |
 | Não vejo nada de efeito de sanidade | Você precisa estar abaixo de ~80% (Uneasy); use uma `SanityZone`, o item "Caco de espelho" ("Encarar") ou `SanityComponent.Of(p).Add(-40)` para testar. |
 | Erro de compilação em `FrameworkBridge` | Um nome/assinatura do framework base difere do documento: mande a mensagem do Console. |
-| Os itens iniciais não aparecem no inventário do jogador | O jogador só tem inventário no **prefab** depois do menu 4 (ou do botão "Instalar inventário" da janela 7). Configure os itens no prefab; os que não couberem aparecem em amarelo na prévia e no Console. |
+| Os itens iniciais não aparecem no inventário do jogador | O jogador só tem inventário no **prefab** depois do menu `Player > Add Item, Sanity and Body Modules To Player Prefab` (ou do botão "Instalar inventário" da janela 7). Configure os itens no prefab; os que não couberem aparecem em amarelo na prévia e no Console. |
 | Troca de personagem não acontece | Falta o `CharacterCatalog` em `Resources`, o personagem não está na lista, ou o prefab dele não tem `PlayerContext` + `PlayerInput` (veja os avisos no inspector do catálogo). |
 | Jogador criado pela troca nasce no lugar errado | O `LocalPlayerManager` reposiciona depois da troca: mande o código dele para ligarmos a escolha direto no ponto de nascimento. |
 
@@ -402,7 +402,7 @@ Todo `GridContainer`/`ListContainer` ganhou um editor para os **itens iniciais**
 - **Prévia da grade**: mostra onde cada item vai cair (mesma regra do jogo), com a quantidade de cada pilha e a linha selecionada contornada. Clique numa peça para selecionar a linha dela.
 - **Avisos**: item que não cabe (com a linha marcada), categoria que o inventário não aceita, linha vazia, e item fora de uma pasta `Resources` (não volta num load).
 
-**Para o jogador**: menu **Tools > Horror FPS > 7. Player Starting Inventory**. A janela acha o prefab do jogador (ou use o campo / o menu do catálogo de personagens), tem uma aba por inventário do prefab (Mochila, Chaves...) e grava direto no prefab, sem abrir a cena. Se o prefab ainda não tem inventário, o botão **Instalar inventário** roda a instalação dos módulos nele. A janela serve também para qualquer prefab com inventário (baús, armários).
+**Para o jogador**: menu **Tools > Horror FPS > Player > Starting Inventory**. A janela acha o prefab do jogador (ou use o campo / o menu do catálogo de personagens), tem uma aba por inventário do prefab (Mochila, Chaves...) e grava direto no prefab, sem abrir a cena. Se o prefab ainda não tem inventário, o botão **Instalar inventário** roda a instalação dos módulos nele. A janela serve também para qualquer prefab com inventário (baús, armários).
 
 Observações:
 - Os itens iniciais entram **uma vez, quando o jogador nasce**. Ao carregar um save, vale o que foi salvo.
@@ -413,7 +413,7 @@ Observações:
 Para a história poder trocar de personagem (ex.: capítulo 2 joga com outra pessoa), o jogador passa a ser escolhido por um **catálogo**.
 
 **Montar (uma vez)**
-1. Selecione no Project o(s) prefab(s) do jogador (um por personagem; copie o prefab base e troque modelo, câmera, valores) e rode **Tools > Horror FPS > 9. Add Selected Player Prefab(s) as Characters**. Isso cria o `CharacterCatalog` em `Resources/HorrorFPS` (também pelo menu **8. Character Catalog**) e um `CharacterDefinition` por prefab.
+1. Selecione no Project o(s) prefab(s) do jogador (um por personagem; copie o prefab base e troque modelo, câmera, valores) e rode **Tools > Horror FPS > Player > Add Selected Player Prefab(s) As Characters**. Isso cria o `CharacterCatalog` em `Resources/HorrorFPS` (também pelo menu **Player > Character Catalog**) e um `CharacterDefinition` por prefab.
 2. No catálogo, escolha o **Starting Character**. **O prefab que o `LocalPlayerManager` usa hoje tem que ser um dos personagens** (o jogo o reconhece pelo nome do prefab).
 3. Em cada `CharacterDefinition`: `id` (curto e estável, vai para o save), nome, retrato, prefab e a regra do inventário.
 
@@ -445,7 +445,7 @@ O jogador acumula muitos componentes (movimento, câmera, status, inventário, s
 
 ## 13. Item Studio — fotografar o modelo 3D e gerar o ícone
 
-**Tools > Horror FPS > 10. Item Studio** (ou `ItemStudioWindow.OpenFor(item)` por código). Uma janela só para os itens, no mesmo estilo da janela de inventário inicial.
+**Tools > Horror FPS > Items > Item Studio** (ou `ItemStudioWindow.OpenFor(item)` por código). Uma janela só para os itens, no mesmo estilo da janela de inventário inicial.
 
 **Layout**
 - **Esquerda**: lista de todos os `ItemData` do projeto (busca por nome/id, miniatura do ícone, aviso "sem ícone — pronto p/ foto"). **＋ Novo item** cria um asset em `Resources/HorrorFPS/Items`.
@@ -460,7 +460,7 @@ O jogador acumula muitos componentes (movimento, câmera, status, inventário, s
 
 **Modelo usado**: o `Inspect Prefab` do item; se estiver vazio, o `World Prefab` (e dá para inverter a preferência na aba Foto). Arraste um prefab para o palco 3D para definir o modelo de um item que ainda não tem. Scripts do prefab não rodam no estúdio (só o visual).
 
-**Gerar ícones que faltam** (barra do topo): fotografa de uma vez todos os itens que têm modelo e não têm ícone, com o enquadramento padrão (3/4) ou o já guardado. Depois refine os que quiser, um a um. Com os itens de exemplo: rode **5. Create Sample Items** e depois esse botão.
+**Gerar ícones que faltam** (barra do topo): fotografa de uma vez todos os itens que têm modelo e não têm ícone, com o enquadramento padrão (3/4) ou o já guardado. Depois refine os que quiser, um a um. Com os itens de exemplo: rode **Demo > Create Sample Items** e depois esse botão.
 
 **No inventário**: o ícone é desenhado sobre a peça (o fundo das células escurece quando há ícone, para a imagem aparecer bem) e **gira junto** quando o jogador rotaciona a peça (passos de 90°). A aba Foto tem uma prévia da peça com botão "↻ Girar peça" para conferir. No hotbar e nos slots da lista o ícone aparece como antes.
 
@@ -483,12 +483,12 @@ A tela do inventário do jogador agora tem **abas** (barra no canto superior dir
 
 **Como o item escolhe a aba**: pelo campo **Aba do inventário** do item (`Tab Rule`). Em `Auto` (padrão): categoria Mapa → Mapa; Documento → Registros; Chave ou Missão → Chaves; o resto → Mochila. Para forçar, escolha a aba no campo (ex.: um bilhete que deve ocupar espaço na mochila: `Tab Rule = Bag`). Ao pegar qualquer item do chão, de um baú ou por código (`AddItem`), ele já entra na aba certa; se o jogador não tiver a lista daquela aba (prefab antigo), cai na mochila. Soltar um item de aba especial na grade da mochila também o manda para a aba dele.
 
-**Instalação**: os módulos do jogador criam sozinhos as listas `[Chaves]`, `[Registros]` e `[Mapas]` (filhas do objeto `[Inventory]`) ao instalar (menu **4. Add Item, Sanity and Body modules to Player Prefab**, ou automaticamente ao jogar). Elas são `ListContainer` normais com o campo **Tab** do contêiner na aba certa, então aparecem na janela **7. Player Starting Inventory** e dá para dar itens iniciais a elas (ex.: um mapa de início). Para outro objeto (baú, NPC) o campo **Tab** do contêiner também existe, mas as abas só aparecem na tela do jogador.
+**Instalação**: os módulos do jogador criam sozinhos as listas `[Chaves]`, `[Registros]` e `[Mapas]` (filhas do objeto `[Inventory]`) ao instalar (menu **Player > Add Item, Sanity and Body Modules To Player Prefab**, ou automaticamente ao jogar). Elas são `ListContainer` normais com o campo **Tab** do contêiner na aba certa, então aparecem na janela **Player > Starting Inventory** e dá para dar itens iniciais a elas (ex.: um mapa de início). Para outro objeto (baú, NPC) o campo **Tab** do contêiner também existe, mas as abas só aparecem na tela do jogador.
 
 **Registros (diários e notas)**
 - O texto completo vem do campo **Read Text** do item; se estiver vazio, usa a descrição. Ele aceita **variantes por sanidade/variáveis** e o glitch de sanidade baixa, como a descrição: o mesmo diário pode contar outra coisa para quem está mal (cada jogador lê o seu).
 - Clique (ou Enter/A) numa linha para ler; roda do mouse/analógico direito rola o texto. Botão direito/X abre o menu do item (Inspecionar, Atalho...). Registros não são arrastáveis. Ao abrir um registro ele é marcado como lido (flag `read` da instância, vai no save); a aba mostra quantos não lidos há.
-- Itens de exemplo: `diario` e `bilhete` já vêm com texto de leitura (crie com **5. Create Sample Items**).
+- Itens de exemplo: `diario` e `bilhete` já vêm com texto de leitura (crie com **Demo > Create Sample Items**).
 
 **Mapa**
 - No item (categoria `Map`), seção **Map**: `Image` (sprite do mapa; o **topo da imagem é o +Z do mundo**), `World Min` (canto inferior esquerdo, X e Z em metros) e `World Max` (canto superior direito) e `Show Players`. Com isso o jogo converte a posição de cada jogador para a imagem e desenha uma **seta** (amarela = você, azul = outros jogadores do split-screen) apontando para onde ele olha.
@@ -549,7 +549,7 @@ Barulho: `noise` vira um evento de `NoiseSystem` (`Gunshot` para tiros, `Impact`
 
 ### 15.5 Itens de exemplo e como atualizar
 
-**Tools > Horror FPS > 5. Create Sample Items** agora também cria **faca, taco com pregos, espingarda, cartuchos calibre 12 e kit médico** (e modelos 3D simples para eles e para o pé de cabra), e **atualiza os itens de exemplo que você já tinha** (lanterna, pé de cabra, pistola) para os novos equipamentos, **só se o Tipo ainda for Nenhum**; remove as ações de teste antigas (*Balançar*, *Disparar (teste)*), que o equipamento substitui. Quem já escolheu um Tipo no Inspector não é tocado.
+**Tools > Horror FPS > Demo > Create Sample Items** agora também cria **faca, taco com pregos, espingarda, cartuchos calibre 12 e kit médico** (e modelos 3D simples para eles e para o pé de cabra), e **atualiza os itens de exemplo que você já tinha** (lanterna, pé de cabra, pistola) para os novos equipamentos, **só se o Tipo ainda for Nenhum**; remove as ações de teste antigas (*Balançar*, *Disparar (teste)*), que o equipamento substitui. Quem já escolheu um Tipo no Inspector não é tocado.
 
 | Item | Tipo | Notas |
 |---|---|---|
@@ -561,7 +561,7 @@ Barulho: `noise` vira um evento de `NoiseSystem` (`Gunshot` para tiros, `Impact`
 | Espingarda | Arma de fogo | 6 cartuchos, 8 projéteis de 12, recarga lenta, munição `cartuchos` |
 | Kit médico | Consumível | +75 de vida em 8 s |
 
-A bancada de testes (menu 6) tem todos no chão, o baú tem kit e cartuchos, e quatro bonecos de treino a 7–20 m.
+(A bancada de testes antiga, que tinha todos no chão, um baú com kit e cartuchos e quatro bonecos de treino, foi removida; use `HitTarget` para montar bonecos de treino na sua cena.)
 
 ### 15.6 Limitações
 
