@@ -45,7 +45,9 @@ namespace HorrorFPS.EditorTools
 
             Prim(PrimitiveType.Cube, "Divisória A", new Vector3(-8.5f, 3f, 9f), new Vector3(13f, 6f, 0.2f), wall, env, true);
             Prim(PrimitiveType.Cube, "Divisória B", new Vector3(0.5f, 3f, 9f), new Vector3(3f, 6f, 0.2f), wall, env, true);
-            Prim(PrimitiveType.Cube, "Divisória C", new Vector3(9f, 3f, 9f), new Vector3(12f, 6f, 0.2f), wall, env, true);
+            Prim(PrimitiveType.Cube, "Divisória C1", new Vector3(6f, 3f, 9f), new Vector3(6f, 6f, 0.2f), wall, env, true);
+            Prim(PrimitiveType.Cube, "Divisória C2", new Vector3(12.7f, 3f, 9f), new Vector3(4.6f, 6f, 0.2f), wall, env, true);
+            Prim(PrimitiveType.Cube, "Verga portão", new Vector3(9.7f, 4.3f, 9f), new Vector3(1.4f, 3.4f, 0.2f), wall, env, true);
             Prim(PrimitiveType.Cube, "Verga porta 1", new Vector3(-1.5f, 4.1f, 9f), new Vector3(1f, 3.8f, 0.2f), wall, env, true);
             Prim(PrimitiveType.Cube, "Verga porta 2", new Vector3(2.5f, 4.1f, 9f), new Vector3(1f, 3.8f, 0.2f), wall, env, true);
 
@@ -58,11 +60,18 @@ namespace HorrorFPS.EditorTools
             Light lampA = MakeLight("Lamp A", new Vector3(0f, 5f, -4f), new Color(1f, 0.75f, 0.5f), 13f, 1.4f);
             Light lampB = MakeLight("Lamp B", new Vector3(-9f, 5f, 3f), new Color(0.6f, 0.75f, 1f), 10f, 1.2f);
             Light lampC = MakeLight("Lamp C", new Vector3(9f, 5f, -9f), new Color(1f, 0.6f, 0.45f), 10f, 1.2f);
-            MakeLight("Lamp Corredor", new Vector3(0f, 4.8f, 12f), new Color(1f, 0.55f, 0.35f), 8f, 1.2f);
+            // a luz do corredor falha com a sanidade e o medo, tem interruptor (apagar a luz esconde) e uma zona de visibilidade que a segue
+            SwitchableLights corridorLamp = AddFailingLamp("Lamp Corredor", new Vector3(0f, 4.8f, 12f), new Color(1f, 0.55f, 0.35f), 8f, 1.2f,
+                string.Empty, string.Empty, 0.6f, true, 0f, 5f, 14f, 0.4f);
+            AddSaveable(corridorLamp.gameObject, false);
+            GameObject corridorSwitch = Prim(PrimitiveType.Cube, "Interruptor do corredor", new Vector3(-2.2f, 1.4f, 14.7f), new Vector3(0.2f, 0.3f, 0.08f), metal, null, true);
+            new Props(corridorSwitch.AddComponent<LightSwitch>()).Refs("targets", corridorLamp).Str("objectName", "a luz do corredor").Apply();
+            AddVisibilityZone("Visibilidade do corredor", new Vector3(0f, 1.5f, 12f), new Vector3(30f, 3f, 5.5f), VisibilityZone.Preset.Lit, corridorLamp);
 
             // ---- onde os jogadores aparecem: ao começar o nível e ao voltar do porão
             MakeSpawnGroup(SpawnPoint.DefaultId, new Vector3(0f, 0.05f, -8f), 0f, 4);
             MakeSpawnGroup("from_cellar", new Vector3(0f, 0.05f, 12.3f), 180f, 4);
+            MakeSpawnGroup("from_lift", new Vector3(12.5f, 0.05f, -10f), 0f, 4);     // o elevador de serviço da Casa de força chega aqui
 
             // ---- mesa com a chave do porão (some para sempre depois de pegar, inclusive no save)
             GameObject table = Prim(PrimitiveType.Cube, "Mesa", new Vector3(-7f, 0.45f, 4f), new Vector3(2.2f, 0.9f, 1.1f), wood, null, true);
@@ -80,6 +89,10 @@ namespace HorrorFPS.EditorTools
             GameObject ironDoor = MakeDoor("Porta de ferro", new Vector3(2f, 0f, 9f), true, heavy);
             new Props(ironDoor.GetComponent<Door>()).Str("unlockVariable", KeyVariable).Str("objectName", "a porta de ferro").Apply();
             AddSaveable(ironDoor, false);
+
+            // ---- atalho: o portão de serviço da divisória só abre pelo lado do corredor (volta rápida depois do porão) e fica aberto no save
+            Shortcut hallGate = MakeShortcutGate("Portão de serviço", new Vector3(9.7f, 0f, 9f), Quaternion.identity, 1.38f, 2.6f, metal, Shortcut.Side.Front, "o portão de serviço");
+            new Props(hallGate).Str("setVariable", "hall_gate_open").Str("openedHint", "O portão abriu: agora dá para voltar ao salão sem passar pelas portas.").Apply();
 
             // ---- porta do porão: troca de nível (precisa da chave)
             GameObject cellarDoor = Prim(PrimitiveType.Cube, "Porta do porão", new Vector3(0f, 1.2f, 14.6f), new Vector3(1.5f, 2.4f, 0.2f), heavy, null, true);
@@ -165,6 +178,17 @@ namespace HorrorFPS.EditorTools
             Light lamp = MakeLight("Lamp Porão", new Vector3(0f, 3.4f, 0f), new Color(1f, 0.65f, 0.4f), 9f, 1.3f);
 
             MakeSpawnGroup(SpawnPoint.DefaultId, new Vector3(0f, 0.05f, -4.5f), 0f, 4);
+            MakeSpawnGroup("from_tunnels", new Vector3(4.8f, 0.05f, 5f), 180f, 4);          // chegando do alçapão dos túneis
+
+            // ---- alçapão para os túneis (parede norte)
+            GameObject hatch = Prim(PrimitiveType.Cube, "Alçapão para os túneis", new Vector3(4.8f, 1.1f, 6.9f), new Vector3(1.4f, 2.2f, 0.2f), metal, null, true);
+            new Props(hatch.AddComponent<LevelDoor>()).Str("levelId", "tunnels").Str("spawnId", SpawnPoint.DefaultId)
+                .Str("verb", "Descer").Str("objectName", "para os túneis").Enum("iconKind", (int)IconKind.Door).Apply();
+
+            // ---- uma lâmpada solta sobre os barris: falha com a sanidade e o medo; a zona de visibilidade dela escurece quando ela apaga
+            SwitchableLights looseBulb = AddFailingLamp("Lamp solta", new Vector3(-4.5f, 2.8f, 3f), new Color(1f, 0.6f, 0.35f), 6f, 1f,
+                string.Empty, string.Empty, 0.7f, true, 0f, 4f, 10f, 0.6f);
+            AddVisibilityZone("Visibilidade da lâmpada solta", new Vector3(-4.5f, 1.5f, 3f), new Vector3(5f, 3f, 5f), VisibilityZone.Preset.Lit, looseBulb);
 
             // ---- escada de volta para o Salão (chegando na porta de lá, grupo "from_cellar")
             GameObject exit = Prim(PrimitiveType.Cube, "Escada para o salão", new Vector3(0f, 1.1f, -6.9f), new Vector3(1.4f, 2.2f, 0.2f), wood, null, true);

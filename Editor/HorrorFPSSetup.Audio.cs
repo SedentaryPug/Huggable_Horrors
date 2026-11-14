@@ -103,5 +103,22 @@ namespace HorrorFPS.EditorTools
                 MusicKind.Uneasy, 0.45f, AmbienceKind.Rumble, 0.55f, NoiseSurface.Preset.Concrete, true, false);
             AddNoiseSurface("Grade de metal do anexo", new Vector3(21.5f, 0.1f, -3f), new Vector3(3f, 0.25f, 3f), NoiseSurface.Preset.Metal);
         }
+
+        static void BuildTunnelsAudio(GridMap g)
+        {
+            // os túneis: gotas e música sombria; a poça do laço e o piso de metal junto da porta de serviço mudam o passo
+            AddAreaAudio("Áudio dos túneis", Vector3.zero, Vector3.one, true, 0,
+                MusicKind.Dread, 0.45f, AmbienceKind.Drips, 0.6f, NoiseSurface.Preset.Concrete, true, false);
+            AddNoiseSurface("Poça do túnel", g.Center(7, 5) + new Vector3(0f, 0.1f, 0f), new Vector3(g.cell * 2f, 0.25f, g.cell), NoiseSurface.Preset.Water);
+            AddNoiseSurface("Grade do túnel", g.Center(4, 3) + new Vector3(0f, 0.1f, 0f), new Vector3(g.cell, 0.25f, g.cell), NoiseSurface.Preset.Metal);
+        }
+
+        static void BuildPowerAudio()
+        {
+            // a casa de força: zumbido elétrico e música inquieta; o piso todo é grade de metal
+            AddAreaAudio("Áudio da casa de força", Vector3.zero, Vector3.one, true, 0,
+                MusicKind.Uneasy, 0.45f, AmbienceKind.Hum, 0.6f, NoiseSurface.Preset.Metal, true, false);
+            AddNoiseSurface("Piso de metal da casa de força", new Vector3(0f, 0.1f, 0f), new Vector3(16f, 0.25f, 12f), NoiseSurface.Preset.Metal);
+        }
     }
 }
