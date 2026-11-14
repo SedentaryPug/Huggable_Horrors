@@ -23,7 +23,7 @@ Também dá para dar Play direto em `Level_Hall` ou `Level_Cellar`: o jogo se mo
 | `Core/`, `Player/`, `Input/`, `World/`, `Stats/` | base: jogador por contexto, movimento, interação, input (só `PlayerInputHandler` lê o input), status |
 | `Flow/`, `Save/`, `Cutscenes/`, `UI/` | troca de cenas (`SceneDirector`, `GameCatalog`), save/load, cutscenes, menus e HUD |
 | `Items/`, `Inventory/`, `Equipment/` | itens, inventário (lista/grade), mãos, armas e lanterna |
-| `Sanity/`, `Body/` | sanidade por jogador, respiração, batimento, tremor, impulsos de câmera |
+| `Sanity/`, `Body/` | sanidade por jogador, respiração, batimento, tremor, impulsos de câmera; barulho e visibilidade do jogador (agachar, pisos, sombras) |
 | `Animation/`, `Characters/`, `Clips/` | corpo animado visível aos outros jogadores, personagens, clipes do Mixamo |
 | `Dialogue/`, `SmartEvents/` | diálogos em grafo e eventos com condições |
 | `Props/` | objetos interativos (gaveta, esconderijo, barril, espelho, armadilha, botões coop) |
@@ -87,6 +87,7 @@ Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções)
 | [`HorrorFPS-Contexto-Scripts`](Docs/HorrorFPS-Contexto-Scripts.md) | guia de referência do código (receitas, armadilhas, índice de classes) |
 | [`HorrorFPS-Objetivos-Tutorial`](Docs/HorrorFPS-Objetivos-Tutorial.md) | objetivos (lista, faixa, eventos, save) e dicas de tutorial de uma vez só + página "Como jogar" |
 | [`HorrorFPS-Diario-Ruido`](Docs/HorrorFPS-Diario-Ruido.md) | diário (notas, gravações, leitor na tela, página na pausa) e ruído do jogador (agachar silencioso, pisos, medidor) |
+| [`HorrorFPS-Visibilidade`](Docs/HorrorFPS-Visibilidade.md) | visibilidade do jogador para o Perseguidor: agachar, sombra e lanterna, zonas de visibilidade, indicador na tela |
 | [`Menus`](Docs/Menus.md) | todos os menus do Editor |
 | [`Contribuindo`](Docs/Contribuindo.md) | convenções e cuidados antes de mexer no código |
 

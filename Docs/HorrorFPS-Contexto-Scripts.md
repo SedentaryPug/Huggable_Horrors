@@ -84,7 +84,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Stalker/` (+`Tree/`) | IA do perseguidor: cérebro, árvore de comportamento editável, diretor, memória | `HorrorFPS` |
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
 | `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
-| `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` | `HorrorFPS` |
+| `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso (ruído e visibilidade) fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` e `Docs/HorrorFPS-Visibilidade.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
@@ -1042,14 +1042,15 @@ Tipos em arquivo de outro nome:
 - `PlayerAnimState.cs` define enum `HandItem`, enum `PlayerAnimEvent`
 - `PoseFx.cs` define struct `PoseDelta`, interface `IPoseModifier`
 
-**Body/**  (14 arquivos)
+**Body/**  (16 arquivos)
 
-Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, ProceduralAudio, SoundEmitter
+Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, ProceduralAudio, SoundEmitter, VisibilityZone
 
 Tipos em arquivo de outro nome:
 - `NoiseSystem.cs` define enum `NoiseKind`, struct `NoiseEvent`, interface `INoiseHearer`
 - `PlayerAudio.cs` define enum `AudioMode`
 - `PlayerMotionProbe.cs` define enum `NoiseLevel` (Silent/Quiet/Normal/Loud: o que o medidor de ruído mostra)
+- `PlayerVisibility.cs` define enum `VisibilityLevel` (Hidden/Low/Normal/High: o que o indicador de visibilidade mostra)
 
 **Characters/**  (6 arquivos)
 
@@ -1083,9 +1084,9 @@ Tipos em arquivo de outro nome:
 - `DialogueText.cs` define class `DialogueStyle`
 - `DialogueView.cs` define struct `DialogueChoiceItem`
 
-**Editor/**  (22 arquivos)
+**Editor/**  (23 arquivos)
 
-Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DemoProps, EquipPresets, HorrorFPSSetup, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.Showcase, HorrorFPSSetup.Showcase.Zones, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, WizardUtil
+Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DemoProps, EquipPresets, HorrorFPSSetup, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.Showcase, HorrorFPSSetup.Showcase.Zones, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
 
 Tipos em arquivo de outro nome:
 - `EquipPresets.cs` define enum `EquipPreset`
@@ -1240,9 +1241,9 @@ Tipos em arquivo de outro nome:
 - `StatTypes.cs` define enum `StatType`, enum `DamageType`, enum `ModifierOp`, struct `DamageInfo`, interface `IDamageable`, class `StatusEffectData`, class `ActiveEffect`
 - `StatsComponent.cs` define enum `StatPreset`
 
-**UI/**  (11 arquivos)
+**UI/**  (12 arquivos)
 
-Arquivos: ControlsPanel, GameOverScreen, InfoPanelBase, MainMenu, NoiseMeterHUD, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites
+Arquivos: ControlsPanel, GameOverScreen, InfoPanelBase, MainMenu, NoiseMeterHUD, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites, VisibilityHUD
 
 **UI/Inventory/**  (15 arquivos)
 

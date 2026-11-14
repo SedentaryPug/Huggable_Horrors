@@ -13,6 +13,10 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Player > Starting Inventory` | `Editor/PlayerInventoryWindow.cs` |
 | `Tools > Horror FPS > Player > Character Catalog` | `Editor/CharacterCatalogUtil.cs` |
 | `Tools > Horror FPS > Player > Add Selected Player Prefab(s) As Characters` | `Editor/CharacterCatalogUtil.cs` |
+| `Tools > Horror FPS > Player > Create Visibility Zone` | `Editor/StealthMenu.cs` |
+| `Tools > Horror FPS > Player > Create Noise Surface` | `Editor/StealthMenu.cs` |
+
+As duas últimas (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Visibilidade.md) e [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
 
 ### Items — itens
 

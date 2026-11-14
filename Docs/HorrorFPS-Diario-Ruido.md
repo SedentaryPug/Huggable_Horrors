@@ -1,6 +1,6 @@
 # Diário e ruído (agachar silencioso)
 
-Dois sistemas: o **diário** (reler notas, páginas de diário e gravações que o grupo achou) e o **ruído do jogador** (agachar e andar devagar fazem menos barulho para quem escuta). Código em `Journal/` e em `Body/` + `UI/` (namespace `HorrorFPS`). O diário é criado sozinho ao iniciar o jogo: não precisa estar em cena.
+Dois sistemas: o **diário** (reler notas, páginas de diário e gravações que o grupo achou) e o **ruído do jogador** (agachar e andar devagar fazem menos barulho para quem escuta). O par do ruído para quem **enxerga** (agachar, sombra e lanterna mudam o quanto o monstro vê) está em `HorrorFPS-Visibilidade.md`. Código em `Journal/` e em `Body/` + `UI/` (namespace `HorrorFPS`). O diário é criado sozinho ao iniciar o jogo: não precisa estar em cena.
 
 > Status: escritos e revisados no código, **ainda não compilados nem testados na Unity** (o ambiente onde foram feitos não tem a Unity). Se aparecer erro de compilação ou algo estranho em Play, mande o texto do erro.
 
@@ -95,13 +95,13 @@ Componente no objeto do piso (ou num pai do collider): `Tapete` 0,45, `Grama` 0,
 
 ### Medidor de ruído na tela (`NoiseMeterHUD`)
 
-Três barrinhas no canto superior direito (abaixo do lugar dos avisos) mostram o quanto o jogador está sendo ouvido: `Silencioso` (cinza, nenhuma barra), `Baixo` (1 barra verde: agachado ou devagar), `Médio` (2 amarelas: andando), `Alto` (3 vermelhas: correndo ou piso barulhento). Cada passo dá uma piscada. Aparece quando há o que mostrar (andando ou agachado) e some sozinho. **Opções > Indicador de ruído** liga e desliga (vale para todos os jogadores deste computador).
+Três barrinhas no canto superior direito (abaixo do lugar dos avisos; o indicador de visibilidade fica logo abaixo) mostram o quanto o jogador está sendo ouvido: `Silencioso` (cinza, nenhuma barra), `Baixo` (1 barra verde: agachado ou devagar), `Médio` (2 amarelas: andando), `Alto` (3 vermelhas: correndo ou piso barulhento). Cada passo dá uma piscada. Aparece quando há o que mostrar (andando ou agachado) e some sozinho. **Opções > Indicadores de furtividade** liga e desliga este medidor e o de visibilidade (vale para todos os jogadores deste computador).
 
 Os limites ficam no `PlayerMotionProbe` (`Quiet Below` 2,5 m e `Loud From` 8 m, em raio de barulho).
 
 ### Dicas de tutorial relacionadas
 
-- `crouch` (já existia) agora explica que agachar faz menos barulho.
+- `crouch` (já existia) agora explica que agachar faz menos barulho e deixa o jogador mais difícil de ver.
 - `noise`: aparece **uma vez** na primeira vez que o jogador faz barulho **alto**, e explica o medidor (`TutorialWhen.LoudNoise`).
 - `journal`: aparece uma vez quando o primeiro registro entra no diário (`TutorialWhen.JournalUnlocked`).
 

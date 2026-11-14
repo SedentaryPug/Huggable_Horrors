@@ -86,7 +86,7 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | Id | Quando aparece |
 |---|---|
 | `move` | 2,5 s depois de o jogador aparecer (some ao se mexer) |
-| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho |
+| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho e deixa mais difícil de ver (ver `HorrorFPS-Visibilidade.md`) |
 | `noise` | a primeira vez que o jogador faz barulho **alto** (correndo, piso barulhento): explica o medidor de ruído |
 | `interact`, `grab` | a primeira vez que aparece uma dica de interação dessa ação |
 | `ladder` | **manual** (volume `Tutorial Trigger` perto da escada) |

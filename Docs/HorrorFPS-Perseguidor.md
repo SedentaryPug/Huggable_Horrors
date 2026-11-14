@@ -100,7 +100,7 @@ Valor contínuo `Attention01` (0..1) → nível com histerese. Sobe com estímul
 | Antecipa o jogador ao perdê-lo | 0 s | 0,4 | 0,8 | 1,2 |
 | Procura por | 14 s | 22 | 34 | 45 |
 
-A **visão** é um medidor por jogador: enche mais rápido com atenção alta, perto, em movimento e com o corpo todo à vista (3 raios: olho, peito, pés); parado enche devagar; escondido = invisível (só `Inspect` descobre). Passou de `glimpseAt` vira "vi algo" (pista fraca); chegou a 1 é "notei". A suspeita tem histerese (não pisca) e ele só segue o **último ponto realmente visto**, não o jogador atrás da parede.
+A **visão** é um medidor por jogador: enche mais rápido com atenção alta, perto, em movimento e com o corpo todo à vista (3 raios: olho, peito, pés); parado enche devagar; **agachado ou na sombra enche mais devagar e encurta o alcance** (a lanterna ligada faz o contrário: `PlayerVisibility`, `VisibilityZone` e `playerVisibilityWeight`/`visibilityRangeInfluence` no perfil; doc `HorrorFPS-Visibilidade`); escondido = invisível (só `Inspect` descobre). Passou de `glimpseAt` vira "vi algo" (pista fraca); chegou a 1 é "notei". A suspeita tem histerese (não pisca) e ele só segue o **último ponto realmente visto**, não o jogador atrás da parede.
 
 ## 5. Diretor: a informação que ele tem e só libera às vezes
 
@@ -406,7 +406,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 
 - Exige **NavMesh** bakeado; sem ele o perseguidor avisa uma vez e fica parado. Cenas aditivas com NavMesh próprio funcionam (ele tenta de novo).
 - Não abre/quebra portas, não usa escadas nem vãos (`NavMeshLink`); sem animação (o `Animator` fica por sua conta, leia `Agent.velocity` e `brain.Mode`).
-- A luz não afeta a visão de série (um módulo com `ModifyVisibility` resolve); "jogador sem tela de morte" depende de `IsAlive` (seção 13).
+- A luz da cena não é medida (a lanterna do jogador e as `VisibilityZone` entram como regras: ver `HorrorFPS-Visibilidade`); um módulo com `ModifyVisibility` resolve o resto; "jogador sem tela de morte" depende de `IsAlive` (seção 13).
 - Iscas: se o jogador **estava** por perto mas fora de vista, a viagem conta como "em vão". É uma simplificação.
 - **Sem simulação fora de cena**: enquanto o monstro está em outro nível (ou fora de cena) nada acontece com ele; quando volta, está onde ficou (ou aparece num ponto). O tempo de ausência não o faz andar.
 - **Um nível atual por vez**: o sistema acompanha o último nível carregado; o monstro "existe" ou nele ou só no elenco.
@@ -424,7 +424,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 |---|---|
 | Fica parado / aviso de NavMesh | falta bake, ou o monstro está fora do NavMesh (a bancada faz o bake antes de criar o monstro) |
 | Não ouve nada | sem Collider no corpo (o módulo cria um trigger, confira o aviso), `HearingMask` sem a camada dele, ou `noiseThreshold` alto demais |
-| Nunca me nota | `visionRange`/`visionFov` do nível Calm, ou `sightMask` incluindo triggers; jogador parado no escuro vale 0,6 |
+| Nunca me nota | `visionRange`/`visionFov` do nível Calm, ou `sightMask` incluindo triggers; jogador parado vale 0,6 e agachado/na sombra vale menos ainda (`PlayerVisibility`, `playerVisibilityWeight`) |
 | Me nota através da parede | camada da parede fora de `sightMask` (padrão: tudo) |
 | Não ignora o rádio | a chave da fonte mudou (objetos com nomes diferentes); use `StalkerNoiseTag.key`; precisam ser 3 viagens em vão |
 | Não recebe pistas | atenção acima de Alert (`pressureOnlyWhenCalm`), sossego ativo, cinemática em curso, ou o alvo está escondido |
@@ -444,7 +444,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 
 ## 16. Ideias para melhorar (próximos passos)
 
-1. **Luz e escuridão**: agora cabe num módulo (`ModifyVisibility` + `ModifyTuning`): visão maior com a lanterna ligada, menor no escuro; sombra e `SanityLight` como fator. Dá também o monstro que **foge da luz** ou **só se move no escuro**.
+1. **Luz e escuridão**: agachar, `VisibilityZone` e lanterna ligada já mudam a visão (doc `HorrorFPS-Visibilidade`); falta medir a luz real da cena e `SanityLight` como fator. Cabe num módulo (`ModifyVisibility` + `ModifyTuning`). Dá também o monstro que **foge da luz** ou **só se move no escuro**.
 2. **Portas**: abrir (com barulho e tempo), arrombar, e o jogador usar porta fechada/trancada como ferramenta (`Door` + `Breakable`).
 3. **Hábitos por jogador**: aprender que o jogador 1 se esconde e o 2 corre, e escolher o método de busca para cada um.
 4. **Isca de propósito**: item arremessável (`Impact`) que o jogador usa de verdade; premiar a variedade, já que o monstro aprende a repetição.
