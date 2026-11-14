@@ -11,24 +11,25 @@ namespace HorrorFPS
     /// <summary>
     /// Menu de pausa (criado automaticamente ao iniciar o jogo, não precisa estar na cena).
     /// Qualquer jogador pausa com a action Pause; o jogador que pausou é o dono do menu e remapeia os controles dele.
-    /// Páginas: principal, salvar, carregar, objetivos, controles (remapeamento), opções e confirmação (menu principal / sair).
+    /// Páginas: principal, salvar, carregar, objetivos, controles (remapeamento), como jogar (dicas), opções e confirmação (menu principal / sair).
     /// Um SavePoint abre direto a página de salvar: PauseMenu.OpenSaveMenu(jogador).
     /// </summary>
     public class PauseMenu : MonoBehaviour
     {
-        enum Page { Main, Controls, Settings, Save, Load, Confirm, Objectives }
+        enum Page { Main, Controls, Settings, Save, Load, Confirm, Objectives, HowToPlay }
 
         static PauseMenu instance;
 
         GameObject rootGo;
         Text titleText, ownerText, noticeText, confirmText;
-        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, objectivesPage;
+        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, objectivesPage, howToPlayPage;
         Selectable mainFirst, confirmDefault;
         Button saveButton, loadButton, menuButton, objectivesButton;
         ControlsPanel controls;
         SettingsPanel settings;
         SaveSlotsPanel slots;
         ObjectivesPanel objectives;
+        HowToPlayPanel howToPlay;
         UnityAction pendingConfirm;
         Page page;
         bool shown, openSaveOnShow;
@@ -207,11 +208,13 @@ namespace HorrorFPS
             slotsPage.SetActive(willSlots);
             confirmPage.SetActive(next == Page.Confirm);
             objectivesPage.SetActive(next == Page.Objectives);
+            howToPlayPage.SetActive(next == Page.HowToPlay);
 
             switch (next)
             {
                 case Page.Controls: titleText.text = UIText.ControlsTitle; break;
                 case Page.Objectives: titleText.text = UIText.ObjectivesTitle; break;
+                case Page.HowToPlay: titleText.text = UIText.HowToPlayTitle; break;
                 case Page.Settings: titleText.text = UIText.SettingsTitle; break;
                 case Page.Save: titleText.text = UIText.SaveSlotsTitle; break;
                 case Page.Load: titleText.text = UIText.LoadSlotsTitle; break;
@@ -224,6 +227,7 @@ namespace HorrorFPS
                 case Page.Controls: if (PauseManager.Owner != null) controls.Show(PauseManager.Owner); break;
                 case Page.Settings: settings.Refresh(); break;
                 case Page.Objectives: objectives.Refresh(); break;
+                case Page.HowToPlay: howToPlay.Refresh(PauseManager.Owner); break;
                 case Page.Save: slots.Show(SaveSlotsPanel.Mode.Save); break;
                 case Page.Load: slots.Show(SaveSlotsPanel.Mode.Load); break;
             }
@@ -261,6 +265,7 @@ namespace HorrorFPS
                 case Page.Controls: return controls.FirstSelectable;
                 case Page.Settings: return settings.FirstSelectable;
                 case Page.Objectives: return objectives.FirstSelectable;
+                case Page.HowToPlay: return howToPlay.FirstSelectable;
                 case Page.Save:
                 case Page.Load: return slots.FirstSelectable;
                 case Page.Confirm: return confirmDefault;
@@ -331,6 +336,10 @@ namespace HorrorFPS
             objectivesPage = objectivesRoot.gameObject;
             objectives = new ObjectivesPanel(objectivesRoot, delegate { ShowPage(Page.Main); });
 
+            RectTransform howToRoot = UIFactory.Stretch("HowToPlayPage", area);
+            howToPlayPage = howToRoot.gameObject;
+            howToPlay = new HowToPlayPanel(howToRoot, delegate { ShowPage(Page.Main); });
+
             BuildConfirmPage(area);
         }
 
@@ -341,13 +350,14 @@ namespace HorrorFPS
             VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRt, 10);
             col.padding = new RectOffset(120, 120, 16, 0);
 
-            // 8 botões: um pouco mais baixos (56) para caberem na página sem rolar
+            // 9 botões: um pouco mais baixos (56) para caberem na página sem rolar
             const float h = 56f;
             mainFirst = UIFactory.MenuButton(pageRt, UIText.Resume, delegate { PauseManager.Resume(); }, 560f, h);
             objectivesButton = UIFactory.MenuButton(pageRt, UIText.ObjectivesButton, delegate { ShowPage(Page.Objectives); }, 560f, h);
             saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, h);
             loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, h);
             UIFactory.MenuButton(pageRt, UIText.Controls, delegate { ShowPage(Page.Controls); }, 560f, h);
+            UIFactory.MenuButton(pageRt, UIText.HowToPlayButton, delegate { ShowPage(Page.HowToPlay); }, 560f, h);
             UIFactory.MenuButton(pageRt, UIText.Settings, delegate { ShowPage(Page.Settings); }, 560f, h);
             menuButton = UIFactory.MenuButton(pageRt, UIText.MainMenuButton,
                 delegate { AskConfirm(UIText.ConfirmMainMenu, SceneDirector.ReturnToMainMenu); }, 560f, h);

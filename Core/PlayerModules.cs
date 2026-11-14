@@ -42,8 +42,10 @@ namespace HorrorFPS
             Ensure<EquipmentController>(player);      // lanterna, armas brancas e de fogo (ItemData.equip)
             Ensure<EquipmentHUD>(player);
 
-            // objetivos na tela do jogador
+            // objetivos e dicas de tutorial na tela do jogador
             Ensure<ObjectivesHUD>(player);
+            Ensure<TutorialHUD>(player);
+            Ensure<TutorialDirector>(player);
 
             // corpo (a sonda de movimento primeiro: os outros dependem dela)
             Ensure<PlayerMotionProbe>(player);
