@@ -10,7 +10,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Menus Stalker > Add Stalker To Selected Object e Create Stalker Definition From Selected: "adicionar perseguidor" ao objeto selecionado e "criar StalkerDefinition" (o que liga o perseguidor ao
-    /// sistema entre cenas). A bancada de teste (BuildDemo) não tem menu desde que a cena Showcase foi removida: chame-a por código se precisar. Os tipos de cutscene do framework são
+    /// sistema entre cenas). A bancada de teste (BuildDemo) é montada pelos menus Stalker > Create Stalker Test Scene (cena própria jogável) e Create Stalker Test Arena In Open Scene (HorrorFPSSetup.StalkerTest.cs). Os tipos de cutscene do framework são
     /// achados por reflexão: este arquivo não quebra se algum deles mudar de nome.
     /// </summary>
     public static class StalkerMenu
@@ -26,7 +26,7 @@ namespace HorrorFPS
 
         /// <summary>
         /// Monta a bancada do perseguidor (arena 40x40 com 4 salas, pontos de ronda e de aparição, o monstro com finalizador e um rádio isca)
-        /// em 'origin'. Não abre diálogo nem seleciona nada (nenhum menu chama isto hoje).
+        /// em 'origin'. Não abre diálogo nem seleciona nada (quem chama decide; ver HorrorFPSSetup.StalkerTest.cs).
         /// 'embedded' = a arena fica dentro de uma cena maior: abre uma porta de 7 m na parede sul (para os jogadores entrarem),
         /// o NavMesh cobre só a arena e o painel de debug do monstro fica desligado (ligue "Show Hud" no Stalker Brain para vê-lo).
         /// </summary>

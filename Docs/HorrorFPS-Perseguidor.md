@@ -39,7 +39,7 @@ Assets/HorrorFPS/Stalker/
   StalkerWorld.cs        concilia a cena com o elenco       StalkerSchedule.cs  chegada, chamado e recuo
   StalkerSpawner.cs      escolhe onde aparece              StalkerSpawnPoint.cs  pontos de aparição
   StalkerSummonTrigger.cs  gatilho de roteiro (chamar, dispensar, desligar)
-Assets/HorrorFPS/Editor/Stalker/StalkerMenu.cs   menus Stalker > Add Stalker To Selected Object e Create Stalker Definition From Selected (a bancada `BuildDemo` ficou sem menu)
+Assets/HorrorFPS/Editor/Stalker/StalkerMenu.cs   menus Stalker > Add Stalker To Selected Object e Create Stalker Definition From Selected e os menus Create Stalker Test Scene / Create Stalker Test Arena In Open Scene (a bancada `BuildDemo`)
   -- árvore editável (doc "Árvore de comportamento") --
 Assets/HorrorFPS/Stalker/Tree/   9 arquivos: base dos nós, asset, nós prontos (fluxo, ações, condições), modelos, variáveis, rastro ao vivo
 Assets/HorrorFPS/Editor/Stalker/StalkerTreeWindow.cs, StalkerTreeMenu.cs, StalkerTreeAssetEditor.cs   janela e menus Stalker > Stalker Tree Editor e Create Stalker Tree...
@@ -53,7 +53,7 @@ Requisitos: os do framework + **NavMesh** na cena (o módulo `AI` do Unity, já 
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. Abra uma cena com chão e faça o *Bake* do NavMesh (*Window > AI > Navigation > Bake*). (A bancada pronta `[Stalker Demo]` — 4 salas, pontos de ronda e de aparição, monstro com `Stalker Finisher`, rádio isca — era criada pelo antigo menu 18 e hoje não tem menu: o método `StalkerMenu.BuildDemo` continua no código e pode ser chamado por script do Editor.)
+2. Use **Tools > Horror FPS > Stalker > Create Stalker Test Scene**: cria a cena jogável `Test_Stalker` (já nos Build Settings, junto com o Core) com `[Stalker Demo]` — arena 40×40 com 4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor vermelho **com `Stalker Finisher` e uma cutscene de teste**, um **rádio isca** verde —, a entrada dos jogadores na sala nordeste e uma **mesa de armas** (espingarda, pistola, faca, taco, pé de cabra, munição, lanterna) para testar o monstro junto com as armas. Para colocar a mesma arena numa cena sua, use **Stalker > Create Stalker Test Arena In Open Scene** (sem jogadores). Se avisar que não gerou o NavMesh: *Window > AI > Navigation > Bake*.
 3. Play. O painel no canto mostra modo, atenção, pista e memória. Experimente: ficar parado no escuro à vista dele (demora a notar), correr (nota rápido), fazer barulho longe, entrar num esconderijo **vendo-o vendo você**, ficar perto do rádio sem ser visto várias vezes (ele aprende que é isca) e **deixá-lo bater até o último golpe** (ele para, a cutscene de teste toca por 2,5 s e você morre).
 
 Para o seu monstro: selecione-o e use **Stalker > Add Stalker To Selected Object** (NavMeshAgent, collider, `Stalker Senses`, `Stalker Brain`; arraste a cabeça para `Eyes`). A finalização é um componente à parte (`Add Component > HorrorFPS > Stalker > Traits > Finisher`, seção 10). Para ele **seguir entre cenas** e ser **chamado**: **Stalker > Create Stalker Definition From Selected** (salva o prefab em `Assets/Prefabs/Stalkers`, se faltar, e cria a `StalkerDefinition` em `Assets/Resources/HorrorFPS/Stalkers`). O monstro da bancada `BuildDemo` **não** tem definição: rode o menu `Stalker > Create Stalker Definition From Selected` nele para testar a troca de cena.
@@ -327,7 +327,7 @@ Se o golpe final já matar a vítima, ela morre sem cena. Se algo der errado (o 
 
 **Avisar o fim.** O último passo da cutscene deve ser um `EventStep` chamando **`StalkerFinisherEnd.Signal()`** (componente no mesmo objeto). Sem ele o fim é detectado pela própria sequência, se ela expõe `IsPlaying` (lido por reflexão), e por último pelo `Max Seconds` (30 s). **`Allow Skip`**: desligue, ou garanta que o `EventStep` final dispare também ao pular. `StalkerFinisherEnd.KillNow()` mata a vítima na hora (para a morte acontecer no meio da cena e o resto ser só fade).
 
-O método `StalkerMenu.BuildDemo` (sem menu hoje) já montava tudo isso numa cena de teste (cutscene de 2,5 s com `WaitStep` + `EventStep` ligado ao `Signal`).
+O método `StalkerMenu.BuildDemo` (menus Stalker > Create Stalker Test Scene / Create Stalker Test Arena In Open Scene) já montava tudo isso numa cena de teste (cutscene de 2,5 s com `WaitStep` + `EventStep` ligado ao `Signal`).
 
 ### 10.4 Opções
 
