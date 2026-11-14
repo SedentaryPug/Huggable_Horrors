@@ -110,7 +110,7 @@ namespace HorrorFPS
             set { EnsureLoaded(); tips = value; Save(); }
         }
 
-        /// <summary>Medidor de ruído (barrinhas no canto da tela) que mostra o quanto o jogador está sendo ouvido. Ver NoiseMeterHUD.</summary>
+        /// <summary>Indicadores de furtividade no canto da tela: o medidor de ruído (NoiseMeterHUD) e o de visibilidade (VisibilityHUD). A chave salva continua "NoiseIndicator".</summary>
         public static bool NoiseIndicator
         {
             get { EnsureLoaded(); return noiseIndicator; }

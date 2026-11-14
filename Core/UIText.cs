@@ -191,13 +191,21 @@ namespace HorrorFPS
         public const string JournalReaderHint = "{0} fecha  •  Setas ou roda do mouse rolam o texto";
         public const string JournalReaderHintPad = "{0} fecha  •  Analógico direito rola o texto";
 
-        // Ruído (agachar silencioso)
-        public const string NoiseIndicator = "Indicador de ruído";
+        // Ruído e visibilidade (agachar silencioso)
+        public const string NoiseIndicator = "Indicadores de furtividade";
         public const string NoiseSilent = "Silencioso";
         public const string NoiseQuiet = "Baixo";
         public const string NoiseNormal = "Médio";
         public const string NoiseLoud = "Alto";
         public const string NoiseCrouched = "Agachado";
+        public const string VisibilityHidden = "Escondido";
+        public const string VisibilityLow = "Pouco visível";
+        public const string VisibilityNormal = "Visível";
+        public const string VisibilityHigh = "Muito visível";
+        public const string VisibilityCrouched = "agachado";
+        public const string VisibilityShadow = "na sombra";
+        public const string VisibilityLit = "iluminado";
+        public const string VisibilityLamp = "lanterna ligada";
 
         // Dicas / Como jogar
         public const string HowToPlayButton = "Como jogar";
