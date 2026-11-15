@@ -59,6 +59,7 @@
 | Vida, dano, status do jogador | `Stats/` | 5.2 |
 | Props (barril, esconderijo, espelho, armadilha) | `Props/` + `PropsBridge` | 5.14 |
 | Jogador caído / reanimar | `Revive/` + `ReviveApi` | 5.16 |
+| Cena de morte, marcas de dano na tela, texto de "como morreu", tela de morte | `Body/DeathSequence.cs`, `Body/DeathCause.cs` (`DeathCauseLabel`), `UI/DamageHUD.cs`, `UI/GameOverScreen.cs` (`Docs/HorrorFPS-MorteDano.md`) | 5.2 |
 | Trocar de personagem | `Characters/` + `CharacterManager` | 5.18 |
 
 ---
@@ -78,7 +79,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Save/` | `GameSession`, `SaveSystem`, `SaveData`, `SaveableEntity` (+`ISaveable`), `SaveableTransform`/`Active`/`Stats`, `StatsSnapshot` | `HorrorFPS` |
 | `Cutscenes/` | `CutsceneSequence`/`Director`/`Context`/`Step` + 16 passos prontos | `HorrorFPS` |
 | `Items/`, `Inventory/`, `Equipment/` | dados e lógica de itens, grade/listas, equipar, lanterna/arma | `HorrorFPS` |
-| `Sanity/`, `Body/` | sanidade por jogador; coração, respiração, head bob, ruído | `HorrorFPS` |
+| `Sanity/`, `Body/` | sanidade por jogador; coração, respiração, head bob, ruído; cena de morte (`DeathSequence`, `DeathCause`; ver `Docs/HorrorFPS-MorteDano.md`) | `HorrorFPS` |
 | `Props/` | barris, gavetas, esconderijos, espelho, coop, armadilha + `PropsBridge` | `HorrorFPS` |
 | `Dialogue/` | grafo de diálogo, gerente, visual, ações/condições | `HorrorFPS` |
 | `Stalker/` (+`Tree/`) | IA do perseguidor: cérebro, árvore de comportamento editável, diretor, memória | `HorrorFPS` |
@@ -89,7 +90,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Audio/` | música e ambiente por área (`AudioZone`, `AudioDirector`, `AreaAudio`, `AudioProfile`), `FootstepSet` (clipes de passo por piso), rádio (`RadioSet`, `RadioTransmission`, `RadioFx`); `FootstepAudio` (passos do jogador) e `ProceduralAudio.Ambience.cs` ficam em `Body/`; ver `Docs/HorrorFPS-Audio.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
-| `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
+| `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código); `DamageHUD` (vida baixa, pancada, seta de direção, tela da morte por jogador) | `HorrorFPS` |
 | `Editor/` (raiz) | ferramentas de itens/personagens/jogador e `ProjectPaths` (inclui `DistractionItems`) e assistente de setup (os `HorrorFPSSetup*`: o assistente do jogo de demonstração, dividido em Levels, MoreLevels, NewLevel, Audio, Distractions, StalkerTest e FullDemo; todos em `HorrorFPS.EditorTools`) | `HorrorFPS.ItemsEditor` / `HorrorFPS.EditorTools` (`ProjectPaths`: `HorrorFPS`) |
 | `Editor/Animation`, `Dialogue`, `Props`, `Revive`, `Stalker` | ferramentas por sistema | `HorrorFPS` |
 | `Prefabs/`, `Scenes/`, `Materials/`, `Resources/HorrorFPS/`, `Generated/` | assets (seção 9) | — |
@@ -226,7 +227,7 @@ StatsComponent : MonoBehaviour, IDamageable          enum StatPreset { Player, M
 StatusEffectData [Serializable]: id, displayName, duration (<=0 = permanente), icon, StatChange[] modifiers {stat, op, value}, StatTick[] overTime {stat, perSecond}
 ```
 
-- **Morte:** `Die` (privado) → `IsAlive = false`, remove efeitos, dispara `Died` e `onDied` e, se configurado, destrói o objeto. `PlayerContext` ouve `Stats.Died`: `IsDead = true` e `Input.GameplayEnabled = false`. `GameOverScreen` espera um atraso e só aparece se **todos** os jogadores estiverem `IsDead`.
+- **Morte:** `Die` (privado) → `IsAlive = false`, remove efeitos, dispara `Died` e `onDied` e, se configurado, destrói o objeto. `PlayerContext` ouve `Stats.Died`: `IsDead = true` e `Input.GameplayEnabled = false`. `GameOverScreen` espera um atraso e só aparece se **todos** os jogadores estiverem `IsDead`. A apresentação da morte (câmera que cai, corpo que tomba, legenda de causa, tela escura) é do `DeathSequence` + `DamageHUD`, que esperam `graceSeconds` (0,3 s) antes de começar porque o módulo de reanimação desfaz a morte logo depois que ela acontece (pendência 1); a causa vem de `DeathCause.Describe(DamageInfo)` (`Resolver` → `DeathCauseLabel` → `DamageType`). Ver `Docs/HorrorFPS-MorteDano.md`.
 - **Armadura:** `dano *= 1 − clamp01(Armor/100)`.
 
 ### 5.3 Interactable — `World/Interactable.cs`
@@ -327,7 +328,7 @@ static class PauseManager  bool IsPaused; PlayerContext Owner; event Action<bool
   void Pause(PlayerContext); Resume(); ForceResume(); RequestFreeCursor(object key); ReleaseFreeCursor(object key); EnforceCursor()
   // Pausar = Time.timeScale 0 + áudio silenciado + GameplayEnabled false
 GameRuntime  static GameRuntime Ensure(); static Coroutine Run(IEnumerator)     // host de corrotinas que sobrevive às cenas; soma PlayTime
-GameSettings (PlayerPrefs)  MouseSensitivity, GamepadSensitivity, InvertY, PromptStyle (PromptMode), GrabMode/CrouchMode (HoldMode), TipsEnabled, NoiseIndicator (medidor de ruído); event Changed; Flush()
+GameSettings (PlayerPrefs)  MouseSensitivity, GamepadSensitivity, InvertY, PromptStyle (PromptMode), GrabMode/CrouchMode (HoldMode), TipsEnabled, NoiseIndicator (medidor de ruído), SoftDamageFx (efeitos de dano suaves: menos flash e balanço de câmera na morte e no dano); event Changed; Flush()
 ```
 Tela que precisa de cursor livre: `PauseManager.RequestFreeCursor(this)` ao abrir e `ReleaseFreeCursor(this)` ao fechar (modelo: `GameOverScreen`).
 
@@ -1056,12 +1057,14 @@ Arquivos: LightFailure
 
 Tipos em arquivo de outro nome: (nenhum). `LightFailure` exige um `SwitchableLights` no mesmo objeto (`RequireComponent`) e põe um `SanityLight` em cada luz dele (se `Viewer Sanity Effect`).
 
-**Body/**  (22 arquivos)
+**Body/**  (25 arquivos)
 
-Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, FootstepAudio, HeartbeatComponent, ItemTremor, NoiseListener, NoiseSourceTag, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, PoseHeartTremor, ProceduralAudio, ProceduralAudio.Ambience, ProceduralAudio.Distraction, SoundEmitter, VisibilityZone
+Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DeathCause, DeathSequence, DynamicHeadBob, FootstepAudio, HeartbeatComponent, ItemTremor, NoiseListener, NoiseSourceTag, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, PoseHeartTremor, ProceduralAudio, ProceduralAudio.Ambience, ProceduralAudio.Death, ProceduralAudio.Distraction, SoundEmitter, VisibilityZone
 
 Tipos em arquivo de outro nome:
 - `NoiseSystem.cs` define enum `NoiseKind`, struct `NoiseEvent`, interface `INoiseHearer`
+- `DeathCause.cs` define `DeathCauseLabel` (componente com o texto de causa) e a classe estática `DeathCause` (`Resolver`, `Describe`, `TryGetOrigin`)
+- `ProceduralAudio.Death.cs`: sons gerados da morte (`BodyFall`, `DeathDrone`); a classe é `partial`
 - `ProceduralAudio.Distraction.cs`: sons gerados das iscas (`GlassBreak`, `FlareIgnite`, `FlareHiss`); a classe é `partial`
 - `PlayerAudio.cs` define enum `AudioMode`
 - `PlayerMotionProbe.cs` define enum `NoiseLevel` (Silent/Quiet/Normal/Loud: o que o medidor de ruído mostra)
@@ -1100,9 +1103,9 @@ Tipos em arquivo de outro nome:
 - `DialogueText.cs` define class `DialogueStyle`
 - `DialogueView.cs` define struct `DialogueChoiceItem`
 
-**Editor/**  (27 arquivos)
+**Editor/**  (28 arquivos)
 
-Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DistractionItems, EquipPresets, HorrorFPSMenu, HorrorFPSSetup, HorrorFPSSetup.Audio, HorrorFPSSetup.Distractions, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.MoreLevels, HorrorFPSSetup.NewLevel, HorrorFPSSetup.StalkerTest, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
+Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DeathMenu, DistractionItems, EquipPresets, HorrorFPSMenu, HorrorFPSSetup, HorrorFPSSetup.Audio, HorrorFPSSetup.Distractions, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.MoreLevels, HorrorFPSSetup.NewLevel, HorrorFPSSetup.StalkerTest, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
 
 Tipos em arquivo de outro nome:
 - `EquipPresets.cs` define enum `EquipPreset`
@@ -1257,9 +1260,9 @@ Tipos em arquivo de outro nome:
 - `StatTypes.cs` define enum `StatType`, enum `DamageType`, enum `ModifierOp`, struct `DamageInfo`, interface `IDamageable`, class `StatusEffectData`, class `ActiveEffect`
 - `StatsComponent.cs` define enum `StatPreset`
 
-**UI/**  (12 arquivos)
+**UI/**  (16 arquivos)
 
-Arquivos: ControlsPanel, GameOverScreen, InfoPanelBase, MainMenu, NoiseMeterHUD, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites, VisibilityHUD
+Arquivos: ControlsPanel, DamageHUD, GameOverScreen, HeartbeatHUD, InfoPanelBase, MainMenu, NoiseMeterHUD, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites, VisibilityHUD
 
 **UI/Inventory/**  (15 arquivos)
 

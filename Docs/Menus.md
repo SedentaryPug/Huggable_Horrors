@@ -15,8 +15,9 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Player > Add Selected Player Prefab(s) As Characters` | `Editor/CharacterCatalogUtil.cs` |
 | `Tools > Horror FPS > Player > Create Visibility Zone` | `Editor/StealthMenu.cs` |
 | `Tools > Horror FPS > Player > Create Noise Surface` | `Editor/StealthMenu.cs` |
+| `Tools > Horror FPS > Player > Death Test > Hurt Player (30)` · `Kill Player` · `Kill Player By Fall` · `Kill All Players (Game Over)` · `Revive Player` | `Editor/DeathMenu.cs` |
 
-As duas últimas (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Visibilidade.md) e [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
+As duas de zona e piso (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Visibilidade.md) e [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md). O submenu **Death Test** só funciona em Play mode e age no jogador selecionado (ou no 1): [`HorrorFPS-MorteDano.md`](HorrorFPS-MorteDano.md).
 
 ### Items — itens
 

@@ -78,6 +78,7 @@ Com **1 jogador** o F6 funciona para ver a tela do caído, mas ele não morre so
 ```
 
 - **O módulo desfaz a morte depois que ela acontece** (leitura por reflexão do framework, seção 11). Quando você me enviar o `StatsComponent`, dá para trocar isso por um **gancho exato** de uma linha, que cancela a morte antes de ela acontecer (seção 11.3).
+- **A cena de morte espera 0,3 s.** O `DeathSequence` ([`HorrorFPS-MorteDano`](HorrorFPS-MorteDano.md)) só começa 0,3 s depois da morte e confere `IsDead` de novo: como o módulo desfaz a morte logo depois que ela acontece, o jogador que vira "caído" não vê câmera caindo nem tela de morte.
 - **Foto do jogador vivo:** a cada 1,5 s, com o jogador vivo, o módulo guarda o que está ligado (scripts, animadores, colisores, filhos diretos). Ao desfazer uma morte ele **religa** o que a morte desligou. Nunca desliga nada.
 - **A vida do caído é mantida** em `Downed Health` (a regeneração do framework não o "cura"). Se algo curar o caído de fora (script, save carregado) para 50% ou mais, ele sai do estado de caído sem efeitos.
 - **Quem pode ajudar** (`IsAble`): de pé, vivo e visto vivo. Um jogador caído ou morto não ajuda.

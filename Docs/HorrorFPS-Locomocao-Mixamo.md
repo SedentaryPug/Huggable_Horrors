@@ -46,6 +46,7 @@ O passo 2 aplica por clipe (`Root Transform` no Import Settings ▸ Animation). 
 | `jumping` | impulso do pulo | não | sim | **não** (o arco do pulo é do `CharacterController`; senão subiria em dobro) |
 | `landing` | pouso | não | **não** | **não** (o agachar do pouso fica no pose) |
 | `climbing_to_top_ladder` | chegada ao topo | não | **não** | sim |
+| `dying`, `death_...` (nome com `death` ou `dying`) | morte (opcional) | não | sim | sim |
 
 Sempre: *Based Upon = Body Orientation / Feet*, *Position XZ* **fora** do pose. Reconhecimento pelo nome (maiúsculas, `_` e espaços não importam): `climb`/`totop`, `runtostop`, `sneak`/`crouch` (+ `idle`/`left`/`right`), `turn` + `left`/`right`, `landing`, `fall`, `jump`, `run`/`sprint`, `walk`, `idle`. Se o clipe se chama `mixamo.com` (o padrão dos FBX do Mixamo), vale o nome do arquivo — e o clipe passa a se chamar como o arquivo.
 
@@ -67,7 +68,7 @@ Estado sem clipe é **omitido** junto com as transições dele (um estado vazio 
 | **`Land`** | `landing` (sai a ~0,7 s; antes se você já está correndo) | gatilho `Land` (queda > ~1 m) + `Grounded` |
 | **`Climb`** | `climbing_ladder` com velocidade = `ClimbRate` (0 = parado no degrau; negativo = descendo, o clipe ao contrário) | `Climbing` (de qualquer estado) |
 | `Climb_Top` | `climbing_to_top_ladder` | **ainda sem transição** (falta o `PlayerClimber` avisar "chegou ao topo") |
-| `Dead` | **vazio** | `Dead`. Ponha o clipe de morte quando tiver (sem clipe o corpo fica em T) |
+| `Dead` | o clipe de morte (`dying`, `death...`), uma vez, e fica no último quadro; **sem clipe o estado é vazio** e o `DeathSequence` tomba o corpo por código ([`HorrorFPS-MorteDano`](HorrorFPS-MorteDano.md), seção 6) | `Dead` (de qualquer estado) |
 
 **Agachado parado:** não há clipe de agachado parado, então o ponto (0,0) do `Crouch` é uma **pose congelada** tirada do ciclo de `sneaking_front` (`Generated/Animation/Clips/Crouch_IdlePose.anim`), em vez do corpo "marchando" parado. O slider *Pose de agachado parado* escolhe o instante do ciclo (0 = passo aberto, com os dois pés no chão); mude e crie o controller de novo se a pose ficar estranha. Quando tiver um clipe de agachado parado de verdade, nomeie-o `crouch_idle` (ou ponha-o no ponto (0,0) da árvore).
 
@@ -122,7 +123,7 @@ Próximos módulos (não incluídos neste pacote):
 ## 10. Limitações deste pacote
 
 - **Nada foi compilado nem testado no Unity.**
-- Sem IK de pés nem de escada (só o gancho `IBodyIK`), sem clipe de morte, sem `Climb_Top` ligado, sem troca de Animator por item.
+- Sem IK de pés nem de escada (só o gancho `IBodyIK`), sem `Climb_Top` ligado, sem troca de Animator por item. O clipe de morte é opcional: sem ele o corpo tomba por código.
 - Sem clipes para os lados/de costas **em pé**: usa pernas viradas e clipe ao contrário (a aparência é boa a 45°, aceitável a 65°).
 - O agachar parado é uma pose congelada.
 - O corte da cabeça é pelo peso do skin (limite de 50% em `HeadWeightThreshold`, no `BodyMeshSplitter`): se pegar o pescoço de forma estranha, ajuste o limite ou separe a cabeça à mão e marque `BodyPart` = Head. Os dois meshes compartilham os mesmos vértices na borda, então não aparece fresta.
