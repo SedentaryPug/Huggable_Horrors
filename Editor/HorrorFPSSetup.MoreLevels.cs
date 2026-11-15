@@ -261,6 +261,10 @@ namespace HorrorFPS.EditorTools
             // ---- uma pilha no laço
             MakePickup("Pilha do túnel", "Pilha", string.Empty, "batteries",
                 PrimitiveType.Cylinder, g.Center(9, 5) + new Vector3(0f, 0.14f, 0.8f), new Vector3(0.22f, 0.14f, 0.22f), battery);
+            Vector3 bottles = g.Center(9, 5) + new Vector3(0f, 0f, -0.8f);
+            MakeDistractionPickup("garrafa", bottles.x, 0f, bottles.z, 2, true, 110f);
+            Vector3 flare = g.Center(7, 5) + new Vector3(0f, 0f, 0.8f);
+            MakeDistractionPickup("sinalizador", flare.x, 0f, flare.z, 1, true, 15f);
 
             BuildTunnelsAudio(g);
 
@@ -327,6 +331,10 @@ namespace HorrorFPS.EditorTools
                 "Ouvi o gerador. O elevador de serviço está livre agora: ele leva direto ao salão. Subam antes que as luzes caiam de vez.", GeneratorVariable);
             so.ApplyModifiedPropertiesWithoutUndo();
             AddSaveable(radio, false);
+
+            // ---- itens de distração: duas garrafas na mesa do rádio e um sinalizador no canto (a sala escura esconde bem quem joga de longe)
+            MakeDistractionPickup("garrafa", -5.7f, 0.9f, 4.3f, 2, true, 80f);
+            MakeDistractionPickup("sinalizador", -6.6f, 0f, -4.8f, 1, true, 40f);
 
             // ---- o elevador de serviço: o atalho de volta ao Salão, liberado pelo gerador
             GameObject lift = Prim(PrimitiveType.Cube, "Elevador de serviço", new Vector3(7.9f, 1.2f, 2.5f), new Vector3(0.2f, 2.4f, 1.8f), heavy, null, true);

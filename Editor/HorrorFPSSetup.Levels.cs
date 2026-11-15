@@ -78,6 +78,10 @@ namespace HorrorFPS.EditorTools
             MakePickup("Chave do porão", "Chave do porão", KeyVariable, string.Empty,
                 PrimitiveType.Cube, new Vector3(-7f, 0.94f, 4f), new Vector3(0.32f, 0.08f, 0.14f), gold);
 
+            // ---- itens de distração: duas garrafas na mesa e um rádio no canto sudoeste (jogue longe: o monstro vai investigar o barulho)
+            MakeDistractionPickup("garrafa", -7.7f, 0.9f, 4.35f, 2, true, 20f);
+            MakeDistractionPickup("radio_portatil", -13.4f, 0f, -12.8f, 1, false, 35f);
+
             // ---- objetos arrastáveis: posição e rotação vão para o save
             AddSaveable(MakeDraggable("Caixa", PrimitiveType.Cube, new Vector3(3f, 0.4f, -5f), new Vector3(0.8f, 0.8f, 0.8f), 8f, 0, wood), true);
             AddSaveable(MakeDraggable("Barril", PrimitiveType.Cylinder, new Vector3(-3.5f, 0.5f, -5.5f), new Vector3(0.6f, 0.5f, 0.6f), 12f, 0, metal), true);
@@ -201,6 +205,7 @@ namespace HorrorFPS.EditorTools
             AddSaveable(MakeDraggable("Caixa do porão", PrimitiveType.Cube, new Vector3(3.8f, 0.4f, 2.2f), new Vector3(0.8f, 0.8f, 0.8f), 8f, 0, wood), true);
             MakePickup("Pilha", "Pilha", string.Empty, "batteries",
                 PrimitiveType.Cylinder, new Vector3(5.2f, 0.14f, -3.5f), new Vector3(0.22f, 0.14f, 0.22f), battery);
+            MakeDistractionPickup("sinalizador", 5.8f, 0f, -5.4f, 1, true, 70f);          // para tirar o monstro da escada
 
             // ---- a sombra do susto: começa desligada, com um brilho vermelho atrás para aparecer como silhueta no escuro
             GameObject shadow = Prim(PrimitiveType.Capsule, "Sombra", new Vector3(0f, 1f, 5.2f), new Vector3(0.7f, 1f, 0.7f), shadowMat, null, false);
