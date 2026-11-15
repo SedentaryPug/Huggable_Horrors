@@ -352,7 +352,16 @@ namespace HorrorFPS
             Vector2Int nav = Vector2Int.zero;
             if (ItemInput.Pressed(input.NavLeft)) nav.x = -1; else if (ItemInput.Pressed(input.NavRight)) nav.x = 1;
             if (ItemInput.Pressed(input.NavUp)) nav.y = -1; else if (ItemInput.Pressed(input.NavDown)) nav.y = 1;
-            if (nav != Vector2Int.zero) { Navigate(nav); UpdateCursorVisual(); }
+            if (nav != Vector2Int.zero)
+            {
+                if (records != null)
+                {
+                    Vector2 to;
+                    if (records.Navigate(nav, cursor, out to)) cursor = overlay.ClampToViewport(to);
+                }
+                else Navigate(nav);
+                UpdateCursorVisual();
+            }
 
             // o que está sob o cursor
             ContainerView hv = null;

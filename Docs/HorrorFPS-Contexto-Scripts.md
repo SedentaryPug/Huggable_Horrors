@@ -85,7 +85,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Stalker/` (+`Tree/`) | IA do perseguidor: cérebro, árvore de comportamento editável, diretor, memória | `HorrorFPS` |
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
 | `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
-| `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso (ruído e visibilidade) fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` e `Docs/HorrorFPS-Visibilidade.md` | `HorrorFPS` |
+| `Journal/` | diário (notas, páginas, gravações; leitor na tela; aba Registros do inventário); o agachar silencioso (ruído e visibilidade) fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` e `Docs/HorrorFPS-Visibilidade.md` | `HorrorFPS` |
 | `Lighting/` | `LightFailure`: luz que pisca e apaga por sanidade, medo, variável ou código, por cima do `SwitchableLights`; `World/Shortcut` (atalho que abre de um lado e fica aberto) e `World/Lever` (alavanca que liga uma variável) completam o pacote; ver `Docs/HorrorFPS-Iluminacao-Niveis.md` | `HorrorFPS` |
 | `Audio/` | música e ambiente por área (`AudioZone`, `AudioDirector`, `AreaAudio`, `AudioProfile`), `FootstepSet` (clipes de passo por piso), rádio (`RadioSet`, `RadioTransmission`, `RadioFx`); `FootstepAudio` (passos do jogador) e `ProceduralAudio.Ambience.cs` ficam em `Body/`; ver `Docs/HorrorFPS-Audio.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
@@ -324,7 +324,7 @@ Em `PreRender` todos os modificadores somam num único `CameraDelta`, que é apl
 ### 5.8 Pausa, tempo e opções — `Core/`
 
 ```
-static class PauseManager  bool IsPaused; PlayerContext Owner; event Action<bool> PauseChanged
+static class PauseManager  bool IsPaused; PlayerContext Owner; event Action<bool> PauseChanged; Hold(key)/ReleaseHold(key) (congela o tempo sem abrir o menu: dicas de tutorial que pausam); bool IsHeld
   void Pause(PlayerContext); Resume(); ForceResume(); RequestFreeCursor(object key); ReleaseFreeCursor(object key); EnforceCursor()
   // Pausar = Time.timeScale 0 + áudio silenciado + GameplayEnabled false
 GameRuntime  static GameRuntime Ensure(); static Coroutine Run(IEnumerator)     // host de corrotinas que sobrevive às cenas; soma PlayTime
@@ -1266,7 +1266,7 @@ Arquivos: ControlsPanel, DamageHUD, GameOverScreen, HeartbeatHUD, InfoPanelBase,
 
 **UI/Inventory/**  (15 arquivos)
 
-Arquivos: ContainerView, GridView, HotbarHUD, InspectPanel, InspectStudio, InvUI, InventoryScreen, InventoryScreen.Tabs, InventoryScreen.Window, ItemMenu, ItemVisual, ListView, MapViewer, PlayerOverlay, RecordReader
+Arquivos: ContainerView, GridView, HotbarHUD, InspectPanel, InspectStudio, InvUI, InventoryScreen, InventoryScreen.Tabs, InventoryScreen.Window, ItemMenu, ItemVisual, ListView, MapViewer, PlayerOverlay, RecordBrowser, RecordReader
 
 **World/**  (10 arquivos)
 

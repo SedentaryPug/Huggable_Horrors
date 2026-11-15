@@ -25,7 +25,7 @@ namespace HorrorFPS
 
     /// <summary>
     /// Um registro do diário: uma nota, página de diário, gravação ou documento que o jogador encontrou e pode reler quando quiser
-    /// (Pausa > Diário). Definido no JournalCatalog (Assets > Create > HorrorFPS > Journal Catalog) ou por código (Journal.Register).
+    /// (Inventário > Registros). Definido no JournalCatalog (Assets > Create > HorrorFPS > Journal Catalog) ou por código (Journal.Register).
     /// Ser "encontrado" NÃO fica aqui: vai para as variáveis do save (GameSession), então salvar, carregar e Novo Jogo funcionam sozinhos.
     /// </summary>
     [Serializable]

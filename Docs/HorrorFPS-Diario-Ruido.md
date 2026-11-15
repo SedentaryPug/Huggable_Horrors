@@ -10,8 +10,8 @@ Dois sistemas: o **diário** (reler notas, páginas de diário e gravações que
 
 ### O que o jogador vê
 
-- **Aviso** no canto da tela quando um registro novo entra: `Novo registro no diário: <título>`.
-- **Pausa > Diário**: todos os registros achados, agrupados em Diários, Notas, Gravações e Documentos, com `● novo` nos que ainda não foram lidos. Escolha um para ler; o texto vira cartões que se rolam com o teclado, o controle ou a roda do mouse. `Anterior` / `Próximo` passam para o registro do lado; `Voltar à lista` (ou Esc / Pausa) volta à lista. `Marcar tudo como lido` limpa os `● novo`. O botão **Diário** do menu de pausa mostra o contador de não lidos e só aparece quando há algo para mostrar.
+- **Aviso** no canto da tela quando um registro novo entra: `Novo registro (Inventário > Registros): <título>`.
+- **Inventário > Registros** (o diário mora aqui, não há página no menu de pausa): uma **lista simples, sem grade**, com tudo o que o jogador pode ler, agrupado em Diários, Notas, Gravações e Documentos, e o **leitor** com o texto completo ao lado. `● novo` marca o que ainda não foi lido (e o mesmo contador aparece na aba). Mouse: clique escolhe, roda rola a lista ou o texto (conforme onde está o cursor). Teclado/controle: cima/baixo trocam de registro, direita/esquerda levam o cursor da lista para o texto e de volta, e no texto cima/baixo (ou o analógico direito) rolam. Z/X (LT/RT) trocam de aba. Documentos do jogador (itens da aba Registros) e entradas do diário aparecem juntos; um documento que já virou entrada do diário não aparece duas vezes.
 - **Nota no mundo** (`JournalNote`): o jogador olha, aperta interagir (`Ler`) e o texto abre no meio da tela **sem pausar o jogo** (ler com um monstro por perto é arriscado). Enquanto lê ele fica parado; fecha com **Voltar** (Backspace / B) ou **E / X**; fecha sozinho ao levar dano, morrer ou começar uma cutscene. Rola com setas / W S / D-pad, roda do mouse ou analógico direito.
 - O diário é **do grupo** (como os objetivos): quem achou, achou para todos.
 
@@ -26,7 +26,7 @@ Três formas, que se misturam:
 | `Id` | identificador único, sem espaços nem `;` (`diario_dr_meyer_1`). É por ele que eventos, scripts e o save se referem ao registro |
 | `Title` / `Kind` | título e tipo (Nota, Diário, Gravação, Documento: só muda o grupo e o rótulo) |
 | `Author` / `Date` | linha embaixo do título (`Dr. Meyer • 12 de março`), opcionais |
-| `Text` | texto completo; aceita rich text (`<b>`, `<i>`, `<color=#ff0000>`). **Linha em branco separa parágrafos** (cada parágrafo é um cartão na página do diário) |
+| `Text` | texto completo; aceita rich text (`<b>`, `<i>`, `<color=#ff0000>`). **Linha em branco separa parágrafos** (rola no leitor do inventário) |
 | `Item Id` | opcional: id de um item de documento (aba Registros). Ao **pegar o item** o registro entra no diário; título/texto vazios vêm do item |
 | `Unlock Variable` | opcional: entra sozinho quando esta variável do jogo ficar verdadeira (a mesma de Pickup, Door, SmartEvent, Set Variable) |
 | `Notify` | mostra o aviso ao entrar |
@@ -67,8 +67,8 @@ Journal.Unlocked += e => ...;                  // também Journal.Changed
 | Sintoma | Causa provável |
 |---|---|
 | A nota diz `Ilegível` e não deixa interagir | `Catalog Id` não existe no catálogo (ou nota sem `Id`). Veja o aviso amarelo no Console |
-| O registro entrou mas não aparece em Pausa > Diário | o id não está no catálogo e a nota era de outra cena (veja acima); ou o id tem `;` |
-| O botão Diário não aparece na pausa | ainda não há registro no catálogo nem achado. Crie o catálogo ou pegue um documento |
+| O registro entrou mas não aparece em Inventário > Registros | o id não está no catálogo e a nota era de outra cena (veja acima); ou o id tem `;` |
+| A aba Registros não aparece no inventário | o jogador não tem a lista `[Registros]` e ainda não achou nada (instale os módulos no prefab do jogador ou pegue um documento) |
 | Documento da aba Registros não vira registro | `Auto Collect Records` desligado, ou o item não é da aba Registros |
 | O leitor fecha na hora | alguém travou/pausou o jogo no mesmo instante (cutscene, loading), ou o jogador levou dano |
 
@@ -107,7 +107,7 @@ Barulho de propósito, longe do jogador: garrafa, sinalizador e rádio emitem `N
 
 - `crouch` (já existia) agora explica que agachar faz menos barulho e deixa o jogador mais difícil de ver.
 - `noise`: aparece **uma vez** na primeira vez que o jogador faz barulho **alto**, e explica o medidor (`TutorialWhen.LoudNoise`).
-- `journal`: aparece uma vez quando o primeiro registro entra no diário (`TutorialWhen.JournalUnlocked`).
+- `journal`: aparece uma vez quando o primeiro registro entra no diário (`TutorialWhen.JournalUnlocked`); manda o jogador abrir a mochila na aba Registros.
 
 ### Em código
 

@@ -478,7 +478,7 @@ A tela do inventário do jogador agora tem **abas** (barra no canto superior dir
 |---|---|---|
 | **Mochila** | itens normais | a grade de sempre |
 | **Chaves** | chaves e itens de missão (categoria `Key`/`Quest`) | lista **ilimitada**: não ocupam espaço da mochila |
-| **Registros** | diários, notas, gravações (categoria `Document`) | lista à esquerda + **leitor** do texto completo à direita; "● novo" até ler |
+| **Registros** | diários, notas, gravações e documentos (categoria `Document`) + as entradas do **diário** (`Journal`) | lista simples (sem grade) à esquerda + **leitor** do texto completo à direita; "● novo" até ler |
 | **Mapa** | mapas (categoria `Map`) | lista à esquerda + **visualizador** com zoom e a seta de cada jogador |
 
 **Como o item escolhe a aba**: pelo campo **Aba do inventário** do item (`Tab Rule`). Em `Auto` (padrão): categoria Mapa → Mapa; Documento → Registros; Chave ou Missão → Chaves; o resto → Mochila. Para forçar, escolha a aba no campo (ex.: um bilhete que deve ocupar espaço na mochila: `Tab Rule = Bag`). Ao pegar qualquer item do chão, de um baú ou por código (`AddItem`), ele já entra na aba certa; se o jogador não tiver a lista daquela aba (prefab antigo), cai na mochila. Soltar um item de aba especial na grade da mochila também o manda para a aba dele.
@@ -487,7 +487,8 @@ A tela do inventário do jogador agora tem **abas** (barra no canto superior dir
 
 **Registros (diários e notas)**
 - O texto completo vem do campo **Read Text** do item; se estiver vazio, usa a descrição. Ele aceita **variantes por sanidade/variáveis** e o glitch de sanidade baixa, como a descrição: o mesmo diário pode contar outra coisa para quem está mal (cada jogador lê o seu).
-- Clique (ou Enter/A) numa linha para ler; roda do mouse/analógico direito rola o texto. Botão direito/X abre o menu do item (Inspecionar, Atalho...). Registros não são arrastáveis. Ao abrir um registro ele é marcado como lido (flag `read` da instância, vai no save); a aba mostra quantos não lidos há.
+- A aba é o `RecordBrowser` (`UI/Inventory/RecordBrowser.cs`): une as entradas do diário (`Journal`, do grupo) e os documentos que o jogador leva. Todo documento pego já vira entrada do diário (`Journal.AutoCollectRecords`), então normalmente a lista mostra a entrada; só um documento sem entrada (auto-coleta desligada) aparece como item. Clique (ou Enter/A) numa linha para ler; roda do mouse/analógico direito rola o texto. Registros não são arrastáveis e não têm menu de item nesta aba (Inspecionar/Soltar ficam de fora: são para ler). Ao abrir um registro ele é marcado como lido; a aba mostra quantos não lidos há.
+- **Chaves** e **Registros** nunca usam a grade: são listas.
 - Itens de exemplo: `diario` e `bilhete` já vêm com texto de leitura (crie com **Demo > Create Sample Items**).
 
 **Mapa**
