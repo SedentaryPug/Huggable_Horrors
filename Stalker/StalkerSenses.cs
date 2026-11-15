@@ -192,6 +192,7 @@ namespace HorrorFPS
             if (vol <= 0f) return;
 
             StalkerNoiseTag tag = src != null ? src.GetComponentInParent<StalkerNoiseTag>() : null;
+            NoiseSourceTag generic = (tag == null && src != null) ? src.GetComponentInParent<NoiseSourceTag>() : null;     // etiqueta do framework (garrafa jogada, rádio...)
             StalkerNoise n = new StalkerNoise();
             n.position = ev.position;
             n.loudness = vol;
@@ -200,16 +201,17 @@ namespace HorrorFPS
             n.time = Time.time;
             n.target = StalkerBridge.TargetOf(src);
             n.playerMade = n.target != null;
-            n.tagMode = tag != null ? tag.mode : NoiseTagMode.Learn;
-            n.key = KeyOf(src, n.kind, tag);
+            n.tagMode = tag != null ? tag.mode : (generic != null && generic.alwaysInvestigate ? NoiseTagMode.AlwaysInvestigate : NoiseTagMode.Learn);
+            n.key = KeyOf(src, n.kind, tag, generic);
 
             if (n.tagMode != NoiseTagMode.AlwaysInvestigate && vol < tune.noiseThreshold) return;
             if (NoiseHeard != null) NoiseHeard(n);
         }
 
-        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag)
+        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag, NoiseSourceTag generic)
         {
             if (tag != null && !string.IsNullOrEmpty(tag.key)) return tag.key;
+            if (generic != null && !string.IsNullOrEmpty(generic.key)) return generic.key;
             if (src == null) return "?:" + kind;
             string n = src.name.Replace("(Clone)", "");
             int p = n.IndexOf(" (", StringComparison.Ordinal);
