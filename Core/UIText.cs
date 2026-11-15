@@ -193,6 +193,7 @@ namespace HorrorFPS
 
         // Ruído e visibilidade (agachar silencioso)
         public const string NoiseIndicator = "Indicadores de furtividade";
+        public const string SoftDamageFx = "Efeitos de dano suaves";
         public const string AudioSection = "Áudio";
         public const string OpenAudio = "Abrir";
         public const string MasterVolume = "Volume geral";

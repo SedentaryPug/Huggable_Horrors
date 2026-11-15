@@ -83,6 +83,10 @@ namespace HorrorFPS
                 delegate { return GameSettings.NoiseIndicator ? UIText.On : UIText.Off; },
                 delegate { GameSettings.NoiseIndicator = !GameSettings.NoiseIndicator; });
 
+            AddCycleRow(pageRoot, UIText.SoftDamageFx,
+                delegate { return GameSettings.SoftDamageFx ? UIText.On : UIText.Off; },
+                delegate { GameSettings.SoftDamageFx = !GameSettings.SoftDamageFx; });
+
             AddCycleRow(pageRoot, UIText.AudioSection,
                 delegate { return UIText.OpenAudio; },
                 delegate { SwitchPage(true); });
