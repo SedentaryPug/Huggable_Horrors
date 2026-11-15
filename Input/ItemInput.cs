@@ -52,6 +52,7 @@ namespace HorrorFPS
         public InputAction TabPrev { get; private set; }      // aba anterior do inventário
         public InputAction TabNext { get; private set; }      // próxima aba do inventário
         public InputAction HoldBreath { get; private set; }   // segurar a respiração (esconderijo): H / clique do analógico direito
+        public InputAction Objectives { get; private set; }   // mostrar a lista de objetivos na tela: J / clique do analógico direito (ignorado escondido, onde esse botão segura o fôlego)
 
         /// <summary>True se o jogador usa mouse (cursor vem do delta do mouse); senão o cursor vem do analógico.</summary>
         public bool UsesMouse { get; private set; }
@@ -148,6 +149,7 @@ namespace HorrorFPS
             TabNext = Button("TabNext", "<Keyboard>/x", "<Keyboard>/pageDown", "<Gamepad>/rightTrigger");
 
             HoldBreath = Button("HoldBreath", "<Keyboard>/h", "<Gamepad>/rightStickPress");
+            Objectives = Button("Objectives", "<Keyboard>/j", "<Gamepad>/rightStickPress");
         }
 
         InputAction Button(string name, params string[] paths)

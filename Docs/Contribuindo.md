@@ -34,7 +34,7 @@ Os menus são decididos em um lugar só: [`Editor/HorrorFPSMenu.cs`](../Editor/H
 static void MeuMenuNovo() { ... }
 ```
 
-- Escolha a área que combina (`Player`, `Items`, `Dialogue`, `Animation`, `Stalker`, `Hurtbox`, `Revive`, `Demo`). Área nova: acrescente o caminho e a ordem em `HorrorFPSMenu`.
+- Escolha a área que combina (`Player`, `Items`, `Dialogue`, `Animation`, `Stalker`, `Hurtbox`, `Revive`, `Objectives`, `Tutorials`, `Demo`). Área nova: acrescente o caminho e a ordem em `HorrorFPSMenu`.
 - **Sem número no nome do menu.** A ordem é o 3º argumento (`Order + n`).
 - Mensagens e comentários que citam um menu devem usar o caminho completo (`Tools > Horror FPS > Área > Nome`), não "menu 15".
 - Atualize [`Menus.md`](Menus.md).

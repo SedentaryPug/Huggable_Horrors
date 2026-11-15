@@ -25,6 +25,7 @@ namespace HorrorFPS
         static PromptMode promptMode = PromptMode.ButtonPrompt;
         static HoldMode grabMode = HoldMode.Hold;
         static HoldMode crouchMode = HoldMode.Hold;
+        static bool tips = true;
 
         public static event Action Changed;
 
@@ -45,6 +46,7 @@ namespace HorrorFPS
             promptMode = (PromptMode)PlayerPrefs.GetInt(Prefix + "PromptMode", (int)promptMode);
             grabMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "GrabMode", (int)grabMode);
             crouchMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "CrouchMode", (int)crouchMode);
+            tips = PlayerPrefs.GetInt(Prefix + "Tips", tips ? 1 : 0) == 1;
         }
 
         static void Save()
@@ -55,6 +57,7 @@ namespace HorrorFPS
             PlayerPrefs.SetInt(Prefix + "PromptMode", (int)promptMode);
             PlayerPrefs.SetInt(Prefix + "GrabMode", (int)grabMode);
             PlayerPrefs.SetInt(Prefix + "CrouchMode", (int)crouchMode);
+            PlayerPrefs.SetInt(Prefix + "Tips", tips ? 1 : 0);
             Changed?.Invoke();
         }
 
@@ -95,6 +98,13 @@ namespace HorrorFPS
         {
             get { EnsureLoaded(); return crouchMode; }
             set { EnsureLoaded(); crouchMode = value; Save(); }
+        }
+
+        /// <summary>Dicas de tutorial na tela (aparecem uma vez cada; ver Tutorials). Desligue para quem já conhece o jogo.</summary>
+        public static bool TipsEnabled
+        {
+            get { EnsureLoaded(); return tips; }
+            set { EnsureLoaded(); tips = value; Save(); }
         }
     }
 }

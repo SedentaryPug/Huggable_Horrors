@@ -148,5 +148,37 @@ namespace HorrorFPS
         public const string Open = "Abrir";
         public const string Close = "Fechar";
         public const string DeviceLost = "Controle desconectado";
+
+        // Objetivos
+        public const string ObjectivesButton = "Objetivos";
+        public const string ObjectivesTitle = "OBJETIVOS";
+        public const string ObjectivesHeader = "OBJETIVOS";
+        public const string ObjectiveNew = "NOVO OBJETIVO";
+        public const string ObjectiveDone = "OBJETIVO CONCLUÍDO";
+        public const string ObjectiveFailed = "OBJETIVO FALHOU";
+        public const string ObjectiveOptionalTag = "(opcional) ";
+        public const string ObjectivesMore = "+{0} objetivo(s)";
+        public const string NoObjectives = "Nenhum objetivo no momento";
+        public const string ObjectivesActive = "EM ANDAMENTO";
+        public const string ObjectivesDone = "CONCLUÍDOS";
+        public const string ObjectivesFailedSection = "FALHARAM";
+        public const string ObjectivesEmpty = "Nenhum objetivo ainda.";
+
+        // Dicas / Como jogar
+        public const string HowToPlayButton = "Como jogar";
+        public const string HowToPlayTitle = "COMO JOGAR";
+        public const string TipHeader = "DICA";
+        public const string TipsOn = "Dicas na tela: Ligado";
+        public const string TipsOff = "Dicas na tela: Desligado";
+        public const string TipsReplay = "Rever dicas";
+        public const string TipsReplayDone = "As dicas vão aparecer de novo";
+        public const string HowToPlayEmpty = "Nenhuma dica cadastrada.";
+        public const string KeyMoveKeyboard = "W A S D";
+        public const string KeyMovePad = "Analógico esq.";
+        public const string KeyLookKeyboard = "Mouse";
+        public const string KeyLookPad = "Analógico dir.";
+        public const string KeyScroll = "Scroll";
+        public const string KeyDpadUpDown = "D-pad cima/baixo";
+        public const string KeyDpadLeftRight = "D-pad esq./dir.";
     }
 }

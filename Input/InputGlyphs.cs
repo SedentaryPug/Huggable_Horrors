@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.InputSystem;
 
 namespace HorrorFPS
@@ -37,6 +38,27 @@ namespace HorrorFPS
             return index < 0 ? "?" : GetBindingText(action, index);
         }
 
+        /// <summary>
+        /// Texto do botão de uma action SEM grupos de esquema (as do ItemInput, criadas por código): escolhe o primeiro binding
+        /// do dispositivo pedido (controle ou teclado/mouse). "?" se não houver.
+        /// </summary>
+        public static string GetBindingTextForDevice(InputAction action, bool gamepad)
+        {
+            if (action == null) return "?";
+            var list = action.bindings;
+            for (int i = 0; i < list.Count; i++)
+            {
+                InputBinding b = list[i];
+                if (b.isComposite || b.isPartOfComposite) continue;
+                string path = b.effectivePath;
+                if (string.IsNullOrEmpty(path)) continue;
+                bool isPad = path.StartsWith("<Gamepad>", StringComparison.Ordinal);
+                if (isPad != gamepad) continue;
+                return GetBindingText(action, i);
+            }
+            return "?";
+        }
+
         public static string GetBindingText(InputAction action, int bindingIndex)
         {
             string raw = action.GetBindingDisplayString(bindingIndex, InputBinding.DisplayStringOptions.DontIncludeInteractions);
@@ -52,6 +74,13 @@ namespace HorrorFPS
 
         static string Shorten(string s)
         {
+            if (!string.IsNullOrEmpty(s) && s.StartsWith("D-Pad", StringComparison.OrdinalIgnoreCase))
+            {
+                if (s.EndsWith("Up", StringComparison.OrdinalIgnoreCase)) return "D-pad cima";
+                if (s.EndsWith("Down", StringComparison.OrdinalIgnoreCase)) return "D-pad baixo";
+                if (s.EndsWith("Left", StringComparison.OrdinalIgnoreCase)) return "D-pad esq.";
+                if (s.EndsWith("Right", StringComparison.OrdinalIgnoreCase)) return "D-pad dir.";
+            }
             switch (s)
             {
                 case "Left Button": return "LMB";

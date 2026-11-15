@@ -29,6 +29,7 @@ Também dá para dar Play direto em `Level_Hall` ou `Level_Cellar`: o jogo se mo
 | `Props/` | objetos interativos (gaveta, esconderijo, barril, espelho, armadilha, botões coop) |
 | `Stalker/` | o perseguidor: IA, sentidos, árvore de comportamento, rotas e hurtboxes |
 | `Revive/` | estado "caído" cooperativo |
+| `Objectives/`, `Tutorials/` | objetivos da partida (lista, faixa, página no menu) e dicas de tutorial que aparecem uma vez por jogador (página "Como jogar") |
 | `Editor/` (e `SmartEvents/Editor/`) | **todo** código que usa `UnityEditor`: menus, janelas e inspetores |
 | `Scenes/`, `Prefabs/`, `Materials/`, `Resources/`, `Generated/` | assets: `Core`, `MainMenu` e níveis; prefab do jogador; catálogo em `Resources/HorrorFPS` |
 | `Docs/` | documentação |
@@ -46,7 +47,9 @@ Os menus são agrupados por área, sem números:
 | **Stalker** | perseguidor, editor da árvore de comportamento, rotas e emboscadas |
 | **Hurtbox** | zonas de dano nos inimigos |
 | **Revive** | perfil e diagnóstico da reanimação |
-| **Demo** | jogo completo de demonstração e itens/diálogos de exemplo |
+| **Objectives** | catálogo de objetivos e ações para eventos |
+| **Tutorials** | catálogo de dicas, volume de dica, reiniciar dicas vistas |
+| **Demo** | jogo completo de demonstração e itens/diálogos/objetivos de exemplo |
 
 Lista completa, e a tabela "número antigo → caminho novo", em [`Docs/Menus.md`](Docs/Menus.md).
 
@@ -62,6 +65,7 @@ Lista completa, e a tabela "número antigo → caminho novo", em [`Docs/Menus.md
 | Os dois lados na mesma mão (duas mãos) | G (toque = item da direita, segurar = item da esquerda) | RB |
 | Mirar | Q | Select |
 | Recarregar / Lanterna | R / F | D-pad ↓ / ↑ |
+| Mostrar objetivos | J | R3 (clique do analógico direito) |
 | Pausar | Esc | Start |
 
 Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções). Detalhes das mãos em
@@ -79,6 +83,7 @@ Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções)
 | [`HorrorFPS-Props`](Docs/HorrorFPS-Props.md) | props interativos |
 | [`HorrorFPS-Reanimacao`](Docs/HorrorFPS-Reanimacao.md) | reanimação em co-op |
 | [`HorrorFPS-Contexto-Scripts`](Docs/HorrorFPS-Contexto-Scripts.md) | guia de referência do código (receitas, armadilhas, índice de classes) |
+| [`HorrorFPS-Objetivos-Tutorial`](Docs/HorrorFPS-Objetivos-Tutorial.md) | objetivos (lista, faixa, eventos, save) e dicas de tutorial de uma vez só + página "Como jogar" |
 | [`Menus`](Docs/Menus.md) | todos os menus do Editor |
 | [`Contribuindo`](Docs/Contribuindo.md) | convenções e cuidados antes de mexer no código |
 
