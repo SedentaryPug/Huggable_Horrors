@@ -9,7 +9,8 @@ namespace HorrorFPS
     /// Um por jogador. O jogador tem DUAS mãos (esquerda e direita), cada uma com o seu item, e a lanterna fica à parte (os três ao mesmo tempo).
     ///
     /// Controles (só com o inventário fechado):
-    ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia ou atira);
+    ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia, atira ou joga);
+    ///    arremessável (garrafa, sinalizador, rádio): segurar o botão carrega a força, soltar joga UMA unidade (ver ThrownDistraction);
     ///  • G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da esquerda; com as duas mãos, qualquer botão usa o item
     ///    e o item da outra mão fica guardado até voltar para uma mão só (apertar G de novo);
     ///  • Q / Select mira (arma de fogo, segurando: zoom, menos dispersão, arma no centro);
@@ -65,6 +66,8 @@ namespace HorrorFPS
             public float chargeT;          // há quanto tempo segura
             public bool heavyReady;        // já segurou o bastante: soltar dá o golpe forte
             public float amp = 1f;         // exagero da pose de armar/golpear (1 = fraco, 1,35 = forte)
+            public float windT;            // 0..1: o braço indo para trás enquanto carrega o arremesso
+            public float releaseT = -1f;   // 0..1: o braço indo para a frente depois de soltar (-1 = parado)
             public Coroutine action;
         }
 
@@ -247,7 +250,8 @@ namespace HorrorFPS
         static bool IsHandKind(ItemInstance it)
         {
             if (it == null || it.data == null || it.data.equip == null) return false;
-            return it.data.equip.kind == EquipKind.Melee || it.data.equip.kind == EquipKind.Firearm;
+            EquipKind k = it.data.equip.kind;
+            return k == EquipKind.Melee || k == EquipKind.Firearm || k == EquipKind.Throwable;
         }
 
         void SyncHand(HandState h)
@@ -310,6 +314,7 @@ namespace HorrorFPS
             if (!Usable(h)) return;
             ItemEquip eq = h.item.data.equip;
             if (eq.kind == EquipKind.Melee) UpdateMelee(h, eq);
+            else if (eq.kind == EquipKind.Throwable) UpdateThrowable(h, eq);
             else if (eq.kind == EquipKind.Firearm)
             {
                 bool fire = eq.automatic ? UseHeld(h) : UsePressed(h);
@@ -489,6 +494,7 @@ namespace HorrorFPS
                 go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 Vector3 size = eq.kind == EquipKind.Melee ? new Vector3(0.05f, 0.5f, 0.05f)
                              : eq.kind == EquipKind.Flashlight ? new Vector3(0.18f, 0.045f, 0.045f)
+                             : eq.kind == EquipKind.Throwable ? new Vector3(0.07f, 0.16f, 0.07f)
                              : new Vector3(0.22f, 0.07f, 0.04f);
                 go.transform.localScale = size;
                 Renderer r = go.GetComponent<Renderer>();
@@ -569,6 +575,7 @@ namespace HorrorFPS
             h.busy = false; h.reloading = false;
             h.swingT = -1f; h.reloadT = -1f;
             h.charging = false; h.heavyReady = false; h.chargeT = 0f; h.amp = 1f;
+            h.windT = 0f; h.releaseT = -1f;
         }
 
         // ------------------------------------------------------------------ lanterna
@@ -727,6 +734,22 @@ namespace HorrorFPS
             }
             pos += new Vector3(0f, 0.012f * h.kick, -0.07f * h.kick);
             rot = rot * Quaternion.Euler(-9f * h.kick, 0f, 0f);
+
+            if (eq.kind == EquipKind.Throwable)
+            {
+                // braço para trás e para cima enquanto carrega; ao soltar, vai para a frente e volta
+                if (!h.charging) h.windT = Mathf.MoveTowards(h.windT, 0f, dt * 5f);
+                float rel = 0f;
+                if (h.releaseT >= 0f)
+                {
+                    h.releaseT += dt / 0.28f;
+                    if (h.releaseT >= 1f) h.releaseT = -1f;
+                    else rel = Mathf.Sin(h.releaseT * Mathf.PI);
+                }
+                float w = Mathf.SmoothStep(0f, 1f, h.windT);
+                pos += new Vector3(0.05f * mirror * w, 0.12f * w - 0.05f * rel, -0.14f * w + 0.28f * rel);
+                rot = rot * Quaternion.Euler(-35f * w + 70f * rel, 0f, -10f * w * mirror);
+            }
 
             if (tremor != null)
             {
@@ -948,6 +971,85 @@ namespace HorrorFPS
                 else if (remaining <= Mathf.Max(1, eq.durability / 5)) Say(weapon.GetName(this) + " está quase quebrando.");
             }
             return true;
+        }
+
+        // ------------------------------------------------------------------ arremessável (garrafa, sinalizador, rádio)
+        static float ThrowFull(ItemEquip eq) { return Mathf.Max(0.05f, eq.throwChargeSeconds); }
+
+        /// <summary>Força do arremesso agora (0..1): o toque rápido vale 'throwMinPower' e segurar o botão sobe até 1.</summary>
+        float ThrowPower(HandState h, ItemEquip eq)
+        {
+            return Mathf.Lerp(Mathf.Clamp01(eq.throwMinPower), 1f, Mathf.Clamp01(h.chargeT / ThrowFull(eq)));
+        }
+
+        /// <summary>Tocar o botão joga fraco (perto); segurar carrega a força e soltar joga. Cada arremesso gasta uma unidade da pilha.</summary>
+        void UpdateThrowable(HandState h, ItemEquip eq)
+        {
+            if (h.charging)
+            {
+                h.chargeT += Time.deltaTime;
+                h.windT = Mathf.Clamp01(h.chargeT / ThrowFull(eq));
+                if (!h.heavyReady && h.chargeT >= ThrowFull(eq))
+                {
+                    h.heavyReady = true;                      // força cheia: um estalinho de aviso
+                    Play(ProceduralAudio.DryClick(), 0.25f);
+                }
+                if (!UseHeld(h)) ReleaseThrow(h, eq);
+                return;
+            }
+            if (h.busy || Time.time < h.nextAttack || !EnsureCamera() || !UsePressed(h)) return;
+            h.charging = true;
+            h.chargeT = 0f;
+            h.heavyReady = false;
+        }
+
+        void ReleaseThrow(HandState h, ItemEquip eq)
+        {
+            float power = ThrowPower(h, eq);
+            h.charging = false; h.heavyReady = false; h.chargeT = 0f;
+            h.releaseT = 0f;
+            h.nextAttack = Time.time + 0.45f;
+            DoThrow(h, eq, power);
+        }
+
+        void DoThrow(HandState h, ItemEquip eq, float power)
+        {
+            ItemInstance it = h.item;
+            if (it == null || it.data == null) return;
+            Transform ct = cam.transform;
+            Vector3 dir = ct.forward;
+            if (tremor != null) dir = ct.rotation * (tremor.MeleeStrike() * Vector3.forward);     // a mão tremendo desvia o arremesso
+            dir = (dir + Vector3.up * Mathf.Max(0f, eq.throwArc)).normalized;
+
+            // sai da frente do corpo, do lado da mão; com parede colada, sai logo antes dela (não nasce dentro)
+            float side = h.side == HandSide.Left ? -1f : 1f;
+            Vector3 origin = ct.position + ct.forward * 0.5f + ct.right * (0.12f * side) - ct.up * 0.1f;
+            RaycastHit wall;
+            if (Physics.SphereCast(ct.position, 0.1f, ct.forward, out wall, 0.55f, hitMask, QueryTriggerInteraction.Ignore) && !IsOwn(wall.collider))
+                origin = ct.position + ct.forward * Mathf.Max(0.05f, wall.distance - 0.1f);
+
+            float speed = Mathf.Max(1f, eq.throwSpeed) * power;
+            ThrownDistraction.Launch(it.data, origin, dir * speed, player.transform);
+
+            Play(ProceduralAudio.Swing(), 0.35f + 0.3f * power);
+            CameraImpulse.Recoil(this, 0.08f + 0.1f * power, 0.1f);
+            ConsumeThrown(it);              // por último: com a pilha acabada a mão fica sem item
+        }
+
+        /// <summary>Gasta uma unidade do que foi jogado. Acabou a pilha: a mão fica vazia e o item sai da mochila.</summary>
+        void ConsumeThrown(ItemInstance it)
+        {
+            string itemName = it.GetName(this);
+            if (it.stack > 1)
+            {
+                it.stack--;
+                it.NotifyModified();
+                return;
+            }
+            ItemContainer c = it.container;
+            owner.Unequip(it);              // o evento tira o modelo da mão
+            if (c != null) c.Remove(it);
+            Say(itemName + ": acabou.");
         }
 
         // ------------------------------------------------------------------ arma de fogo

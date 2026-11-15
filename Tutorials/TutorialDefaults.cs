@@ -45,6 +45,8 @@ namespace HorrorFPS
                 TutorialWhen.ItemEquipped, "Melee", 1f, 10f, ""));
             list.Add(Make("firearm", "Arma de fogo", "Atire com {HandRight} ou {HandLeft}, mire com {Aim} e recarregue com {Reload}. Cada tiro faz barulho.",
                 TutorialWhen.ItemEquipped, "Firearm", 1f, 11f, ""));
+            list.Add(Make("throwable", "Arremessar", "Segure {HandRight} ou {HandLeft} para carregar a força e solte para jogar; um toque joga perto. O barulho do que você joga atrai o monstro para lá, mas ele aprende truques repetidos.",
+                TutorialWhen.ItemEquipped, "Throwable", 1f, 11f, ""));
 
             // ---- jogo
             list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para ver seus objetivos na tela. A lista completa fica no menu de pausa.",
