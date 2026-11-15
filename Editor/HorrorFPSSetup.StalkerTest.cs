@@ -4,7 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace HorrorFPS
+namespace HorrorFPS.EditorTools
 {
     /// <summary>
     /// Cena de teste do perseguidor: a arena do StalkerMenu.BuildDemo (4 salas, pontos de ronda, pontos de aparição, o monstro com finalizador e um
