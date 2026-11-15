@@ -147,7 +147,7 @@ Para eventos, `Delay` é a espera depois do evento.
 | `Tutorials/HowToPlayPanel.cs`, `UI/InfoPanelBase.cs` | página "Como jogar" do menu de pausa (e a base das páginas de leitura) |
 | `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
 
-Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 54 em vez de 64, para caberem 10 com o Diário), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
+Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`, `TipsPause`), `Core/PauseManager.cs` (`Hold`/`ReleaseHold`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal têm 56 de altura), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
 
 ## 4. Limites conhecidos
 
