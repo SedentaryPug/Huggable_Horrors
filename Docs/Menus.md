@@ -78,6 +78,16 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Objectives > Create Objective Catalog` | `Editor/Objectives/ObjectivesMenu.cs` |
 | `Tools > Horror FPS > Objectives > Add Objective Actions To Selected` | `Editor/Objectives/ObjectivesMenu.cs` |
 
+### Journal — diário
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Journal > Create Journal Catalog` | `Editor/Journal/JournalMenu.cs` |
+| `Tools > Horror FPS > Journal > Create Journal Note In Scene` | `Editor/Journal/JournalMenu.cs` |
+| `Tools > Horror FPS > Journal > Add Journal Actions To Selected` | `Editor/Journal/JournalMenu.cs` |
+
+Como usar: [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
+
 ### Tutorials — dicas de tutorial
 
 | Menu | Arquivo |
@@ -96,6 +106,7 @@ Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objeti
 | `Tools > Horror FPS > Demo > Create Sample Items` | `Editor/SampleItems.cs` |
 | `Tools > Horror FPS > Demo > Create Sample Dialogues` | `Editor/Dialogue/DialogueMenus.cs` |
 | `Tools > Horror FPS > Demo > Create Sample Objectives` | `Editor/Objectives/ObjectivesMenu.cs` |
+| `Tools > Horror FPS > Demo > Create Sample Journal Entries` | `Editor/Journal/JournalMenu.cs` |
 
 Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects.
 

@@ -86,13 +86,15 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | Id | Quando aparece |
 |---|---|
 | `move` | 2,5 s depois de o jogador aparecer (some ao se mexer) |
-| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta) |
+| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho |
+| `noise` | a primeira vez que o jogador faz barulho **alto** (correndo, piso barulhento): explica o medidor de ruído |
 | `interact`, `grab` | a primeira vez que aparece uma dica de interação dessa ação |
 | `ladder` | **manual** (volume `Tutorial Trigger` perto da escada) |
 | `hide` | ao entrar num esconderijo |
 | `inventory`, `hotbar` | ao pegar o primeiro item (a segunda ~16 s depois) |
 | `flashlight`, `melee`, `firearm` | ao equipar uma lanterna / arma branca / arma de fogo |
 | `objectives` | quando o primeiro objetivo começa |
+| `journal` | quando o primeiro registro entra no diário (ver `HorrorFPS-Diario-Ruido.md`) |
 | `pause` | 2 minutos de jogo |
 | `hurt`, `low_stamina`, `low_sanity` | primeiro dano / fôlego abaixo de 20% / sanidade abaixo de 40% (avisos: não aparecem na lista Como jogar) |
 
@@ -112,6 +114,8 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | `LowStat` | status abaixo de `Threshold` (0 a 1) | `Health`, `Stamina`, `Sanity`... |
 | `Hid` | entrou num esconderijo | — |
 | `ObjectiveStarted` | um objetivo começou | — |
+| `LoudNoise` | fez barulho alto pela primeira vez (`PlayerMotionProbe.Level` = Alto) | — |
+| `JournalUnlocked` | um registro novo entrou no diário | — |
 
 Para eventos, `Delay` é a espera depois do evento.
 
@@ -142,11 +146,11 @@ Para eventos, `Delay` é a espera depois do evento.
 | `Tutorials/HowToPlayPanel.cs`, `UI/InfoPanelBase.cs` | página "Como jogar" do menu de pausa (e a base das páginas de leitura) |
 | `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
 
-Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 56 em vez de 64, para caberem 9), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
+Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 54 em vez de 64, para caberem 10 com o Diário), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
 
 ## 4. Limites conhecidos
 
 - O **menu principal** (antes de começar a partida) não tem a página "Como jogar": as dicas existem dentro do jogo, no menu de pausa.
 - A tecla de objetivos (**J / R3**) vive no `ItemInput` e, como as outras ações dele, não aparece no painel de remapeamento (para mudar, edite os caminhos em `ItemInput.Build()`).
 - Se o jogador trocar de teclado para controle no meio de uma dica, o cartão já aberto não muda de texto (a lista Como jogar, ao ser aberta, já mostra os botões do dispositivo atual).
-- Um diário/caderno de notas (reler documentos achados) é um passo futuro e ainda não existe.
+- O diário (reler notas, diários e gravações achados) existe em **Pausa > Diário**: ver `HorrorFPS-Diario-Ruido.md`.

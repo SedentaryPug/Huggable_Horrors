@@ -30,6 +30,7 @@ Também dá para dar Play direto em `Level_Hall` ou `Level_Cellar`: o jogo se mo
 | `Stalker/` | o perseguidor: IA, sentidos, árvore de comportamento, rotas e hurtboxes |
 | `Revive/` | estado "caído" cooperativo |
 | `Objectives/`, `Tutorials/` | objetivos da partida (lista, faixa, página no menu) e dicas de tutorial que aparecem uma vez por jogador (página "Como jogar") |
+| `Journal/` | diário: notas, páginas de diário e gravações que o grupo achou, com leitor na tela e página na pausa |
 | `Editor/` (e `SmartEvents/Editor/`) | **todo** código que usa `UnityEditor`: menus, janelas e inspetores |
 | `Scenes/`, `Prefabs/`, `Materials/`, `Resources/`, `Generated/` | assets: `Core`, `MainMenu` e níveis; prefab do jogador; catálogo em `Resources/HorrorFPS` |
 | `Docs/` | documentação |
@@ -48,8 +49,9 @@ Os menus são agrupados por área, sem números:
 | **Hurtbox** | zonas de dano nos inimigos |
 | **Revive** | perfil e diagnóstico da reanimação |
 | **Objectives** | catálogo de objetivos e ações para eventos |
+| **Journal** | catálogo do diário, nota na cena e ações para eventos |
 | **Tutorials** | catálogo de dicas, volume de dica, reiniciar dicas vistas |
-| **Demo** | jogo completo de demonstração e itens/diálogos/objetivos de exemplo |
+| **Demo** | jogo completo de demonstração e itens/diálogos/objetivos/registros de exemplo |
 
 Lista completa, e a tabela "número antigo → caminho novo", em [`Docs/Menus.md`](Docs/Menus.md).
 
@@ -84,6 +86,7 @@ Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções)
 | [`HorrorFPS-Reanimacao`](Docs/HorrorFPS-Reanimacao.md) | reanimação em co-op |
 | [`HorrorFPS-Contexto-Scripts`](Docs/HorrorFPS-Contexto-Scripts.md) | guia de referência do código (receitas, armadilhas, índice de classes) |
 | [`HorrorFPS-Objetivos-Tutorial`](Docs/HorrorFPS-Objetivos-Tutorial.md) | objetivos (lista, faixa, eventos, save) e dicas de tutorial de uma vez só + página "Como jogar" |
+| [`HorrorFPS-Diario-Ruido`](Docs/HorrorFPS-Diario-Ruido.md) | diário (notas, gravações, leitor na tela, página na pausa) e ruído do jogador (agachar silencioso, pisos, medidor) |
 | [`Menus`](Docs/Menus.md) | todos os menus do Editor |
 | [`Contribuindo`](Docs/Contribuindo.md) | convenções e cuidados antes de mexer no código |
 

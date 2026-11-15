@@ -57,6 +57,10 @@ namespace HorrorFPS
                 delegate { return GameSettings.CrouchMode == HoldMode.Hold ? UIText.ModeHold : UIText.ModeToggle; },
                 delegate { GameSettings.CrouchMode = GameSettings.CrouchMode == HoldMode.Hold ? HoldMode.Toggle : HoldMode.Hold; });
 
+            AddCycleRow(pageRoot, UIText.NoiseIndicator,
+                delegate { return GameSettings.NoiseIndicator ? UIText.On : UIText.Off; },
+                delegate { GameSettings.NoiseIndicator = !GameSettings.NoiseIndicator; });
+
             if (onControls != null)
             {
                 Button controls = UIFactory.CreateButton(pageRoot, UIText.Controls, new Vector2(300f, 64f),

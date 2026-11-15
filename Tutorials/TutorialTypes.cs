@@ -24,7 +24,11 @@ namespace HorrorFPS
         /// <summary>Entrou em um esconderijo.</summary>
         Hid = 8,
         /// <summary>Um objetivo começou.</summary>
-        ObjectiveStarted = 9
+        ObjectiveStarted = 9,
+        /// <summary>Fez barulho alto pela primeira vez (correndo, em piso barulhento...). Aparece uma vez por jogador.</summary>
+        LoudNoise = 10,
+        /// <summary>Um registro novo entrou no diário.</summary>
+        JournalUnlocked = 11
     }
 
     /// <summary>

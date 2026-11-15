@@ -84,6 +84,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `Stalker/` (+`Tree/`) | IA do perseguidor: cérebro, árvore de comportamento editável, diretor, memória | `HorrorFPS` |
 | `Revive/` | estado "caído" cooperativo | `HorrorFPS` |
 | `Objectives/`, `Tutorials/` | objetivos da partida e dicas de tutorial (uma vez por jogador); ver `Docs/HorrorFPS-Objetivos-Tutorial.md` | `HorrorFPS` |
+| `Journal/` | diário (notas, páginas, gravações; leitor na tela; página na pausa); o agachar silencioso fica em `Body/`; ver `Docs/HorrorFPS-Diario-Ruido.md` | `HorrorFPS` |
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
@@ -200,7 +201,7 @@ PlayerDragger:    bool IsDragging; Draggable Held; bool CanDrag(d); bool Begin(d
 PlayerClimber:    Ladder Current; bool IsClimbing, CanGrab; bool BeginClimb(Ladder); void Release(); events ClimbStarted/ClimbEnded(Ladder)
 ```
 
-**Módulos instalados automaticamente** (`PlayerModules.Install`; o `PlayerModulesRunner`, criado sozinho, varre os `PlayerContext` a cada 0,5 s e instala **uma vez** por jogador; desligue com `PlayerModules.AutoInstall = false` ou o símbolo `HORRORFPS_NO_AUTOINSTALL`; só adiciona o que **não** existe, procurando também nos filhos): `ItemInput`, `PlayerOverlay`, `InventoryOwner` (+ `GridContainer` "bag" e listas Chaves/Registros/Mapas), `Hotbar`, `HotbarHUD`, `InventoryScreen`, `EquipmentController`, `EquipmentHUD`, `PlayerMotionProbe`, `BreathingComponent`, `HeartbeatComponent`, `DynamicHeadBob`, `DamageReaction`, `SanityComponent`, `SanityFX`, `SanityEffects`, `SanityAudio`, `SanitySubtitles`. O resto do jogador vem do prefab (seção 9).
+**Módulos instalados automaticamente** (`PlayerModules.Install`; o `PlayerModulesRunner`, criado sozinho, varre os `PlayerContext` a cada 0,5 s e instala **uma vez** por jogador; desligue com `PlayerModules.AutoInstall = false` ou o símbolo `HORRORFPS_NO_AUTOINSTALL`; só adiciona o que **não** existe, procurando também nos filhos): `ItemInput`, `PlayerOverlay`, `InventoryOwner` (+ `GridContainer` "bag" e listas Chaves/Registros/Mapas), `Hotbar`, `HotbarHUD`, `InventoryScreen`, `EquipmentController`, `EquipmentHUD`, `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector`, `NoiseMeterHUD`, `JournalReader`, `PlayerMotionProbe`, `BreathingComponent`, `HeartbeatComponent`, `DynamicHeadBob`, `DamageReaction`, `SanityComponent`, `SanityFX`, `SanityEffects`, `SanityAudio`, `SanitySubtitles`. O resto do jogador vem do prefab (seção 9).
 
 ### 5.2 Stats e dano — `Stats/`
 
@@ -324,7 +325,7 @@ static class PauseManager  bool IsPaused; PlayerContext Owner; event Action<bool
   void Pause(PlayerContext); Resume(); ForceResume(); RequestFreeCursor(object key); ReleaseFreeCursor(object key); EnforceCursor()
   // Pausar = Time.timeScale 0 + áudio silenciado + GameplayEnabled false
 GameRuntime  static GameRuntime Ensure(); static Coroutine Run(IEnumerator)     // host de corrotinas que sobrevive às cenas; soma PlayTime
-GameSettings (PlayerPrefs)  MouseSensitivity, GamepadSensitivity, InvertY, PromptStyle (PromptMode), GrabMode/CrouchMode (HoldMode); event Changed; Flush()
+GameSettings (PlayerPrefs)  MouseSensitivity, GamepadSensitivity, InvertY, PromptStyle (PromptMode), GrabMode/CrouchMode (HoldMode), TipsEnabled, NoiseIndicator (medidor de ruído); event Changed; Flush()
 ```
 Tela que precisa de cursor livre: `PauseManager.RequestFreeCursor(this)` ao abrir e `ReleaseFreeCursor(this)` ao fechar (modelo: `GameOverScreen`).
 
@@ -1041,13 +1042,14 @@ Tipos em arquivo de outro nome:
 - `PlayerAnimState.cs` define enum `HandItem`, enum `PlayerAnimEvent`
 - `PoseFx.cs` define struct `PoseDelta`, interface `IPoseModifier`
 
-**Body/**  (13 arquivos)
+**Body/**  (14 arquivos)
 
-Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, HeartbeatComponent, NoiseListener, NoiseSystem, PlayerAudio, PlayerMotionProbe, ProceduralAudio, SoundEmitter
+Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, ProceduralAudio, SoundEmitter
 
 Tipos em arquivo de outro nome:
 - `NoiseSystem.cs` define enum `NoiseKind`, struct `NoiseEvent`, interface `INoiseHearer`
 - `PlayerAudio.cs` define enum `AudioMode`
+- `PlayerMotionProbe.cs` define enum `NoiseLevel` (Silent/Quiet/Normal/Loud: o que o medidor de ruído mostra)
 
 **Characters/**  (6 arquivos)
 
@@ -1240,7 +1242,7 @@ Tipos em arquivo de outro nome:
 
 **UI/**  (11 arquivos)
 
-Arquivos: ControlsPanel, GameOverScreen, MainMenu, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites
+Arquivos: ControlsPanel, GameOverScreen, InfoPanelBase, MainMenu, NoiseMeterHUD, PauseMenu, PlayerHUD, SaveSlotsPanel, ScrollFollowSelection, SettingsPanel, Toast, UIFactory, UISprites
 
 **UI/Inventory/**  (15 arquivos)
 

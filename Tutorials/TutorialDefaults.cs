@@ -19,8 +19,10 @@ namespace HorrorFPS
                 TutorialWhen.Walking, "", 8f, 8f, "Sprint"));
             list.Add(Make("jump", "Pular", "Aperte {Jump} para pular.",
                 TutorialWhen.Walking, "", 18f, 7f, "Jump"));
-            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar e passar por vãos baixos.",
-                TutorialWhen.Walking, "", 30f, 8f, "Crouch"));
+            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar: você anda mais devagar, mas faz muito menos barulho, e ainda passa por vãos baixos.",
+                TutorialWhen.Walking, "", 30f, 9f, "Crouch"));
+            list.Add(Make("noise", "Barulho", "Correr, pular e mexer em coisas fazem barulho, e o que estiver por perto ouve. O medidor no canto da tela mostra o quanto você está fazendo: agache ({Crouch}) ou ande devagar para ficar quieto.",
+                TutorialWhen.LoudNoise, "", 1f, 12f, ""));
 
             // ---- mundo
             list.Add(Make("interact", "Interagir", "Olhe para portas, itens e objetos e aperte {Interact} para interagir.",
@@ -47,7 +49,9 @@ namespace HorrorFPS
             // ---- jogo
             list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para ver seus objetivos na tela. A lista completa fica no menu de pausa.",
                 TutorialWhen.ObjectiveStarted, "", 5f, 9f, ""));
-            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos e os controles.",
+            list.Add(Make("journal", "Diário", "Notas, diários e gravações que você acha ficam guardados. Aperte {Pause} e escolha Diário para reler quando quiser.",
+                TutorialWhen.JournalUnlocked, "", 4f, 10f, ""));
+            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos, o diário e os controles.",
                 TutorialWhen.GameStart, "", 120f, 8f, ""));
 
             // ---- avisos (não são comandos: ficam fora da lista Como jogar)
