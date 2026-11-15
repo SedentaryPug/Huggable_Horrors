@@ -212,7 +212,9 @@ namespace HorrorFPS
         public const string VisibilityShadow = "na sombra";
         public const string VisibilityLit = "iluminado";
         public const string VisibilityLamp = "lanterna ligada";
+        public const string TipsOnPause = "Dicas na tela: Ligado e pausa";
 
+        public const string TipContinue = "Aperte {0} para continuar";
         // Dicas / Como jogar
         public const string HowToPlayButton = "Como jogar";
         public const string HowToPlayTitle = "COMO JOGAR";

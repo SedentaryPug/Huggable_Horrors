@@ -17,17 +17,24 @@ namespace HorrorFPS
 
         public HowToPlayPanel(RectTransform pageRoot, Action onBack) : base(pageRoot)
         {
-            AddBottomButton(TipsText(), delegate { ToggleTips(); }, 330f, out tipsLabel);
+            AddBottomButton(TipsText(), delegate { ToggleTips(); }, 400f, out tipsLabel);
             Text unused;
-            AddBottomButton(UIText.TipsReplay, delegate { ReplayTips(); }, 220f, out unused);
+            AddBottomButton(UIText.TipsReplay, delegate { ReplayTips(); }, 200f, out unused);
             AddBackButton(onBack);
         }
 
-        static string TipsText() { return GameSettings.TipsEnabled ? UIText.TipsOn : UIText.TipsOff; }
+        static string TipsText()
+        {
+            if (!GameSettings.TipsEnabled) return UIText.TipsOff;
+            return GameSettings.TipsPause ? UIText.TipsOnPause : UIText.TipsOn;
+        }
 
+        /// <summary>Desligado → Ligado → Ligado e pausa → Desligado.</summary>
         void ToggleTips()
         {
-            GameSettings.TipsEnabled = !GameSettings.TipsEnabled;
+            if (!GameSettings.TipsEnabled) { GameSettings.TipsPause = false; GameSettings.TipsEnabled = true; }
+            else if (!GameSettings.TipsPause) GameSettings.TipsPause = true;
+            else GameSettings.TipsEnabled = false;
             tipsLabel.text = TipsText();
         }
 
