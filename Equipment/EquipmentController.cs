@@ -72,6 +72,7 @@ namespace HorrorFPS
         }
 
         PlayerContext player;
+        bool wasDead;
         InventoryOwner owner;
         ItemInput input;
         InventoryScreen screen;
@@ -161,6 +162,7 @@ namespace HorrorFPS
         bool Usable(HandState h)
         {
             if (h.item == null) return false;
+            if (player != null && player.IsDead) return false;          // morto: as mãos somem da tela
             HandSide two = TwoSide;
             return two == HandSide.None || two == h.side;
         }
@@ -285,6 +287,14 @@ namespace HorrorFPS
             float dt = Time.deltaTime;
             if (Time.unscaledTime >= nextSync) { nextSync = Time.unscaledTime + 0.4f; Sync(); }
 
+            bool dead = player.IsDead;
+            if (dead != wasDead)
+            {
+                wasDead = dead;
+                ApplyStow();                    // esconde (ou volta a mostrar) o modelo das mãos
+                if (dead) { CancelCharge(right); CancelCharge(left); }
+            }
+
             TickLamp(dt);
             TickAim(dt);
             TickPrecision(dt);
@@ -294,7 +304,7 @@ namespace HorrorFPS
             TickMuzzle(right);
             TickMuzzle(left);
 
-            if (!Allowed()) { twoDown = -1f; CancelCharge(right); CancelCharge(left); return; }
+            if (dead || !Allowed()) { twoDown = -1f; CancelCharge(right); CancelCharge(left); return; }
 
             if (ItemInput.Pressed(input.ToggleLight)) ToggleLamp();
             TickTwoHandKey();
