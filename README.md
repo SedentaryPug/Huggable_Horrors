@@ -90,6 +90,7 @@ Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções)
 | [`HorrorFPS-Visibilidade`](Docs/HorrorFPS-Visibilidade.md) | visibilidade do jogador para o Perseguidor: agachar, sombra e lanterna, zonas de visibilidade, indicador na tela |
 | [`HorrorFPS-Audio`](Docs/HorrorFPS-Audio.md) | música e ambiente por área (zonas de áudio), camada de tensão, passos por tipo de piso, rádio com legenda, volumes nas Opções |
 | [`HorrorFPS-Iluminacao-Niveis`](Docs/HorrorFPS-Iluminacao-Niveis.md) | luz que falha (sanidade, medo, roteiro), atalhos que se abrem, alavanca, níveis Túneis e Casa de força, menu para criar um nível novo |
+| [`HorrorFPS-Distracoes`](Docs/HorrorFPS-Distracoes.md) | garrafa, sinalizador e rádio que o jogador joga para atrair o monstro (barulho do objeto, não do jogador); o monstro aprende iscas repetidas |
 | [`Menus`](Docs/Menus.md) | todos os menus do Editor |
 | [`Contribuindo`](Docs/Contribuindo.md) | convenções e cuidados antes de mexer no código |
 

@@ -90,7 +90,7 @@ A **raiz do repositório é o conteúdo da pasta do framework** (`Assets/HorrorF
 | `SmartEvents/` (+`Editor/`) | eventos com condições | **`SmartEvents`** (campos `_camelCase`) |
 | `Characters/`, `Animation/` | personagens selecionáveis; corpo/animação visível aos outros jogadores | `HorrorFPS` |
 | `UI/` (+`Inventory/`) | menus, HUD, inventário (tudo por código) | `HorrorFPS` |
-| `Editor/` (raiz) | ferramentas de itens/personagens/jogador e `ProjectPaths` (17 arquivos) e assistente de setup (os `HorrorFPSSetup*`: o assistente do jogo de demonstração, dividido em Levels, MoreLevels, NewLevel, Audio, StalkerTest e FullDemo) | `HorrorFPS.ItemsEditor` / `HorrorFPS.EditorTools` (`ProjectPaths`: `HorrorFPS`) |
+| `Editor/` (raiz) | ferramentas de itens/personagens/jogador e `ProjectPaths` (inclui `DistractionItems`) e assistente de setup (os `HorrorFPSSetup*`: o assistente do jogo de demonstração, dividido em Levels, MoreLevels, NewLevel, Audio, Distractions, StalkerTest e FullDemo; todos em `HorrorFPS.EditorTools`) | `HorrorFPS.ItemsEditor` / `HorrorFPS.EditorTools` (`ProjectPaths`: `HorrorFPS`) |
 | `Editor/Animation`, `Dialogue`, `Props`, `Revive`, `Stalker` | ferramentas por sistema | `HorrorFPS` |
 | `Prefabs/`, `Scenes/`, `Materials/`, `Resources/HorrorFPS/`, `Generated/` | assets (seção 9) | — |
 | `Docs/`, `Explicações de como usar/`, `README.md` | cópias dos docs (o `README.md` é o doc de arquitetura) | — |
@@ -351,7 +351,7 @@ Passos prontos: `Activate`, `Animator`, `Audio`, `CameraMove`, `CameraShake`, `E
 
 - **`ItemData`** (ScriptableObject, menu "HorrorFPS/Item"): `id` (vazio = nome do asset), `displayName`/`description`/`readText` (`ItemTextSet`: texto + variantes condicionais), `category` (flags `ItemCategory`), `icon`, `color`, `shape` (`ItemShape`, grade estilo RE4), `allowRotation`, `listSlots`, `stackable`/`maxStack`, `tabRule`, `map`, `worldPrefab`, `inspectPrefab`, `canDrop`, `canInspect`, `equip` (`ItemEquip`), `equipSlot`, `actions` (`ItemAction[]`: `id`, `label`, `consume`, `requires`, `blockedReason`, `effects`, `sound`).
 - **Efeitos** (`ItemEffect`, `kind`): `RestoreStat`, `StatModifier`, `SetVariable`, `AddVariable`, `Sanity`, `HeartRate`, `Noise`, `CameraShake`, `SetItemFlag`, `Message` (chama `IItemUseHandler.OnItemMessage(ctx, key)`), `Recoil`. Contexto: `ItemUseContext { owner, item, action; UserObject, Player, Stats, Sanity, Heart, HeadBob }`. `IItemUseHandler { bool OnBeforeUse(ItemUseContext ctx) /*true cancela*/; void OnItemMessage(ItemUseContext ctx, string key); }` — implemente em qualquer script do jogador ou de filhos.
-- **`ItemEquip`**: `kind` (`EquipKind`: `None`, `Flashlight`, `Melee`, `Firearm`), `heldPrefab/heldPosition/heldEuler/heldScale`, dano/alcance/ruído (corpo a corpo), luz e bateria (lanterna), tiros/s, `automatic`, `pellets`, `spread`, `magazineSize`, `ammoItem`, recarga (arma). Estado por instância: `EquipState` (`Ready`, `Lit`, `Battery`, `Ammo`, `Durability`; `AmmoOf`, `BatteryOf`, `DurabilityOf`, `Status`).
+- **`ItemEquip`**: `kind` (`EquipKind`: `None`, `Flashlight`, `Melee`, `Firearm`, `Throwable`), `heldPrefab/heldPosition/heldEuler/heldScale`, dano/alcance/ruído (corpo a corpo), luz e bateria (lanterna), tiros/s, `automatic`, `pellets`, `spread`, `magazineSize`, `ammoItem`, recarga (arma), arremessáveis (`throwEffect` `Shatter`/`Flare`/`Radio`, `throwPrefab`, `throwSpeed`, `throwNoise`, `lureSeconds`, `lureNoise`, `lureInterval`, `lureAlwaysInvestigate`, `lureKey`; ver `Docs/HorrorFPS-Distracoes.md`). Estado por instância: `EquipState` (`Ready`, `Lit`, `Battery`, `Ammo`, `Durability`; `AmmoOf`, `BatteryOf`, `DurabilityOf`, `Status`).
 - **`ItemInstance`** (um item no mundo/mochila): `uid`, `data`, `stack`, `rotation`, `gridPos`, `hotkey`, `container`; flags (`HasFlag/SetFlag`) e contadores (`GetCounter/SetCounter/AddCounter`); `Clone`, `ToSave/FromSave`; `GetName/GetDescription/GetReadText(Component viewer)` (texto depende de quem olha: sanidade/flags).
 - **`ItemDatabase.Find(id)`** — carrega todos os `ItemData` de qualquer pasta `Resources` (`Resources.LoadAll<ItemData>("")`). **O asset precisa estar numa pasta `Resources`.**
 - **`InventoryOwner`** (um por jogador; também em baús/gavetas; `ISaveable`, chave `inventory_owner`):
@@ -365,7 +365,7 @@ Passos prontos: `Activate`, `Animator`, `Audio`, `CameraMove`, `CameraShake`, `E
   string ExportTransfer(); void ImportTransfer(string json, bool clearFirst = true)      // troca de personagem
   ```
   Contêineres: `ItemContainer` (abstrato; `GridContainer`, `ListContainer`), `ContainerId`, `Tab` (`InventoryTab`: Keys, Records, Maps…), `TryAdd`, `CanFit`, eventos `Changed/ItemAdded/ItemRemoved/Overflowed`. Itens largados: `DropRegistry` (chave `drops_v1`).
-- **`Hotbar`**, `EquipmentController` (`[PlayerModule("Equipamento", 0)]`, implementa `IItemUseHandler`), `HitTarget` (alvo de golpe), `IItemHittable` (`ItemHit.cs`).
+- **`Hotbar`**, `EquipmentController` (`[PlayerModule("Equipamento", 0)]`, implementa `IItemUseHandler`), `HitTarget` (alvo de golpe), `IItemHittable` (`ItemHit.cs`), `ThrownDistraction` (o objeto jogado que chama o monstro: garrafa, sinalizador, rádio; `Launch`, `Alive`, `LureStarted/LureEnded`) e `NoiseSourceTag` em `Body/` (nome da fonte de um barulho do mundo, lido por `StalkerSenses`).
 
 ### 5.11 Sanidade — `Sanity/`
 
@@ -390,7 +390,7 @@ Componentes de cena: `SanityZone` (volume Trigger que drena ou cura a sanidade d
 ### 5.12 Ruído — `Body/NoiseSystem.cs`
 
 ```
-enum NoiseKind { Footstep, Land, Heartbeat, Breath, Gasp, Item, Impact, Explosion, Voice, Custom, Gunshot }
+enum NoiseKind { Footstep, Land, Heartbeat, Breath, Gasp, Item, Impact, Explosion, Voice, Custom, Gunshot, Distraction }
 struct NoiseEvent { Vector3 position; float radius; NoiseKind kind; GameObject source; float time; bool IsFrom(Transform) }
 interface INoiseHearer { void OnNoiseHeard(NoiseEvent noise); }   // no mesmo objeto (ou pai) de um Collider dentro do raio; ou use NoiseListener
 static class NoiseSystem
@@ -1056,12 +1056,13 @@ Arquivos: LightFailure
 
 Tipos em arquivo de outro nome: (nenhum). `LightFailure` exige um `SwitchableLights` no mesmo objeto (`RequireComponent`) e põe um `SanityLight` em cada luz dele (se `Viewer Sanity Effect`).
 
-**Body/**  (18 arquivos)
+**Body/**  (22 arquivos)
 
-Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, FootstepAudio, HeartbeatComponent, NoiseListener, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, ProceduralAudio, ProceduralAudio.Ambience, SoundEmitter, VisibilityZone
+Arquivos: BreathingComponent, CameraImpulse, CameraImpulseInteractable, CameraImpulseSource, DamageReaction, DynamicHeadBob, FootstepAudio, HeartbeatComponent, ItemTremor, NoiseListener, NoiseSourceTag, NoiseSurface, NoiseSystem, PlayerAudio, PlayerMotionProbe, PlayerVisibility, PoseHeartTremor, ProceduralAudio, ProceduralAudio.Ambience, ProceduralAudio.Distraction, SoundEmitter, VisibilityZone
 
 Tipos em arquivo de outro nome:
 - `NoiseSystem.cs` define enum `NoiseKind`, struct `NoiseEvent`, interface `INoiseHearer`
+- `ProceduralAudio.Distraction.cs`: sons gerados das iscas (`GlassBreak`, `FlareIgnite`, `FlareHiss`); a classe é `partial`
 - `PlayerAudio.cs` define enum `AudioMode`
 - `PlayerMotionProbe.cs` define enum `NoiseLevel` (Silent/Quiet/Normal/Loud: o que o medidor de ruído mostra)
 - `PlayerVisibility.cs` define enum `VisibilityLevel` (Hidden/Low/Normal/High: o que o indicador de visibilidade mostra)
@@ -1099,9 +1100,9 @@ Tipos em arquivo de outro nome:
 - `DialogueText.cs` define class `DialogueStyle`
 - `DialogueView.cs` define struct `DialogueChoiceItem`
 
-**Editor/**  (23 arquivos)
+**Editor/**  (27 arquivos)
 
-Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DemoProps, EquipPresets, HorrorFPSSetup, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.Showcase, HorrorFPSSetup.Showcase.Zones, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
+Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DistractionItems, EquipPresets, HorrorFPSMenu, HorrorFPSSetup, HorrorFPSSetup.Audio, HorrorFPSSetup.Distractions, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.MoreLevels, HorrorFPSSetup.NewLevel, HorrorFPSSetup.StalkerTest, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
 
 Tipos em arquivo de outro nome:
 - `EquipPresets.cs` define enum `EquipPreset`
@@ -1129,9 +1130,9 @@ Arquivos: ReviveMenu
 
 Arquivos: StalkerMenu, StalkerTreeAssetEditor, StalkerTreeMenu, StalkerTreeWindow
 
-**Equipment/**  (4 arquivos)
+**Equipment/**  (5 arquivos)
 
-Arquivos: EquipmentController, EquipmentHUD, HitTarget, ItemHit
+Arquivos: EquipmentController, EquipmentHUD, HitTarget, ItemHit, ThrownDistraction
 
 Tipos em arquivo de outro nome:
 - `ItemHit.cs` define interface `IItemHittable`
@@ -1162,7 +1163,7 @@ Tipos em arquivo de outro nome:
 - `ItemCondition.cs` define enum `ItemConditionKind`, struct `ItemViewContext`, class `ConditionalText`, class `ItemTextSet`
 - `ItemData.cs` define enum `ItemCategory`, class `ItemAction`
 - `ItemEffect.cs` define enum `ItemEffectKind`, class `ItemUseContext`, interface `IItemUseHandler`
-- `ItemEquip.cs` define enum `EquipKind`, class `EquipState`
+- `ItemEquip.cs` define enum `EquipKind`, enum `ThrowEffect`, enum `HandGrip`, class `EquipState`
 - `ItemInstance.cs` define class `ItemSave`
 
 **Player/**  (5 arquivos)

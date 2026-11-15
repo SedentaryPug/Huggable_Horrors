@@ -23,6 +23,7 @@ As duas últimas (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Visibili
 | Menu | Arquivo |
 |---|---|
 | `Tools > Horror FPS > Items > Item Studio` | `Editor/ItemStudioWindow.cs` |
+| `Tools > Horror FPS > Items > Create Distraction Items` | `Editor/DistractionItems.cs` |
 
 ### Dialogue — diálogos
 

@@ -79,6 +79,10 @@ Para testar: espingarda numa mão só (clique escolhe a mão ao equipar), atirar
 | `Editor/ItemEquipDrawer.cs` | mostra `grip` e os campos do golpe forte; Fase 3: seção "Precisão e arma pesada" |
 | `Editor/EquipPresets.cs` | Fase 3: valores de precisão e de uma mão só nos botões Pistola / Espingarda / Automática |
 
+## Arremessáveis (garrafa, sinalizador, rádio)
+
+O tipo de equipamento `Throwable` usa o mesmo botão de mão: **tocar** joga perto, **segurar** carrega a força e **soltar** joga uma unidade (a mão mostra o braço indo para trás e voltando). O objeto jogado chama o monstro com o barulho dele mesmo, não do jogador. Detalhes, campos e como montar: [`HorrorFPS-Distracoes`](HorrorFPS-Distracoes.md).
+
 ## Limitações conhecidas
 
 - `PlayerAnimItemAdapter` / animação do corpo só olham o slot `mao` (direita): item só na mão esquerda não dispara a animação de segurar, e o golpe forte não tem animação própria no corpo.

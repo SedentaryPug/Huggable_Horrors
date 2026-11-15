@@ -99,6 +99,10 @@ Três barrinhas no canto superior direito (abaixo do lugar dos avisos; o indicad
 
 Os limites ficam no `PlayerMotionProbe` (`Quiet Below` 2,5 m e `Loud From` 8 m, em raio de barulho).
 
+### O barulho que o jogador joga (iscas)
+
+Barulho de propósito, longe do jogador: garrafa, sinalizador e rádio emitem `NoiseKind.Distraction` **a partir do objeto jogado** (não do jogador), então o monstro vai ao ponto em vez de ir atrás de quem jogou. Ver [`HorrorFPS-Distracoes`](HorrorFPS-Distracoes.md).
+
 ### Dicas de tutorial relacionadas
 
 - `crouch` (já existia) agora explica que agachar faz menos barulho e deixa o jogador mais difícil de ver.
