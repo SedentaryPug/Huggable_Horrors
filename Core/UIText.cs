@@ -165,11 +165,9 @@ namespace HorrorFPS
         public const string ObjectivesEmpty = "Nenhum objetivo ainda.";
 
         // Diário
-        public const string JournalButton = "Diário";
-        public const string JournalTitle = "DIÁRIO";
         public const string JournalRead = "Ler";
         public const string JournalUnreadable = "Ilegível";
-        public const string JournalUnlocked = "Novo registro no diário: {0}";
+        public const string JournalUnlocked = "Novo registro (Inventário > Registros): {0}";
         public const string JournalAlready = "Já está no diário: {0}";
         public const string JournalKindNote = "Nota";
         public const string JournalKindDiary = "Diário";
@@ -179,32 +177,44 @@ namespace HorrorFPS
         public const string JournalHeaderDiary = "DIÁRIOS";
         public const string JournalHeaderRecording = "GRAVAÇÕES";
         public const string JournalHeaderDocument = "DOCUMENTOS";
+        public const string RecordsHeader = "REGISTROS";
         public const string JournalEmpty = "Nenhum registro ainda.\nNotas, diários e gravações que você achar ficam guardados aqui.";
         public const string JournalCount = "{0} registro(s)";
         public const string JournalCountUnread = "{0} registro(s)  •  {1} novo(s)";
         public const string JournalNewTag = "● novo";
-        public const string JournalMarkAllRead = "Marcar tudo como lido";
-        public const string JournalPrevious = "Anterior";
-        public const string JournalNext = "Próximo";
-        public const string JournalToList = "Voltar à lista";
-        public const string JournalNoText = "(sem texto)";
         public const string JournalReaderHint = "{0} fecha  •  Setas ou roda do mouse rolam o texto";
         public const string JournalReaderHintPad = "{0} fecha  •  Analógico direito rola o texto";
 
-        // Ruído (agachar silencioso)
-        public const string NoiseIndicator = "Indicador de ruído";
+        // Ruído e visibilidade (agachar silencioso)
+        public const string NoiseIndicator = "Indicadores de furtividade";
+        public const string SoftDamageFx = "Efeitos de dano suaves";
+        public const string AudioSection = "Áudio";
+        public const string OpenAudio = "Abrir";
+        public const string MasterVolume = "Volume geral";
+        public const string MusicVolume = "Música";
+        public const string AmbienceVolume = "Ambiente e efeitos";
         public const string NoiseSilent = "Silencioso";
         public const string NoiseQuiet = "Baixo";
         public const string NoiseNormal = "Médio";
         public const string NoiseLoud = "Alto";
         public const string NoiseCrouched = "Agachado";
+        public const string VisibilityHidden = "Escondido";
+        public const string VisibilityLow = "Pouco visível";
+        public const string VisibilityNormal = "Visível";
+        public const string VisibilityHigh = "Muito visível";
+        public const string VisibilityCrouched = "agachado";
+        public const string VisibilityShadow = "na sombra";
+        public const string VisibilityLit = "iluminado";
+        public const string VisibilityLamp = "lanterna ligada";
 
         // Dicas / Como jogar
         public const string HowToPlayButton = "Como jogar";
         public const string HowToPlayTitle = "COMO JOGAR";
         public const string TipHeader = "DICA";
         public const string TipsOn = "Dicas na tela: Ligado";
+        public const string TipsOnPause = "Dicas na tela: Ligado e pausa";
         public const string TipsOff = "Dicas na tela: Desligado";
+        public const string TipContinue = "Aperte {0} para continuar";
         public const string TipsReplay = "Rever dicas";
         public const string TipsReplayDone = "As dicas vão aparecer de novo";
         public const string HowToPlayEmpty = "Nenhuma dica cadastrada.";

@@ -31,6 +31,17 @@ namespace HorrorFPS
         JournalUnlocked = 11
     }
 
+    /// <summary>Se a dica congela o jogo até o jogador apertar o botão de continuar.</summary>
+    public enum TutorialPause
+    {
+        /// <summary>Segue a opção do jogador (Pausa > Como jogar > Dicas na tela).</summary>
+        UseSetting = 0,
+        /// <summary>Sempre congela (use em dicas que o jogador não pode perder).</summary>
+        Always = 1,
+        /// <summary>Nunca congela (dicas curtas ou em momentos de tensão).</summary>
+        Never = 2
+    }
+
     /// <summary>
     /// Uma dica de tutorial: aparece na tela UMA vez para cada jogador, explicando como executar uma ação, e fica sempre
     /// consultável em Pausa > Como jogar. No texto, {Nome} vira o botão do jogador no dispositivo que ele está usando
@@ -60,7 +71,9 @@ namespace HorrorFPS
         public float threshold = 0.25f;
 
         [Header("Exibição")]
-        [Tooltip("Segundos na tela.")]
+        [Tooltip("Congela o jogo no meio da tela até o jogador apertar o botão de continuar. 'Use Setting' segue a opção do jogador; 'Always' e 'Never' ignoram a opção.")]
+        public TutorialPause pause = TutorialPause.UseSetting;
+        [Tooltip("Segundos na tela (só para dicas que não congelam o jogo: as que congelam ficam até o jogador fechar).")]
         public float seconds = 8f;
         [Tooltip("Ação do jogador que fecha a dica logo depois de ser feita (Move, Jump, Sprint, Crouch, Interact, Grab...). Vazio = só pelo tempo.")]
         public string dismissAction = "";

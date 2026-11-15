@@ -79,7 +79,7 @@ namespace HorrorFPS
         {
             if (!EditorUtility.DisplayDialog("Registros de exemplo",
                     "Vai acrescentar 3 registros de exemplo ao JournalCatalog (se ainda não existirem). Apague-os do catálogo quando terminar de testar.\n\n" +
-                    "Para testar sem cena: aperte Play e, num script, chame Journal.Unlock(\"sample_diario\"). Eles também aparecem em Pausa > Diário.",
+                    "Para testar sem cena: aperte Play e, num script, chame Journal.Unlock(\"sample_diario\"). Eles também aparecem em Inventário > Registros.",
                     "Criar", "Cancelar"))
                 return;
 

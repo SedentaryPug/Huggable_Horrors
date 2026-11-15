@@ -8,8 +8,11 @@ namespace HorrorFPS
     ///
     /// Como usar: ponha no objeto do piso (ou num pai do collider do piso). Para um tapete sobre um piso comum, crie uma caixa fina
     /// sobre o chão com um Collider marcado como Trigger e este componente: vale o piso mais próximo dos pés. A caixa precisa ser BAIXA (até uns 0,3 m de altura, deitada no chão): o raio de leitura sai 0,4 m acima dos pés e não
-    /// enxerga um collider dentro do qual ele começa. O som do passo (clipe) continua sendo coisa do seu sistema de áudio: aqui só
-    /// mudamos o que a IA ouve.
+    /// enxerga um collider dentro do qual ele começa.
+    ///
+    /// O mesmo piso decide o SOM do passo (FootstepAudio): o tipo escolhido em 'Preset' escolhe o passo gerado por código (tapete macio,
+    /// metal ressoando, vidro estalando...) e, se você preencher 'Footsteps', os seus clipes valem no lugar. Assim o que o jogador ouve
+    /// e o que a IA ouve combinam.
     /// </summary>
     [AddComponentMenu("HorrorFPS/Body/Noise Surface")]
     public class NoiseSurface : MonoBehaviour
@@ -32,7 +35,15 @@ namespace HorrorFPS
         [Tooltip("Multiplica o raio do barulho dos passos neste piso. 0,5 = metade do alcance; 2 = o dobro. Agachado continua mais silencioso que andando.")]
         [SerializeField, Range(0.05f, 4f)] float footstepMultiplier = 1f;
 
+        [Tooltip("Opcional: seus próprios clipes de passo e pouso neste piso (FootstepSet). Vazio = passo gerado pelo Preset acima.")]
+        [SerializeField] FootstepSet footsteps;
+
         static readonly RaycastHit[] hits = new RaycastHit[12];
+
+        /// <summary>Tipo do piso (Custom = sem tipo definido: o passo soa como o piso padrão da área).</summary>
+        public Preset Kind { get { return preset; } set { preset = value; } }
+        /// <summary>Clipes próprios deste piso (pode ser nulo).</summary>
+        public FootstepSet Footsteps { get { return footsteps; } }
 
         public float FootstepMultiplier { get { return footstepMultiplier; } set { footstepMultiplier = Mathf.Clamp(value, 0.05f, 4f); } }
 
@@ -64,10 +75,17 @@ namespace HorrorFPS
         /// </summary>
         public static float MultiplierAt(Vector3 feet, int mask)
         {
+            NoiseSurface s = Nearest(feet, mask);
+            return s != null ? s.footstepMultiplier : 1f;
+        }
+
+        /// <summary>O NoiseSurface mais próximo sob 'feet' (nulo se não há). É o que o FootstepAudio usa para saber que som tocar.</summary>
+        public static NoiseSurface Nearest(Vector3 feet, int mask)
+        {
             Vector3 origin = feet + Vector3.up * 0.4f;
             int n = Physics.RaycastNonAlloc(origin, Vector3.down, hits, 1f, mask, QueryTriggerInteraction.Collide);
             float best = float.MaxValue;
-            float result = 1f;
+            NoiseSurface result = null;
             for (int i = 0; i < n; i++)
             {
                 if (hits[i].distance >= best) continue;
@@ -76,7 +94,7 @@ namespace HorrorFPS
                 NoiseSurface s = c.GetComponentInParent<NoiseSurface>();
                 if (s == null || !s.isActiveAndEnabled) continue;
                 best = hits[i].distance;
-                result = s.footstepMultiplier;
+                result = s;
             }
             return result;
         }

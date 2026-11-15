@@ -76,7 +76,8 @@ Um cartão no lado esquerdo da tela explicando **como executar uma ação**, com
 
 - **Aparece uma única vez para cada jogador** (no co-op local, cada um vê as dicas dele, no dispositivo que ele usa: teclado mostra `Espaço`, controle mostra `A`). O "já vi" fica no perfil do computador (`PlayerPrefs`), vale para qualquer save: um Novo Jogo não repete.
 - Uma dica por vez, na ordem pedida. Fica parada com o jogo pausado, o inventário aberto ou em cutscene. Fecha logo depois de o jogador fazer a ação ensinada (`Dismiss Action`).
-- **Pausa > Como jogar**: a lista de todos os comandos, com os botões do jogador que abriu o menu. É onde ele relê o que a tela mostrou uma vez. Na mesma página: **Dicas na tela: Ligado/Desligado** (para quem já conhece o jogo) e **Rever dicas** (esquece o que já foi visto).
+- **Dicas que pausam**: com a opção ligada, a dica **congela o jogo** (para todos os jogadores), vai para o meio da tela com a tela escurecida e o aviso **"Aperte E / X para continuar"** (o botão do dispositivo de quem vê a dica); só fecha quando o dono da dica aperta esse botão (E/X, Backspace/B ou o botão de pegar). O jogo e o controle voltam logo depois. Se o jogador morrer ou começar uma cutscene, a dica é descartada e o jogo descongela sozinho. O congelamento usa `PauseManager.Hold(chave)` (não abre o menu de pausa; abrir a pausa por cima não solta nada).
+- **Pausa > Como jogar**: a lista de todos os comandos, com os botões do jogador que abriu o menu. É onde ele relê o que a tela mostrou uma vez. Na mesma página: o botão **Dicas na tela** alterna **Desligado → Ligado → Ligado e pausa** (para quem já conhece o jogo ou quer ler com calma; padrão: Ligado e pausa) e **Rever dicas** (esquece o que já foi visto).
 - O texto troca `{Nome}` pelo botão. Nomes: `Move`, `Look`, `Jump`, `Sprint`, `Crouch`, `Interact`, `Grab`, `GrabDistance`, `Pause`, `Inventory`, `Objectives`, `Reload`, `Flashlight`, `Aim`, `HoldBreath`, `TwoHand`, `Inspect`, `HandLeft`, `HandRight`, `Hotbar`. Os botões respeitam o remapeamento (as ações do jogo base). As ações do inventário/mãos (`ItemInput`) ainda não são remapeáveis; o texto mostra o botão fixo delas.
 
 ### Dicas padrão
@@ -86,7 +87,7 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 | Id | Quando aparece |
 |---|---|
 | `move` | 2,5 s depois de o jogador aparecer (some ao se mexer) |
-| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho |
+| `sprint`, `jump`, `crouch` | depois de andar 8 s, 18 s e 30 s no total (parado não conta). `crouch` também explica que agachar faz menos barulho e deixa mais difícil de ver (ver `HorrorFPS-Visibilidade.md`) |
 | `noise` | a primeira vez que o jogador faz barulho **alto** (correndo, piso barulhento): explica o medidor de ruído |
 | `interact`, `grab` | a primeira vez que aparece uma dica de interação dessa ação |
 | `ladder` | **manual** (volume `Tutorial Trigger` perto da escada) |
@@ -100,7 +101,7 @@ Valem sem configurar nada (`Tutorials/TutorialDefaults.cs`):
 
 ### Mudar textos, gatilhos ou acrescentar dicas
 
-`Tools > Horror FPS > Tutorials > Create Tutorial Catalog` cria `Resources/HorrorFPS/TutorialCatalog.asset` **já com as dicas padrão** para editar. Uma dica com o mesmo `Id` de uma padrão a **substitui** (desmarque `Enabled` para desligar uma); `Id` novo **acrescenta**. Campos principais: `Title`, `Text`, `When` (gatilho), `Filter`, `Delay`, `Threshold`, `Seconds`, `Dismiss Action`, `In Menu`.
+`Tools > Horror FPS > Tutorials > Create Tutorial Catalog` cria `Resources/HorrorFPS/TutorialCatalog.asset` **já com as dicas padrão** para editar. Uma dica com o mesmo `Id` de uma padrão a **substitui** (desmarque `Enabled` para desligar uma); `Id` novo **acrescenta**. Campos principais: `Title`, `Text`, `When` (gatilho), `Filter`, `Delay`, `Threshold`, `Pause` (`Use Setting` segue a opção do jogador; `Always` sempre congela; `Never` nunca congela: os avisos de ferimento, fôlego e sanidade são `Never`), `Seconds` (só para as que não pausam), `Dismiss Action`, `In Menu`.
 
 | `When` | Dispara | `Filter` |
 |---|---|---|
@@ -146,11 +147,11 @@ Para eventos, `Delay` é a espera depois do evento.
 | `Tutorials/HowToPlayPanel.cs`, `UI/InfoPanelBase.cs` | página "Como jogar" do menu de pausa (e a base das páginas de leitura) |
 | `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
 
-Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal ficaram mais baixos, 54 em vez de 64, para caberem 10 com o Diário), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
+Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`, `TipsPause`), `Core/PauseManager.cs` (`Hold`/`ReleaseHold`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal têm 56 de altura), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
 
 ## 4. Limites conhecidos
 
 - O **menu principal** (antes de começar a partida) não tem a página "Como jogar": as dicas existem dentro do jogo, no menu de pausa.
 - A tecla de objetivos (**J / R3**) vive no `ItemInput` e, como as outras ações dele, não aparece no painel de remapeamento (para mudar, edite os caminhos em `ItemInput.Build()`).
 - Se o jogador trocar de teclado para controle no meio de uma dica, o cartão já aberto não muda de texto (a lista Como jogar, ao ser aberta, já mostra os botões do dispositivo atual).
-- O diário (reler notas, diários e gravações achados) existe em **Pausa > Diário**: ver `HorrorFPS-Diario-Ruido.md`.
+- O diário (reler notas, diários e gravações achados) existe em **Inventário > Registros**: ver `HorrorFPS-Diario-Ruido.md`.

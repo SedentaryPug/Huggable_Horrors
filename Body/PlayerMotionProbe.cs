@@ -93,6 +93,10 @@ namespace HorrorFPS
         public float LastStepTime { get; private set; }
         /// <summary>Multiplicador do piso sob os pés (NoiseSurface); 1 = piso comum.</summary>
         public float SurfaceMultiplier { get { return surfaceMultiplier; } }
+        /// <summary>Posição dos pés (de onde se lê o piso). Usada pelo FootstepAudio.</summary>
+        public Vector3 FeetPosition { get { return body != null ? body.position : transform.position; } }
+        /// <summary>Camadas que contam como chão.</summary>
+        public int GroundMask { get { return groundMask.value; } }
         /// <summary>Produto dos modificadores de SetNoiseModifier.</summary>
         public float NoiseModifier { get { return noiseModifier; } }
         /// <summary>0 parado, ~0,3 andando, 1 correndo (suavizado).</summary>

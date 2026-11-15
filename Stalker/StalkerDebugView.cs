@@ -311,7 +311,12 @@ namespace HorrorFPS
 
                 float dist = Vector3.Distance(eye, pts[1]);
                 Vector3 toP = Flat(pts[1] - eye);
-                bool inRange = dist <= t.visionRange;
+                // agachado / na sombra / lanterna ligada mudam o alcance e a velocidade com que ele nota (PlayerVisibility)
+                StalkerTarget tg = StalkerBridge.TargetOf(pl.transform);
+                bool weighed = tg != null && b.Senses != null;
+                float scale = weighed ? b.Senses.VisibilityScale(tg) : 1f;
+                float range = weighed ? b.Senses.VisionRangeFor(tg, t) : t.visionRange;
+                bool inRange = dist <= range;
                 bool inCone = toP.sqrMagnitude < 0.0001f || Vector3.Angle(fwd, toP) <= half;
                 int seen = 0;
                 if (inRange && inCone)
@@ -328,7 +333,8 @@ namespace HorrorFPS
                 else { state = string.Format("VISÍVEL {0}/3", seen); c = new Color(1f, 0.2f, 0.2f, 1f); }
 
                 if (dist <= t.visionRange * 1.5f) Line(eye, pts[1], c);
-                AddLabel(feet + Vector3.up * 2.05f, string.Format("J{0}  {1:0.0} m  {2}", idx, dist, state), c);
+                string vis = Mathf.Abs(scale - 1f) > 0.05f ? string.Format("   visibilidade x{0:0.00} (alcance {1:0} m)", scale, range) : "";
+                AddLabel(feet + Vector3.up * 2.05f, string.Format("J{0}  {1:0.0} m  {2}{3}", idx, dist, state, vis), c);
             }
         }
 

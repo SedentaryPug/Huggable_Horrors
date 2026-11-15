@@ -471,7 +471,7 @@ namespace HorrorFPS
             AnimatorState climb = OptionalState(sm, "Climb", 3, 5, k.Get(LocoRole.Climb));
             UseSpeedParam(climb, PlayerAnimParams.ClimbRate);   // 0 = parado no degrau, negativo = descendo (clipe ao contrário)
             OptionalState(sm, "Climb_Top", 4, 5, k.Get(LocoRole.ClimbTop));   // ainda sem transição: falta o aviso "chegou ao topo"
-            AnimatorState dead = Add(sm, "Dead", 4, 6);
+            AnimatorState dead = ClipState(sm, "Dead", 4, 6, k.Get(LocoRole.Death));   // sem clipe de morte: o estado fica vazio e o DeathSequence tomba o corpo por código
 
             float landExit = landClip != null ? Mathf.Clamp(0.7f / Mathf.Max(0.1f, landClip.length), 0.15f, 0.85f) : 0.8f;
 
@@ -545,7 +545,7 @@ namespace HorrorFPS
             t = Tr(climb, loco, 0.2f, -1f); IfNot(t, PlayerAnimParams.Climbing); Gt(t, PlayerAnimParams.Speed, 0.15f);
             t = Tr(climb, idle, 0.2f, -1f); IfNot(t, PlayerAnimParams.Climbing);
 
-            // ---- morte / reviver (estado vazio: ponha o clipe de morte quando tiver)
+            // ---- morte / reviver (com clipe de morte ele toca uma vez e fica no último quadro; sem clipe o estado é vazio)
             t = Any(sm, dead, 0.1f, false); If(t, PlayerAnimParams.Dead);
             t = Tr(dead, idle, 0.2f, -1f); IfNot(t, PlayerAnimParams.Dead);
         }

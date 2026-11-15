@@ -88,6 +88,7 @@ namespace HorrorFPS
             StalkerSenses senses = m.AddComponent<StalkerSenses>();
             senses.eyes = head.transform;
             StalkerBrain brain = m.AddComponent<StalkerBrain>();
+            m.AddComponent<DeathCauseLabel>().Cause = "Pego pelo perseguidor.";
             brain.showHud = !embedded;
 
             // finalização: último golpe -> cutscene de teste -> a vítima morre
@@ -149,6 +150,7 @@ namespace HorrorFPS
             }
             if (go.GetComponent<StalkerSenses>() == null) Undo.AddComponent<StalkerSenses>(go);
             if (go.GetComponent<StalkerBrain>() == null) Undo.AddComponent<StalkerBrain>(go);
+            if (go.GetComponent<DeathCauseLabel>() == null) Undo.AddComponent<DeathCauseLabel>(go);      // o texto da tela de morte (edite no Inspector)
             EditorSceneManager.MarkSceneDirty(go.scene);
             EditorUtility.DisplayDialog("Perseguidor",
                 "'" + go.name + "' agora tem NavMeshAgent, Stalker Senses e Stalker Brain.\n\n"

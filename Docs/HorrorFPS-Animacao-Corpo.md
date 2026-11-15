@@ -138,7 +138,7 @@ Layers (por nome): **`Upper Body`**, **`Flashlight`**, **`Additive`**. O peso da
 | | `Land` | pouso | trigger `Land` + `Grounded` |
 | | `Climb` (blend 2D ClimbX/ClimbY) | escalada | `Climbing` |
 | | `Drag` (blend 2D) | andar arrastando | `Dragging` |
-| | `Dead` | morte | `Dead` (de qualquer estado) |
+| | `Dead` | morte (toca o clipe de morte, se houver, e fica no chão) | `Dead` (de qualquer estado) |
 | **Upper Body** (máscara tronco+braços, **IK Pass**) | `Empty` | — (sem item: o braço fica com a Base) | padrão |
 | | `Hold_Generic`, `Hold_Melee`, `Hold_Pistol`, `Hold_Long` | pose segurando cada tipo | `HandItem` = 1..4 |
 | | `Attack`, `Fire`, `Reload`, `Equip`, `Interact` | ação pontual (volta sozinha à pose de segurar) | triggers |
@@ -184,7 +184,7 @@ Pesos do IK das mãos: a **direita** vai para o alvo quando há item na mão; a 
 
 Mesma ideia do `CameraFx`/`ICameraModifier` do framework, mas para o corpo: cada efeito **soma** um `PoseDelta` no quadro e o apresentador aplica o total. Funciona com o Animator **e** com o boneco de teste, e os outros jogadores veem o efeito junto com o corpo.
 
-`PoseDelta`: `bodyOffset` (m, espaço do corpo) · `lookOffset` (graus: x = pitch + para baixo, y = yaw) · `lookWeightAdd` · `rightHandPos`/`leftHandPos` (m, espaço da **câmera**) · `rightHandEuler`/`leftHandEuler` (graus) · `rightHandWeightAdd`/`leftHandWeightAdd`.
+`PoseDelta`: `bodyOffset` (m, espaço do corpo) · `lookOffset` (graus: x = pitch + para baixo, y = yaw) · `lookWeightAdd` · `rightHandPos`/`leftHandPos` (m, espaço da **câmera**) · `rightHandEuler`/`leftHandEuler` (graus) · `rightHandWeightAdd`/`leftHandWeightAdd` · `bodyEuler` (graus: tomba o **corpo inteiro** por cima da orientação normal; x para frente, z para os lados; é o que o `DeathSequence` usa para o corpo cair).
 
 Incluídos (todos desligáveis desmarcando o componente):
 
@@ -192,6 +192,7 @@ Incluídos (todos desligáveis desmarcando o componente):
 |---|---|---|
 | `PoseBreathing` | peito sobe e desce; cabeça balança de leve; mais rápido/fundo com `Exertion`; quase parado com `HoldingBreath` | `restRate` 13, `maxRate` 40 resp/min, `chestAmplitude`, `headAmplitude`, `holdBreathFactor` |
 | `PoseImpulse` | molas amortecidas: **pouso** (corpo afunda), **dano** (empurrão e torção para longe de quem bateu), **tiro** (coice da cabeça e das mãos; maior com arma longa), **golpe** (avanço), **equipar** (mãos baixam), **arfada** | `stiffness` 85, `damping` 11, `landDip`, `hitPush`, `hitTwist`, `recoilPistol`, `recoilLong`, `handRecoil`, `lungeMelee` |
+| `DeathSequence` (módulo `Corpo`, em `Body/`) | na morte do dono, tomba o corpo para longe de quem bateu (`bodyEuler`) e cai a câmera dele; **cede** se o Animator tem clipe de morte. [`HorrorFPS-MorteDano`](HorrorFPS-MorteDano.md) | `bodyFallDegrees` 86, `fallSeconds` 0,85, `yieldToDeathClip` |
 | `PoseWallAvoid` | com item/lanterna, um SphereCast à frente da câmera recua e baixa as mãos e levanta a ponta do item quando há parede perto (sem câmera extra de "viewmodel" — vale em qualquer pipeline) | `reach` 0,85, `probeRadius`, `mask`, `pullBack`, `lower`, `raiseAngle`, `smoothing` |
 
 **Escrevendo o seu** (ex.: mãos tremem com a sanidade baixa):

@@ -44,6 +44,7 @@ namespace HorrorFPS
         Vector3 baseOffset;
         Quaternion baseRotation = Quaternion.identity;
         float pull;
+        bool tilted;
         BodyVisibility visibility;
         readonly GameObject[] held = new GameObject[2];
         readonly List<IPoseModifier> modifiers = new List<IPoseModifier>();
@@ -126,6 +127,7 @@ namespace HorrorFPS
                 : Mathf.Clamp01(-pitch / maxPitch) * lookUpPullback;
             pull = Mathf.Lerp(pull, target, 1f - Mathf.Exp(-pullbackSmoothing * dt));
             Vector3 local = baseOffset + new Vector3(0f, 0f, -pull) + delta.bodyOffset;
+            Quaternion tilt = delta.bodyEuler == Vector3.zero ? Quaternion.identity : Quaternion.Euler(delta.bodyEuler);
 
             if (followCameraYaw)
             {
@@ -133,11 +135,12 @@ namespace HorrorFPS
                 Transform parent = transform.parent;
                 Vector3 origin = parent != null ? parent.position : Vector3.zero;
                 transform.position = origin + yaw * local;                 // o recuo segue o olhar...
-                transform.rotation = Quaternion.Euler(0f, s.yaw + bodyYawOffset, 0f) * baseRotation;   // ...e o corpo pode girar à parte
+                transform.rotation = Quaternion.Euler(0f, s.yaw + bodyYawOffset, 0f) * tilt * baseRotation;   // ...e o corpo pode girar à parte (e tombar, na morte)
             }
             else
             {
                 transform.localPosition = local;
+                if (tilt != Quaternion.identity || tilted) { transform.localRotation = tilt * baseRotation; tilted = tilt != Quaternion.identity; }
             }
         }
 

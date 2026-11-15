@@ -5,7 +5,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Nota, página de diário ou gravação no mundo: o jogador olha, aperta o botão de interagir e o texto abre na tela (JournalReader);
-    /// o registro também entra no diário (Pausa > Diário) para reler depois.
+    /// o registro também entra no diário (Inventário > Registros) para reler depois.
     ///
     /// Duas formas de definir o texto:
     ///   • 'Catalog Id': usa um registro do JournalCatalog (o recomendado: o texto fica no catálogo, que vale em qualquer cena);

@@ -67,6 +67,23 @@ namespace HorrorFPS
             return lastSeen.TryGetValue(t, out s) && Time.time - s <= seconds;
         }
 
+        /// <summary>
+        /// Quanto o jogador está fácil de ver para ESTE monstro (1 = normal; agachado e na sombra, menos; com a lanterna ligada, mais):
+        /// o fator do PlayerVisibility pesado por StalkerProfile.playerVisibilityWeight.
+        /// </summary>
+        public float VisibilityScale(StalkerTarget t)
+        {
+            StalkerProfile prof = brain != null ? brain.Profile : StalkerProfile.Default;
+            return Mathf.Lerp(1f, StalkerBridge.VisibilityFactor(t), prof.playerVisibilityWeight);
+        }
+
+        /// <summary>Até onde ele enxerga ESTE jogador agora: o alcance do nível de atenção, encurtado (ou alongado) pela visibilidade dele.</summary>
+        public float VisionRangeFor(StalkerTarget t, AttentionTuning tune)
+        {
+            StalkerProfile prof = brain != null ? brain.Profile : StalkerProfile.Default;
+            return tune.visionRange * Mathf.Lerp(1f, VisibilityScale(t), prof.visibilityRangeInfluence);
+        }
+
         // ------------------------------------------------------------------ visão
         public void Tick(float dt)
         {
@@ -127,7 +144,9 @@ namespace HorrorFPS
             Vector3 chest = StalkerBridge.ChestPos(t);
             Vector3 to = chest - eye;
             float dist = to.magnitude;
-            if (dist > tune.visionRange) return 0f;
+            float scale = VisibilityScale(t);                 // agachado / sombra / lanterna ligada
+            float range = tune.visionRange * Mathf.Lerp(1f, scale, prof.visibilityRangeInfluence);
+            if (dist > range) return 0f;
             if (dist > prof.nearSenseRange && Vector3.Angle(Forward, to) > tune.visionFov * 0.5f) return 0f;
 
             int visible = 0;
@@ -136,8 +155,8 @@ namespace HorrorFPS
             if (LineClear(eye, StalkerBridge.FeetPos(t), t)) visible++;
             if (visible == 0) return 0f;
 
-            float k = dist / Mathf.Max(1f, tune.visionRange);
-            float v = (visible / 3f) * (1f - 0.6f * k * k);
+            float k = dist / Mathf.Max(1f, range);
+            float v = (visible / 3f) * (1f - 0.6f * k * k) * scale;
             if (t.speed < 0.25f) v *= prof.stillFactor;
             else if (t.speed > 4.2f) v *= prof.runningFactor;
             v = brain.ModifyVisibility(t, v);        // traços exclusivos (cego à luz, visão noturna...)
@@ -173,6 +192,7 @@ namespace HorrorFPS
             if (vol <= 0f) return;
 
             StalkerNoiseTag tag = src != null ? src.GetComponentInParent<StalkerNoiseTag>() : null;
+            NoiseSourceTag generic = (tag == null && src != null) ? src.GetComponentInParent<NoiseSourceTag>() : null;     // etiqueta do framework (garrafa jogada, rádio...)
             StalkerNoise n = new StalkerNoise();
             n.position = ev.position;
             n.loudness = vol;
@@ -181,16 +201,17 @@ namespace HorrorFPS
             n.time = Time.time;
             n.target = StalkerBridge.TargetOf(src);
             n.playerMade = n.target != null;
-            n.tagMode = tag != null ? tag.mode : NoiseTagMode.Learn;
-            n.key = KeyOf(src, n.kind, tag);
+            n.tagMode = tag != null ? tag.mode : (generic != null && generic.alwaysInvestigate ? NoiseTagMode.AlwaysInvestigate : NoiseTagMode.Learn);
+            n.key = KeyOf(src, n.kind, tag, generic);
 
             if (n.tagMode != NoiseTagMode.AlwaysInvestigate && vol < tune.noiseThreshold) return;
             if (NoiseHeard != null) NoiseHeard(n);
         }
 
-        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag)
+        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag, NoiseSourceTag generic)
         {
             if (tag != null && !string.IsNullOrEmpty(tag.key)) return tag.key;
+            if (generic != null && !string.IsNullOrEmpty(generic.key)) return generic.key;
             if (src == null) return "?:" + kind;
             string n = src.name.Replace("(Clone)", "");
             int p = n.IndexOf(" (", StringComparison.Ordinal);

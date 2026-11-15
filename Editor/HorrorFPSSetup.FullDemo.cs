@@ -30,7 +30,7 @@ namespace HorrorFPS.EditorTools
             InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputPath);
 
             // as cenas do jogo são recriadas do zero: avisa antes de sobrescrever o que já existe
-            string[] scenePaths = { MenuScenePath, CoreScenePath, HallScenePath, CellarScenePath, AnnexScenePath };
+            string[] scenePaths = { MenuScenePath, CoreScenePath, HallScenePath, CellarScenePath, AnnexScenePath, TunnelsScenePath, PowerScenePath };
             string existing = string.Empty;
             for (int i = 0; i < scenePaths.Length; i++)
                 if (AssetDatabase.LoadMainAssetAtPath(scenePaths[i]) != null) existing += "\n  • " + scenePaths[i];
@@ -47,12 +47,14 @@ namespace HorrorFPS.EditorTools
             EnsureFolder(Root + "/Resources/HorrorFPS");
 
             BuildAnnexScene();
+            BuildTunnelsScene();
+            BuildPowerScene();
             BuildCellarScene();
             BuildHallScene();
             BuildCoreScene(prefab);
             BuildMainMenuScene(actions);
             CreateCatalog();
-            SetBuildScenes(new string[] { MenuScenePath, CoreScenePath, HallScenePath, CellarScenePath, AnnexScenePath });
+            SetBuildScenes(new string[] { MenuScenePath, CoreScenePath, HallScenePath, CellarScenePath, TunnelsScenePath, PowerScenePath, AnnexScenePath });
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -61,7 +63,8 @@ namespace HorrorFPS.EditorTools
             EditorUtility.DisplayDialog("Horror FPS",
                 "Jogo de demonstração criado.\n\n" +
                 "Cenas em " + Root + "/Scenes (já nos Build Settings, MainMenu primeiro) e catálogo em Resources/HorrorFPS.\n\n" +
-                "Abra a cena MainMenu e dê Play: Novo jogo → pegue a chave na mesa → abra a porta do porão. " +
+                "Abra a cena MainMenu e dê Play: Novo jogo → pegue a chave na mesa → abra a porta do porão → o alçapão leva aos túneis (puxe a alavanca, " +
+                "ache o atalho) e à casa de força (ligue o gerador, o elevador volta ao salão). " +
                 "Salve no gravador, saia para o menu e use Carregar. Para testar um nível direto, dê Play em Level_Hall ou Level_Cellar.",
                 "OK");
         }
@@ -110,6 +113,8 @@ namespace HorrorFPS.EditorTools
             MainMenu mainMenu = menu.AddComponent<MainMenu>();
             new Props(mainMenu).Obj("controlsAsset", actions).Apply();
 
+            BuildMenuAudio();
+
             EditorSceneManager.SaveScene(scene, MenuScenePath);
         }
 
@@ -130,6 +135,10 @@ namespace HorrorFPS.EditorTools
                 "Segure o botão de interagir para pular uma cutscene.");
             UpsertLevel(catalog, "cellar", "Porão", "Level_Cellar",
                 "Use o gravador para salvar o jogo. Checkpoints salvam sozinhos.");
+            UpsertLevel(catalog, "tunnels", "Túneis", "Level_Tunnels",
+                "Quando a sanidade cai, as luzes falham. Fique agachado no escuro: o monstro enxerga menos.");
+            UpsertLevel(catalog, "power", "Casa de força", "Level_Power",
+                "Um atalho aberto fica aberto: volte por ele e poupe o caminho.");
 
             if (catalog.loadingTips == null || catalog.loadingTips.Length == 0)
             {

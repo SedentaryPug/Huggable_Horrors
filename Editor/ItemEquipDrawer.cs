@@ -4,8 +4,8 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Campo "equip" do ItemData: escolhe o tipo (lanterna, arma branca, arma de fogo), mostra só os campos daquele tipo e
-    /// tem botões de modelo (Lanterna, Pistola, Espingarda...) que preenchem tudo, inclusive o slot de equipar.
+    /// Campo "equip" do ItemData: escolhe o tipo (lanterna, arma branca, arma de fogo, arremessável), mostra só os campos daquele tipo e
+    /// tem botões de modelo (Lanterna, Pistola, Garrafa, Sinalizador...) que preenchem tudo, inclusive o slot de equipar.
     /// </summary>
     [CustomPropertyDrawer(typeof(ItemEquip))]
     public class ItemEquipDrawer : PropertyDrawer
@@ -22,6 +22,13 @@ namespace HorrorFPS.ItemsEditor
             "ammoItem", "reloadSeconds", "recoil", "useSound", "emptySound", "reloadSound"
         };
 
+        static readonly string[] Throwable =
+        {
+            "throwEffect", "throwPrefab", "throwSpeed", "throwChargeSeconds", "throwMinPower", "throwArc",
+            "throwNoise", "throwImpactSound", "lureSeconds", "lureNoise", "lureInterval", "lureSound",
+            "lureAlwaysInvestigate", "lureKey", "flareColor", "flareRange", "flareIntensity"
+        };
+
         // Fase 3: só arma de fogo (segunda seção)
         static readonly string[] GunPrecision =
         {
@@ -36,6 +43,7 @@ namespace HorrorFPS.ItemsEditor
                 case EquipKind.Flashlight: return Lamp;
                 case EquipKind.Melee: return Melee;
                 case EquipKind.Firearm: return Gun;
+                case EquipKind.Throwable: return Throwable;
             }
             return new string[0];
         }
@@ -100,7 +108,7 @@ namespace HorrorFPS.ItemsEditor
 
             r = Section(r, "Na mão");
             r = Fields(r, property, Held);
-            r = Section(r, kind == EquipKind.Flashlight ? "Lanterna" : kind == EquipKind.Melee ? "Arma branca" : "Arma de fogo");
+            r = Section(r, kind == EquipKind.Flashlight ? "Lanterna" : kind == EquipKind.Melee ? "Arma branca" : kind == EquipKind.Throwable ? "Arremessável (isca)" : "Arma de fogo");
             r = Fields(r, property, FieldsOf(kind));
             if (kind == EquipKind.Firearm)
             {

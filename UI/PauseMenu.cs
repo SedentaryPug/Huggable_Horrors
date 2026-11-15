@@ -16,22 +16,20 @@ namespace HorrorFPS
     /// </summary>
     public class PauseMenu : MonoBehaviour
     {
-        enum Page { Main, Controls, Settings, Save, Load, Confirm, Objectives, HowToPlay, Journal }
+        enum Page { Main, Controls, Settings, Save, Load, Confirm, Objectives, HowToPlay }
 
         static PauseMenu instance;
 
         GameObject rootGo;
         Text titleText, ownerText, noticeText, confirmText;
-        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, objectivesPage, howToPlayPage, journalPage;
+        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, objectivesPage, howToPlayPage;
         Selectable mainFirst, confirmDefault;
-        Button saveButton, loadButton, menuButton, objectivesButton, journalButton;
-        Text journalLabel;
+        Button saveButton, loadButton, menuButton, objectivesButton;
         ControlsPanel controls;
         SettingsPanel settings;
         SaveSlotsPanel slots;
         ObjectivesPanel objectives;
         HowToPlayPanel howToPlay;
-        JournalPanel journal;
         UnityAction pendingConfirm;
         Page page;
         bool shown, openSaveOnShow;
@@ -193,7 +191,6 @@ namespace HorrorFPS
         void Back()
         {
             if (page == Page.Main) PauseManager.Resume();
-            else if (page == Page.Journal && journal.HandleBack()) return;      // dentro de um registro: volta à lista
             else ShowPage(Page.Main);
         }
 
@@ -212,14 +209,12 @@ namespace HorrorFPS
             confirmPage.SetActive(next == Page.Confirm);
             objectivesPage.SetActive(next == Page.Objectives);
             howToPlayPage.SetActive(next == Page.HowToPlay);
-            journalPage.SetActive(next == Page.Journal);
 
             switch (next)
             {
                 case Page.Controls: titleText.text = UIText.ControlsTitle; break;
                 case Page.Objectives: titleText.text = UIText.ObjectivesTitle; break;
                 case Page.HowToPlay: titleText.text = UIText.HowToPlayTitle; break;
-                case Page.Journal: titleText.text = UIText.JournalTitle; break;
                 case Page.Settings: titleText.text = UIText.SettingsTitle; break;
                 case Page.Save: titleText.text = UIText.SaveSlotsTitle; break;
                 case Page.Load: titleText.text = UIText.LoadSlotsTitle; break;
@@ -233,7 +228,6 @@ namespace HorrorFPS
                 case Page.Settings: settings.Refresh(); break;
                 case Page.Objectives: objectives.Refresh(); break;
                 case Page.HowToPlay: howToPlay.Refresh(PauseManager.Owner); break;
-                case Page.Journal: journal.Refresh(); break;
                 case Page.Save: slots.Show(SaveSlotsPanel.Mode.Save); break;
                 case Page.Load: slots.Show(SaveSlotsPanel.Mode.Load); break;
             }
@@ -248,9 +242,6 @@ namespace HorrorFPS
             menuButton.gameObject.SetActive(inGame);
             loadButton.interactable = SaveSystem.HasAnySave();
             objectivesButton.gameObject.SetActive(inGame && Objectives.All.Count > 0);
-            journalButton.gameObject.SetActive(inGame && (Journal.All.Count > 0 || Journal.Count > 0));
-            int unread = Journal.UnreadCount;
-            journalLabel.text = unread > 0 ? UIText.JournalButton + "   <color=#E8C04A>● " + unread + "</color>" : UIText.JournalButton;
         }
 
         void AskConfirm(string message, UnityAction onYes)
@@ -275,7 +266,6 @@ namespace HorrorFPS
                 case Page.Settings: return settings.FirstSelectable;
                 case Page.Objectives: return objectives.FirstSelectable;
                 case Page.HowToPlay: return howToPlay.FirstSelectable;
-                case Page.Journal: return journal.FirstSelectable;
                 case Page.Save:
                 case Page.Load: return slots.FirstSelectable;
                 case Page.Confirm: return confirmDefault;
@@ -350,10 +340,6 @@ namespace HorrorFPS
             howToPlayPage = howToRoot.gameObject;
             howToPlay = new HowToPlayPanel(howToRoot, delegate { ShowPage(Page.Main); });
 
-            RectTransform journalRoot = UIFactory.Stretch("JournalPage", area);
-            journalPage = journalRoot.gameObject;
-            journal = new JournalPanel(journalRoot, delegate { ShowPage(Page.Main); });
-
             BuildConfirmPage(area);
         }
 
@@ -364,12 +350,9 @@ namespace HorrorFPS
             VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRt, 10);
             col.padding = new RectOffset(120, 120, 16, 0);
 
-            // 10 botões: um pouco mais baixos (54) para caberem na página sem rolar
-            const float h = 54f;
+            const float h = 56f;
             mainFirst = UIFactory.MenuButton(pageRt, UIText.Resume, delegate { PauseManager.Resume(); }, 560f, h);
             objectivesButton = UIFactory.MenuButton(pageRt, UIText.ObjectivesButton, delegate { ShowPage(Page.Objectives); }, 560f, h);
-            journalButton = UIFactory.MenuButton(pageRt, UIText.JournalButton, delegate { ShowPage(Page.Journal); }, 560f, h);
-            journalLabel = journalButton.GetComponentInChildren<Text>();
             saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, h);
             loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, h);
             UIFactory.MenuButton(pageRt, UIText.Controls, delegate { ShowPage(Page.Controls); }, 560f, h);

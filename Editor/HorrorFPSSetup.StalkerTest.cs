@@ -4,7 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace HorrorFPS
+namespace HorrorFPS.EditorTools
 {
     /// <summary>
     /// Cena de teste do perseguidor: a arena do StalkerMenu.BuildDemo (4 salas, pontos de ronda, pontos de aparição, o monstro com finalizador e um
@@ -15,8 +15,8 @@ namespace HorrorFPS
     {
         static string StalkerTestScenePath { get { return Root + "/Scenes/Test_Stalker.unity"; } }
 
-        // itens que vão para a mesa de armas (ids dos itens de exemplo: Demo > Create Sample Items)
-        static readonly string[] ArsenalIds = { "espingarda", "cartuchos", "pistola", "municao", "faca", "taco", "pe_de_cabra", "kit_medico", "lanterna", "pilhas" };
+        // itens que vão para a mesa de armas (ids dos itens de exemplo: Demo > Create Sample Items; as iscas: Items > Create Distraction Items)
+        static readonly string[] ArsenalIds = { "espingarda", "cartuchos", "pistola", "municao", "faca", "taco", "pe_de_cabra", "kit_medico", "lanterna", "pilhas", "garrafa", "sinalizador", "radio_portatil" };
 
         [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Test Scene", false, HorrorFPSMenu.StalkerOrder + 10)]
         public static void CreateStalkerTestSceneMenu()
@@ -87,31 +87,33 @@ namespace HorrorFPS
         {
             int created;
             Dictionary<string, ItemData> items = ItemsEditor.SampleItems.EnsureAll(out created);
+            int decoys;
+            foreach (KeyValuePair<string, ItemData> kv in ItemsEditor.DistractionItems.EnsureAll(out decoys)) items[kv.Key] = kv.Value;
 
             Material wood = Mat("Wood", new Color(0.35f, 0.22f, 0.12f));
             Material crate = Mat("Heavy", new Color(0.5f, 0.12f, 0.1f));
             GameObject root = new GameObject("Mesa de armas");
             root.transform.position = position;
-            Prim(PrimitiveType.Cube, "Tampo", new Vector3(0f, 0.9f, 0f), new Vector3(0.9f, 0.1f, 3.6f), wood, root.transform, true);
-            Prim(PrimitiveType.Cube, "Pé 1", new Vector3(0f, 0.45f, -1.6f), new Vector3(0.7f, 0.9f, 0.15f), wood, root.transform, true);
-            Prim(PrimitiveType.Cube, "Pé 2", new Vector3(0f, 0.45f, 1.6f), new Vector3(0.7f, 0.9f, 0.15f), wood, root.transform, true);
+            Prim(PrimitiveType.Cube, "Tampo", new Vector3(0f, 0.9f, 0f), new Vector3(0.9f, 0.1f, 4.8f), wood, root.transform, true);
+            Prim(PrimitiveType.Cube, "Pé 1", new Vector3(0f, 0.45f, -2.2f), new Vector3(0.7f, 0.9f, 0.15f), wood, root.transform, true);
+            Prim(PrimitiveType.Cube, "Pé 2", new Vector3(0f, 0.45f, 2.2f), new Vector3(0.7f, 0.9f, 0.15f), wood, root.transform, true);
 
             int placed = 0;
             List<string> missing = new List<string>();
-            float step = 3.2f / (ArsenalIds.Length - 1);
+            float step = 4.2f / (ArsenalIds.Length - 1);
             for (int i = 0; i < ArsenalIds.Length; i++)
             {
                 ItemData data;
                 if (!items.TryGetValue(ArsenalIds[i], out data) || data == null) { missing.Add(ArsenalIds[i]); continue; }
 
-                GameObject go = Prim(PrimitiveType.Cube, "Item " + data.id, new Vector3(0f, 1.1f, -1.6f + step * i), new Vector3(0.28f, 0.2f, 0.28f), crate, root.transform, true);
+                GameObject go = Prim(PrimitiveType.Cube, "Item " + data.id, new Vector3(0f, 1.1f, -2.1f + step * i), new Vector3(0.28f, 0.2f, 0.28f), crate, root.transform, true);
                 WorldItem world = go.AddComponent<WorldItem>();
                 bool ammo = data.id == "cartuchos" || data.id == "municao" || data.id == "pilhas";
                 new Props(world).Obj("data", data).Int("amount", ammo ? 12 : 1).Apply();
                 placed++;
             }
 
-            string note = "Mesa de armas na parede leste da sala nordeste com " + placed + " itens (espingarda, pistola, faca, taco, pé de cabra, munição, lanterna...): pegue com Interagir e equipe pelo atalho.";
+            string note = "Mesa de armas na parede leste da sala nordeste com " + placed + " itens (espingarda, pistola, faca, taco, pé de cabra, munição, lanterna, garrafa, sinalizador, rádio...): pegue com Interagir e equipe pelo atalho; as iscas se jogam segurando o botão de usar.";
             if (missing.Count > 0) note += "\nFaltaram itens de exemplo (" + string.Join(", ", missing.ToArray()) + "): rode Demo > Create Sample Items.";
             return note;
         }

@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace HorrorFPS.ItemsEditor
 {
-    public enum EquipPreset { Flashlight, Melee, Pistol, Shotgun, Automatic }
+    public enum EquipPreset { Flashlight, Melee, Pistol, Shotgun, Automatic, Bottle, Flare, Radio }
 
     /// <summary>Valores prontos de equipamento (usados pelos botões do Inspector e pelos itens de exemplo).</summary>
     public static class EquipPresets
     {
-        public static readonly string[] Names = { "Lanterna", "Arma branca", "Pistola", "Espingarda", "Automática" };
+        public static readonly string[] Names = { "Lanterna", "Arma branca", "Pistola", "Espingarda", "Automática", "Garrafa", "Sinaliz.", "Rádio" };
 
         /// <summary>Preenche d.equip e o slot de equipar. Mantém o modelo na mão, a munição e os sons já escolhidos.</summary>
         public static void Apply(ItemData d, EquipPreset preset)
@@ -16,6 +16,9 @@ namespace HorrorFPS.ItemsEditor
             ItemEquip old = d.equip ?? new ItemEquip();
             ItemEquip e = new ItemEquip();
             e.heldPrefab = old.heldPrefab;
+            e.throwPrefab = old.throwPrefab;
+            e.throwImpactSound = old.throwImpactSound;
+            e.lureSound = old.lureSound;
             e.ammoItem = old.ammoItem;
             e.useSound = old.useSound;
             e.emptySound = old.emptySound;
@@ -59,8 +62,41 @@ namespace HorrorFPS.ItemsEditor
                     Precision(e, 0.35f, 4f, 5f, 1.8f, 2f, 1.8f, 0.12f);        // pesada (automática): abre rápido atirando em rajada
                     d.equipSlot = "mao";
                     break;
+
+                case EquipPreset.Bottle:
+                    Throwable(e, ThrowEffect.Shatter, 13f, 28f, 0f, 0f, 0f);
+                    d.equipSlot = "mao";
+                    d.stackable = true; d.maxStack = Mathf.Max(d.maxStack, 4);
+                    break;
+
+                case EquipPreset.Flare:
+                    Throwable(e, ThrowEffect.Flare, 12f, 8f, 20f, 26f, 2.2f);       // queima 20 s e chama de 2,2 em 2,2 s num raio de 26 m
+                    d.equipSlot = "mao";
+                    d.stackable = true; d.maxStack = Mathf.Max(d.maxStack, 3);
+                    break;
+
+                case EquipPreset.Radio:
+                    Throwable(e, ThrowEffect.Radio, 10f, 14f, 25f, 22f, 2.8f);      // toca 25 s e chama de 2,8 em 2,8 s num raio de 22 m
+                    d.equipSlot = "mao";
+                    d.stackable = false;
+                    break;
             }
             d.equip = e;
+        }
+
+        /// <summary>Arremessável: o que faz, a velocidade, o barulho da batida e (sinalizador, rádio) por quanto tempo e com que raio continua chamando.</summary>
+        static void Throwable(ItemEquip e, ThrowEffect effect, float speed, float impactNoise, float lureSeconds, float lureNoise, float lureInterval)
+        {
+            e.kind = EquipKind.Throwable;
+            e.throwEffect = effect;
+            e.heldPosition = new Vector3(0.22f, -0.2f, 0.45f);
+            e.heldEuler = Vector3.zero;
+            e.noise = 0f;
+            e.throwSpeed = speed;
+            e.throwNoise = impactNoise;
+            e.lureSeconds = lureSeconds;
+            e.lureNoise = lureNoise;
+            e.lureInterval = lureInterval;
         }
 
         /// <summary>Fase 3: dispersão dinâmica (tiros seguidos e movimento) e o que muda numa arma pesada segurada com uma mão só.</summary>

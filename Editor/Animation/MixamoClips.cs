@@ -14,7 +14,8 @@ namespace HorrorFPS
         CrouchIdle, SneakFront, SneakLeft, SneakRight,
         TurnLeft, TurnRight, RunToStop,
         Jump, Fall, Land,
-        Climb, ClimbTop
+        Climb, ClimbTop,
+        Death
     }
 
     /// <summary>Clipes de locomoção encontrados, um por papel.</summary>
@@ -57,6 +58,7 @@ namespace HorrorFPS
             string n = Norm(rawName);
             if (n.Length == 0) return false;
 
+            if (n.Contains("death") || n.Contains("dying")) { role = LocoRole.Death; return true; }   // antes de "fall"/"back": "Falling Back Death"
             if (n.Contains("totop") || n.Contains("topladder")) { role = LocoRole.ClimbTop; return true; }
             if (n.Contains("climb")) { role = LocoRole.Climb; return true; }
             if (n.Contains("runtostop") || n.Contains("runningtostop")) { role = LocoRole.RunToStop; return true; }
@@ -101,6 +103,7 @@ namespace HorrorFPS
                 case LocoRole.Fall: return "No ar (queda)";
                 case LocoRole.Land: return "Pouso";
                 case LocoRole.Climb: return "Escada (subindo)";
+                case LocoRole.Death: return "Morte (cair e ficar no chão)";
                 default: return "Escada (chegada ao topo)";
             }
         }

@@ -225,6 +225,9 @@ namespace HorrorFPS
                     case EquipKind.Melee:
                         if (e.durability > 0) body = name + "   " + EquipState.DurabilityOf(w) + "/" + e.durability;
                         break;
+                    case EquipKind.Throwable:
+                        body = name + "   x" + Mathf.Max(1, w.stack);
+                        break;
                 }
             }
             string grip = two == side ? "  <color=#80ff8c>[2 mãos]</color>" : "";

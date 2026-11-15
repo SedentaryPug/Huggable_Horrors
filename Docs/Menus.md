@@ -13,12 +13,18 @@ Os menus ficam agrupados por área, **sem números**. O caminho de cada área e 
 | `Tools > Horror FPS > Player > Starting Inventory` | `Editor/PlayerInventoryWindow.cs` |
 | `Tools > Horror FPS > Player > Character Catalog` | `Editor/CharacterCatalogUtil.cs` |
 | `Tools > Horror FPS > Player > Add Selected Player Prefab(s) As Characters` | `Editor/CharacterCatalogUtil.cs` |
+| `Tools > Horror FPS > Player > Create Visibility Zone` | `Editor/StealthMenu.cs` |
+| `Tools > Horror FPS > Player > Create Noise Surface` | `Editor/StealthMenu.cs` |
+| `Tools > Horror FPS > Player > Death Test > Hurt Player (30)` · `Kill Player` · `Kill Player By Fall` · `Kill All Players (Game Over)` · `Revive Player` | `Editor/DeathMenu.cs` |
+
+As duas de zona e piso (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Visibilidade.md) e [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md). O submenu **Death Test** só funciona em Play mode e age no jogador selecionado (ou no 1): [`HorrorFPS-MorteDano.md`](HorrorFPS-MorteDano.md).
 
 ### Items — itens
 
 | Menu | Arquivo |
 |---|---|
 | `Tools > Horror FPS > Items > Item Studio` | `Editor/ItemStudioWindow.cs` |
+| `Tools > Horror FPS > Items > Create Distraction Items` | `Editor/DistractionItems.cs` |
 
 ### Dialogue — diálogos
 
@@ -97,6 +103,30 @@ Como usar: [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
 | `Tools > Horror FPS > Tutorials > Reset Tips Seen` | `Editor/Tutorials/TutorialsMenu.cs` |
 
 Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objetivos-Tutorial.md).
+
+### Audio — música e ambiente por área, passos por piso e rádio
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Audio > Create Audio Zone` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Level Audio (Global Zone)` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Radio` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Footstep Set` | `Editor/Audio/AudioMenu.cs` |
+| `Tools > Horror FPS > Audio > Create Audio Profile` | `Editor/Audio/AudioMenu.cs` |
+
+Como usar: [`HorrorFPS-Audio.md`](HorrorFPS-Audio.md).
+
+### Levels — luz que falha, atalhos, alavancas e níveis novos
+
+| Menu | Arquivo |
+|---|---|
+| `Tools > Horror FPS > Levels > Create Failing Light` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Add Light Failure To Selected` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create Shortcut` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create Lever` | `Editor/Levels/LevelsMenu.cs` |
+| `Tools > Horror FPS > Levels > Create New Level Scene...` | `Editor/HorrorFPSSetup.NewLevel.cs` |
+
+Como usar: [`HorrorFPS-Iluminacao-Niveis.md`](HorrorFPS-Iluminacao-Niveis.md). A área tem `LevelsOrder = 100` e a `Demo` passou de 100 para 110.
 
 ### Demo — jogo de demonstração e exemplos prontos
 

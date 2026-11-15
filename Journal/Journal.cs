@@ -6,7 +6,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Diário do jogo: as notas, páginas de diário, gravações e documentos que o jogador já encontrou, para reler quando quiser
-    /// (Pausa > Diário). API estática: de qualquer script, evento ou cutscene.
+    /// (Inventário > Registros). API estática: de qualquer script, evento ou cutscene.
     ///
     ///   Journal.Unlock("diario_dr_meyer_1");     // o registro entra no diário (e aparece o aviso)
     ///   Journal.IsUnlocked("diario_dr_meyer_1");

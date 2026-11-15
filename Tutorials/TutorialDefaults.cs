@@ -19,7 +19,7 @@ namespace HorrorFPS
                 TutorialWhen.Walking, "", 8f, 8f, "Sprint"));
             list.Add(Make("jump", "Pular", "Aperte {Jump} para pular.",
                 TutorialWhen.Walking, "", 18f, 7f, "Jump"));
-            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar: você anda mais devagar, mas faz muito menos barulho, e ainda passa por vãos baixos.",
+            list.Add(Make("crouch", "Agachar", "Use {Crouch} para agachar: você anda mais devagar, mas faz muito menos barulho, fica mais difícil de ver e ainda passa por vãos baixos.",
                 TutorialWhen.Walking, "", 30f, 9f, "Crouch"));
             list.Add(Make("noise", "Barulho", "Correr, pular e mexer em coisas fazem barulho, e o que estiver por perto ouve. O medidor no canto da tela mostra o quanto você está fazendo: agache ({Crouch}) ou ande devagar para ficar quieto.",
                 TutorialWhen.LoudNoise, "", 1f, 12f, ""));
@@ -39,19 +39,21 @@ namespace HorrorFPS
                 TutorialWhen.ItemPicked, "", 1.5f, 9f, ""));
             list.Add(Make("hotbar", "Atalhos rápidos", "Use {Hotbar} para usar rapidamente os itens da faixa de atalhos.",
                 TutorialWhen.ItemPicked, "", 16f, 8f, ""));
-            list.Add(Make("flashlight", "Lanterna", "Use {Flashlight} para ligar e desligar a lanterna. A bateria acaba: guarde pilhas.",
+            list.Add(Make("flashlight", "Lanterna", "Use {Flashlight} para ligar e desligar a lanterna. A bateria acaba: guarde pilhas. A luz ajuda você a ver, mas também deixa você mais fácil de ser visto.",
                 TutorialWhen.ItemEquipped, "Flashlight", 1f, 9f, ""));
             list.Add(Make("melee", "Arma branca", "Golpeie com {HandRight} (mão direita) ou {HandLeft} (mão esquerda). Segure e solte para um golpe forte.",
                 TutorialWhen.ItemEquipped, "Melee", 1f, 10f, ""));
             list.Add(Make("firearm", "Arma de fogo", "Atire com {HandRight} ou {HandLeft}, mire com {Aim} e recarregue com {Reload}. Cada tiro faz barulho.",
                 TutorialWhen.ItemEquipped, "Firearm", 1f, 11f, ""));
+            list.Add(Make("throwable", "Arremessar", "Segure {HandRight} ou {HandLeft} para carregar a força e solte para jogar; um toque joga perto. O barulho do que você joga atrai o monstro para lá, mas ele aprende truques repetidos.",
+                TutorialWhen.ItemEquipped, "Throwable", 1f, 11f, ""));
 
             // ---- jogo
             list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para ver seus objetivos na tela. A lista completa fica no menu de pausa.",
                 TutorialWhen.ObjectiveStarted, "", 5f, 9f, ""));
-            list.Add(Make("journal", "Diário", "Notas, diários e gravações que você acha ficam guardados. Aperte {Pause} e escolha Diário para reler quando quiser.",
+            list.Add(Make("journal", "Diário", "Notas, diários e gravações que você acha ficam guardados. Abra a mochila com {Inventory} e vá na aba Registros para reler quando quiser.",
                 TutorialWhen.JournalUnlocked, "", 4f, 10f, ""));
-            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos, o diário e os controles.",
+            list.Add(Make("pause", "Pausar e salvar", "Aperte {Pause} para pausar, salvar o jogo e rever os objetivos e os controles.",
                 TutorialWhen.GameStart, "", 120f, 8f, ""));
 
             // ---- avisos (não são comandos: ficam fora da lista Como jogar)
@@ -83,6 +85,7 @@ namespace HorrorFPS
             TutorialEntry e = Make(id, title, text, when, filter, delay, 8f, "");
             e.threshold = threshold;
             e.inMenu = false;
+            e.pause = TutorialPause.Never;          // avisos aparecem em plena ação: não congelam o jogo
             return e;
         }
     }

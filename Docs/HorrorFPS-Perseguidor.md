@@ -53,7 +53,7 @@ Requisitos: os do framework + **NavMesh** na cena (o módulo `AI` do Unity, já 
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. Use **Tools > Horror FPS > Stalker > Create Stalker Test Scene**: cria a cena jogável `Test_Stalker` (já nos Build Settings, junto com o Core) com `[Stalker Demo]` — arena 40×40 com 4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor vermelho **com `Stalker Finisher` e uma cutscene de teste**, um **rádio isca** verde —, a entrada dos jogadores na sala nordeste e uma **mesa de armas** (espingarda, pistola, faca, taco, pé de cabra, munição, lanterna) para testar o monstro junto com as armas. Para colocar a mesma arena numa cena sua, use **Stalker > Create Stalker Test Arena In Open Scene** (sem jogadores). Se avisar que não gerou o NavMesh: *Window > AI > Navigation > Bake*.
+2. Use **Tools > Horror FPS > Stalker > Create Stalker Test Scene**: cria a cena jogável `Test_Stalker` (já nos Build Settings, junto com o Core) com `[Stalker Demo]` — arena 40×40 com 4 salas, 5 pontos de ronda, 4 pontos de aparição, o perseguidor vermelho **com `Stalker Finisher` e uma cutscene de teste**, um **rádio isca** verde —, a entrada dos jogadores na sala nordeste e uma **mesa de armas** (espingarda, pistola, faca, taco, pé de cabra, munição, lanterna e as iscas garrafa, sinalizador e rádio portátil) para testar o monstro junto com as armas. Para colocar a mesma arena numa cena sua, use **Stalker > Create Stalker Test Arena In Open Scene** (sem jogadores). Se avisar que não gerou o NavMesh: *Window > AI > Navigation > Bake*.
 3. Play. O painel no canto mostra modo, atenção, pista e memória. Experimente: ficar parado no escuro à vista dele (demora a notar), correr (nota rápido), fazer barulho longe, entrar num esconderijo **vendo-o vendo você**, ficar perto do rádio sem ser visto várias vezes (ele aprende que é isca) e **deixá-lo bater até o último golpe** (ele para, a cutscene de teste toca por 2,5 s e você morre).
 
 Para o seu monstro: selecione-o e use **Stalker > Add Stalker To Selected Object** (NavMeshAgent, collider, `Stalker Senses`, `Stalker Brain`; arraste a cabeça para `Eyes`). A finalização é um componente à parte (`Add Component > HorrorFPS > Stalker > Traits > Finisher`, seção 10). Para ele **seguir entre cenas** e ser **chamado**: **Stalker > Create Stalker Definition From Selected** (salva o prefab em `Assets/Prefabs/Stalkers`, se faltar, e cria a `StalkerDefinition` em `Assets/Resources/HorrorFPS/Stalkers`). O monstro da bancada `BuildDemo` **não** tem definição: rode o menu `Stalker > Create Stalker Definition From Selected` nele para testar a troca de cena.
@@ -100,7 +100,7 @@ Valor contínuo `Attention01` (0..1) → nível com histerese. Sobe com estímul
 | Antecipa o jogador ao perdê-lo | 0 s | 0,4 | 0,8 | 1,2 |
 | Procura por | 14 s | 22 | 34 | 45 |
 
-A **visão** é um medidor por jogador: enche mais rápido com atenção alta, perto, em movimento e com o corpo todo à vista (3 raios: olho, peito, pés); parado enche devagar; escondido = invisível (só `Inspect` descobre). Passou de `glimpseAt` vira "vi algo" (pista fraca); chegou a 1 é "notei". A suspeita tem histerese (não pisca) e ele só segue o **último ponto realmente visto**, não o jogador atrás da parede.
+A **visão** é um medidor por jogador: enche mais rápido com atenção alta, perto, em movimento e com o corpo todo à vista (3 raios: olho, peito, pés); parado enche devagar; **agachado ou na sombra enche mais devagar e encurta o alcance** (a lanterna ligada faz o contrário: `PlayerVisibility`, `VisibilityZone` e `playerVisibilityWeight`/`visibilityRangeInfluence` no perfil; doc `HorrorFPS-Visibilidade`); escondido = invisível (só `Inspect` descobre). Passou de `glimpseAt` vira "vi algo" (pista fraca); chegou a 1 é "notei". A suspeita tem histerese (não pisca) e ele só segue o **último ponto realmente visto**, não o jogador atrás da parede.
 
 ## 5. Diretor: a informação que ele tem e só libera às vezes
 
@@ -345,6 +345,8 @@ Para um finalizador **diferente por monstro**, herde de `StalkerFinisher` e sobr
 
 ## 11. Receitas e ganchos
 
+- **Iscas que o jogador joga** (garrafa, sinalizador, rádio; [`HorrorFPS-Distracoes`](HorrorFPS-Distracoes.md)): o barulho sai do objeto jogado (`NoiseKind.Distraction`), que leva um `NoiseSourceTag` do framework (`key`, `alwaysInvestigate`). `StalkerSenses` lê essa etiqueta quando não há `StalkerNoiseTag`, então o monstro investiga o ponto e aprende a chave como qualquer isca.
+- **Texto de "como morreu"**: ponha um `DeathCauseLabel` (framework, `Body/DeathCause.cs`) no objeto do monstro com o texto (ex.: "Pego pelo perseguidor."). Ele aparece na tela de morte do jogador e na tela final ([`HorrorFPS-MorteDano`](HorrorFPS-MorteDano.md)). O menu de demonstração e "Add Stalker To Selected Object" já adicionam. A posição do monstro também define para que lado a câmera do jogador cai.
 - **Fonte de som que ele nunca aprende** (história): `StalkerNoiseTag` com `AlwaysInvestigate`. **Ruído de ambiente**: `NeverInvestigate`. Sem a etiqueta, a chave é `NomeDoObjeto:TipoDoBarulho` (todos com o mesmo nome compartilham o aprendizado).
 - **Sustos/música**: `brain.Spotted`, `brain.ModeChanged`, `brain.AttentionChanged` e `brain.HintReceived` (bom para um *tell*: lâmpada que pisca, som distante quando o Diretor "sopra"); `StalkerManager.Arrived` / `Retreated` para a trilha de quando ele entra e sai de cena.
 - **Cutscene em que ele acorda**: `brain.ForceAttention(0.7f)`; **momento de roteiro sem pressão**: `StalkerDirector.Instance.GiveRelief(60f)`; **cutscene sua com o monstro por perto**: `StalkerManager.BeginCinematic()` ... `EndCinematic()` (todos param, ninguém chega, ninguém recebe pista).
@@ -406,7 +408,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 
 - Exige **NavMesh** bakeado; sem ele o perseguidor avisa uma vez e fica parado. Cenas aditivas com NavMesh próprio funcionam (ele tenta de novo).
 - Não abre/quebra portas, não usa escadas nem vãos (`NavMeshLink`); sem animação (o `Animator` fica por sua conta, leia `Agent.velocity` e `brain.Mode`).
-- A luz não afeta a visão de série (um módulo com `ModifyVisibility` resolve); "jogador sem tela de morte" depende de `IsAlive` (seção 13).
+- A luz da cena não é medida (a lanterna do jogador e as `VisibilityZone` entram como regras: ver `HorrorFPS-Visibilidade`); um módulo com `ModifyVisibility` resolve o resto; "jogador sem tela de morte" depende de `IsAlive` (seção 13).
 - Iscas: se o jogador **estava** por perto mas fora de vista, a viagem conta como "em vão". É uma simplificação.
 - **Sem simulação fora de cena**: enquanto o monstro está em outro nível (ou fora de cena) nada acontece com ele; quando volta, está onde ficou (ou aparece num ponto). O tempo de ausência não o faz andar.
 - **Um nível atual por vez**: o sistema acompanha o último nível carregado; o monstro "existe" ou nele ou só no elenco.
@@ -424,7 +426,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 |---|---|
 | Fica parado / aviso de NavMesh | falta bake, ou o monstro está fora do NavMesh (a bancada faz o bake antes de criar o monstro) |
 | Não ouve nada | sem Collider no corpo (o módulo cria um trigger, confira o aviso), `HearingMask` sem a camada dele, ou `noiseThreshold` alto demais |
-| Nunca me nota | `visionRange`/`visionFov` do nível Calm, ou `sightMask` incluindo triggers; jogador parado no escuro vale 0,6 |
+| Nunca me nota | `visionRange`/`visionFov` do nível Calm, ou `sightMask` incluindo triggers; jogador parado vale 0,6 e agachado/na sombra vale menos ainda (`PlayerVisibility`, `playerVisibilityWeight`) |
 | Me nota através da parede | camada da parede fora de `sightMask` (padrão: tudo) |
 | Não ignora o rádio | a chave da fonte mudou (objetos com nomes diferentes); use `StalkerNoiseTag.key`; precisam ser 3 viagens em vão |
 | Não recebe pistas | atenção acima de Alert (`pressureOnlyWhenCalm`), sossego ativo, cinemática em curso, ou o alvo está escondido |
@@ -444,7 +446,7 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 
 ## 16. Ideias para melhorar (próximos passos)
 
-1. **Luz e escuridão**: agora cabe num módulo (`ModifyVisibility` + `ModifyTuning`): visão maior com a lanterna ligada, menor no escuro; sombra e `SanityLight` como fator. Dá também o monstro que **foge da luz** ou **só se move no escuro**.
+1. **Luz e escuridão**: agachar, `VisibilityZone` e lanterna ligada já mudam a visão (doc `HorrorFPS-Visibilidade`); falta medir a luz real da cena e `SanityLight` como fator. Cabe num módulo (`ModifyVisibility` + `ModifyTuning`). Dá também o monstro que **foge da luz** ou **só se move no escuro**.
 2. **Portas**: abrir (com barulho e tempo), arrombar, e o jogador usar porta fechada/trancada como ferramenta (`Door` + `Breakable`).
 3. **Hábitos por jogador**: aprender que o jogador 1 se esconde e o 2 corre, e escolher o método de busca para cada um.
 4. **Isca de propósito**: item arremessável (`Impact`) que o jogador usa de verdade; premiar a variedade, já que o monstro aprende a repetição.

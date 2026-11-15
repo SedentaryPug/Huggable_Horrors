@@ -326,7 +326,7 @@ namespace HorrorFPS
 
             flash = Mathf.MoveTowards(flash, 0f, dt * 0.8f);
             Color c = damageFlash.color;
-            c.a = flash * 0.6f;
+            c.a = flash * (GameSettings.SoftDamageFx ? 0.2f : 0.6f);
             damageFlash.color = c;
         }
     }

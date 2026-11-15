@@ -4,7 +4,7 @@ namespace HorrorFPS
     /// Onde cada menu do framework mora em Tools > Horror FPS. Todo [MenuItem] do projeto usa estas constantes,
     /// então a árvore de menus inteira é decidida AQUI, em um lugar só.
     ///
-    /// Menu novo: escolha a área (Player, Items, Dialogue, Animation, Stalker, Hurtbox, Revive, Objectives, Journal, Tutorials, Demo), use o caminho dela e
+    /// Menu novo: escolha a área (Player, Items, Dialogue, Animation, Stalker, Hurtbox, Revive, Objectives, Journal, Tutorials, Audio, Levels, Demo), use o caminho dela e
     /// some um número à ordem da área para o item ficar na posição certa:
     ///     [MenuItem(HorrorFPSMenu.Stalker + "Meu Menu Novo", false, HorrorFPSMenu.StalkerOrder + 10)]
     /// Área nova: acrescente o caminho e uma ordem aqui (de 10 em 10 as áreas se mantêm juntas, sem separadores soltos).
@@ -27,6 +27,8 @@ namespace HorrorFPS
         public const string Objectives = Root + "Objectives/"; // objetivos da partida (catálogo, ações em cena)
         public const string Journal   = Root + "Journal/";     // diário (catálogo, nota em cena, ações para eventos)
         public const string Tutorials = Root + "Tutorials/";   // dicas de tutorial (catálogo, volumes, reiniciar dicas vistas)
+        public const string Audio    = Root + "Audio/";      // música e ambiente por área, passos por piso, rádio
+        public const string Levels   = Root + "Levels/";     // luz que falha, atalhos, alavancas e níveis novos
         public const string Demo      = Root + "Demo/";        // jogo de demonstração e exemplos prontos
 
         // ------------------------------------------------------------------ ordem das áreas (3º argumento do [MenuItem])
@@ -40,6 +42,8 @@ namespace HorrorFPS
         public const int ObjectivesOrder = 80;
         public const int JournalOrder   = 85;   // 85 a 87, entre Objetivos e Dicas
         public const int TutorialsOrder = 90;
-        public const int DemoOrder      = 100;
+        public const int AudioOrder     = 95;   // 95 a 99, entre Dicas e Níveis
+        public const int LevelsOrder    = 100;  // 100 a 104, entre Áudio e Demo
+        public const int DemoOrder      = 110;
     }
 }

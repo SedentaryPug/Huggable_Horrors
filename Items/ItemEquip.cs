@@ -8,7 +8,16 @@ namespace HorrorFPS
         None = 0,        // sem comportamento próprio (vale o jeito antigo: a ação principal do item)
         Flashlight = 1,  // lanterna: liga/desliga, bateria, pisca quando fraca
         Melee = 2,       // arma branca: golpe com dano na frente da câmera, durabilidade opcional
-        Firearm = 3      // arma de fogo: carregador, munição da mochila, recarga, coice, barulho
+        Firearm = 3,     // arma de fogo: carregador, munição da mochila, recarga, coice, barulho
+        Throwable = 4    // arremessável: garrafa, sinalizador, rádio. Segurar o botão carrega a força, soltar joga (uma unidade por vez)
+    }
+
+    /// <summary>O que o objeto jogado faz (EquipKind.Throwable). Todos viram "isca" para o monstro: o som sai do objeto, não do jogador.</summary>
+    public enum ThrowEffect
+    {
+        Shatter = 0,   // garrafa: quebra ao bater e faz um barulho forte, uma vez só
+        Flare = 1,     // sinalizador: acende ao ser jogado, queima com luz vermelha e chama o monstro até apagar
+        Radio = 2      // rádio: começa a tocar quando cai e chama o monstro até a bateria acabar
     }
 
     /// <summary>Peso do item nas mãos: decide o que dá para fazer segurando com uma mão só.</summary>
@@ -23,7 +32,7 @@ namespace HorrorFPS
     /// Comportamento de um item quando EQUIPADO (campo 'equip' do ItemData). O estado (munição no carregador, bateria,
     /// durabilidade, lanterna ligada) fica na instância do item e vai para o save.
     /// Controles: botão esquerdo / LT usa o item da mão esquerda e botão direito / RT o da mão direita (com duas mãos, qualquer um);
-    /// arma branca: toque = golpe fraco, segurar o botão e soltar = golpe forte;
+    /// arma branca: toque = golpe fraco, segurar o botão e soltar = golpe forte; arremessável: segurar carrega a força, soltar joga;
     /// Q mira (arma de fogo); G (toque) segura o item da mão direita com as duas mãos, G (segurar) o da esquerda; R recarrega; F liga/desliga a lanterna.
     /// </summary>
     [Serializable]
@@ -127,6 +136,40 @@ namespace HorrorFPS
         [Tooltip("Chance (0..1) de a arma escapar da mão a cada tiro com uma mão só. Sobe até 50% com a mão tremendo. 0 = nunca escapa.")]
         [Range(0f, 1f)] public float oneHandDropChance = 0.2f;
 
+        // ---- arremessável (garrafa, sinalizador, rádio)
+        [Tooltip("O que o objeto jogado faz: Garrafa (quebra e faz barulho), Sinalizador (queima e chama) ou Rádio (toca e chama).")]
+        public ThrowEffect throwEffect = ThrowEffect.Shatter;
+        [Tooltip("Modelo do objeto jogado. Vazio = o modelo da mão (ou do mundo, ou um bloco simples).")]
+        public GameObject throwPrefab;
+        [Tooltip("Velocidade do arremesso com a força cheia, em metros por segundo.")]
+        public float throwSpeed = 13f;
+        [Tooltip("Segundos segurando o botão até a força cheia. Um toque rápido joga fraco (perto).")]
+        public float throwChargeSeconds = 0.55f;
+        [Tooltip("Força do toque rápido, de 0 a 1 (a força cheia vale 1).")]
+        [Range(0f, 1f)] public float throwMinPower = 0.35f;
+        [Tooltip("Quanto o arremesso sobe em relação ao olhar (0 = reto, 0,3 = arco suave).")]
+        public float throwArc = 0.22f;
+        [Tooltip("Raio do barulho (metros) quando o objeto bate em algo. É isto que a garrafa faz. 0 = sem barulho de impacto.")]
+        public float throwNoise = 28f;
+        [Tooltip("Som da batida. Vazio = som gerado por código (vidro, para a garrafa).")]
+        public AudioClip throwImpactSound;
+        [Tooltip("Por quantos segundos o objeto continua chamando depois de jogado (sinalizador queimando, rádio tocando). 0 = só o barulho do impacto.")]
+        public float lureSeconds = 0f;
+        [Tooltip("Raio de cada chamado do objeto, em metros.")]
+        public float lureNoise = 20f;
+        [Tooltip("Segundos entre um chamado e outro enquanto o objeto está ativo.")]
+        public float lureInterval = 2.5f;
+        [Tooltip("Som que o objeto toca enquanto está ativo (em laço). Vazio = chiado do sinalizador ou estática de rádio, gerados por código.")]
+        public AudioClip lureSound;
+        [Tooltip("Marcado: o monstro SEMPRE vai investigar (como um barulho de história). Desmarcado: ele aprende que este objeto é isca depois de algumas viagens em vão e passa a ignorá-lo.")]
+        public bool lureAlwaysInvestigate;
+        [Tooltip("Nome da fonte no aprendizado do monstro. Vazio = o id do item (todas as garrafas ensinam a mesma coisa).")]
+        public string lureKey = "";
+        [Tooltip("Sinalizador: cor, alcance e intensidade da luz.")]
+        public Color flareColor = new Color(1f, 0.28f, 0.16f, 1f);
+        public float flareRange = 15f;
+        public float flareIntensity = 3.2f;
+
         /// <summary>True se o item é pesado (ver HandGrip): com uma mão só não recarrega.</summary>
         public bool IsHeavy
         {
@@ -196,6 +239,8 @@ namespace HorrorFPS
                     return "Bateria " + Mathf.RoundToInt(100f * BatteryOf(it) / Mathf.Max(1, e.batterySeconds)) + "%" + (it.HasFlag(Lit) ? "  •  ligada" : "");
                 case EquipKind.Melee:
                     return e.durability > 0 ? "Durabilidade " + DurabilityOf(it) + "/" + e.durability : "";
+                case EquipKind.Throwable:
+                    return "Quantidade " + Mathf.Max(1, it.stack);
             }
             return "";
         }
