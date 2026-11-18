@@ -15,6 +15,7 @@ MonoBehaviour:
   mainMenuScene: MainMenu
   coreScene: Core
   noPlayerScenes: []
+  hotbarSlots: 9
   gameTitle: Huggable Horrors
   firstLevel: hall
   levels:
@@ -30,13 +31,19 @@ MonoBehaviour:
     - Level_Cellar
     defaultSpawn: start
     loadingTip: Use o gravador para salvar o jogo. Checkpoints salvam sozinhos.
-  - id: showcase
-    displayName: Cena completa
+  - id: tunnels
+    displayName: "T\xFAneis"
     scenes:
-    - Level_Showcase
+    - Level_Tunnels
     defaultSpawn: start
-    loadingTip: "Cada zona mostra um sistema do jogo. Siga as estradas coloridas
-      a partir da pra\xE7a."
+    loadingTip: 'Quando a sanidade cai, as luzes falham. Fique agachado no escuro:
+      o monstro enxerga menos.'
+  - id: power
+    displayName: "Casa de for\xE7a"
+    scenes:
+    - Level_Power
+    defaultSpawn: start
+    loadingTip: 'Um atalho aberto fica aberto: volte por ele e poupe o caminho.'
   loadingTips:
   - "Dois jogadores? Aperte um bot\xE3o no segundo controle para entrar."
   - "Objetos que voc\xEA move continuam onde voc\xEA deixou, mesmo depois de trocar

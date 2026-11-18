@@ -9,8 +9,8 @@ using UnityEngine.AI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Menus 19 e 20: "adicionar perseguidor" ao objeto selecionado e "criar StalkerDefinition" (o que liga o perseguidor ao
-    /// sistema entre cenas). A bancada de teste (BuildDemo) vem na cena completa, menu 27. Os tipos de cutscene do framework são
+    /// Menus Stalker > Add Stalker To Selected Object e Create Stalker Definition From Selected: "adicionar perseguidor" ao objeto selecionado e "criar StalkerDefinition" (o que liga o perseguidor ao
+    /// sistema entre cenas). A bancada de teste (BuildDemo) é montada pelos menus Stalker > Create Stalker Test Scene (cena própria jogável) e Create Stalker Test Arena In Open Scene (HorrorFPSSetup.StalkerTest.cs). Os tipos de cutscene do framework são
     /// achados por reflexão: este arquivo não quebra se algum deles mudar de nome.
     /// </summary>
     public static class StalkerMenu
@@ -26,7 +26,7 @@ namespace HorrorFPS
 
         /// <summary>
         /// Monta a bancada do perseguidor (arena 40x40 com 4 salas, pontos de ronda e de aparição, o monstro com finalizador e um rádio isca)
-        /// em 'origin'. Não abre diálogo nem seleciona nada: a cena completa (menu 27) usa isto.
+        /// em 'origin'. Não abre diálogo nem seleciona nada (quem chama decide; ver HorrorFPSSetup.StalkerTest.cs).
         /// 'embedded' = a arena fica dentro de uma cena maior: abre uma porta de 7 m na parede sul (para os jogadores entrarem),
         /// o NavMesh cobre só a arena e o painel de debug do monstro fica desligado (ligue "Show Hud" no Stalker Brain para vê-lo).
         /// </summary>
@@ -88,13 +88,14 @@ namespace HorrorFPS
             StalkerSenses senses = m.AddComponent<StalkerSenses>();
             senses.eyes = head.transform;
             StalkerBrain brain = m.AddComponent<StalkerBrain>();
+            m.AddComponent<DeathCauseLabel>().Cause = "Pego pelo perseguidor.";
             brain.showHud = !embedded;
 
             // finalização: último golpe -> cutscene de teste -> a vítima morre
             StalkerFinisher fin = m.AddComponent<StalkerFinisher>();
             string finNote = BuildFinisherCutscene(m, fin);
 
-            // pontos de aparição (valem quando o perseguidor tem uma StalkerDefinition: menu 20)
+            // pontos de aparição (valem quando o perseguidor tem uma StalkerDefinition: menu Stalker > Create Stalker Definition From Selected)
             GameObject spawns = new GameObject("StalkerSpawnPoints");
             spawns.transform.SetParent(r, false);
             Vector3[] sps = { new Vector3(-16f, 0f, -16f), new Vector3(16f, 0f, -16f), new Vector3(-16f, 0f, 16f), new Vector3(16f, 0f, 16f) };
@@ -132,7 +133,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ 19. adicionar ao selecionado
-        [MenuItem("Tools/Horror FPS/19. Add Stalker To Selected Object")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Add Stalker To Selected Object", false, HorrorFPSMenu.StalkerOrder + 0)]
         public static void AddToSelected()
         {
             GameObject go = Selection.activeGameObject;
@@ -149,6 +150,7 @@ namespace HorrorFPS
             }
             if (go.GetComponent<StalkerSenses>() == null) Undo.AddComponent<StalkerSenses>(go);
             if (go.GetComponent<StalkerBrain>() == null) Undo.AddComponent<StalkerBrain>(go);
+            if (go.GetComponent<DeathCauseLabel>() == null) Undo.AddComponent<DeathCauseLabel>(go);      // o texto da tela de morte (edite no Inspector)
             EditorSceneManager.MarkSceneDirty(go.scene);
             EditorUtility.DisplayDialog("Perseguidor",
                 "'" + go.name + "' agora tem NavMeshAgent, Stalker Senses e Stalker Brain.\n\n"
@@ -157,12 +159,12 @@ namespace HorrorFPS
                 + "3) Garanta que a cena tem NavMesh e que o monstro está sobre ele.\n"
                 + "4) Para o monstro e o estado dele irem para o save: SaveableEntity + SaveableTransform no mesmo objeto.\n"
                 + "5) Traços opcionais (Add Component > HorrorFPS > Stalker > Traits): Finisher (último golpe com cutscene), Sprint Burst (exemplo).\n"
-                + "6) Para seguir os jogadores entre cenas e ser chamado por tempo/barulho: menu 20 (cria a StalkerDefinition).",
+                + "6) Para seguir os jogadores entre cenas e ser chamado por tempo/barulho: menu Stalker > Create Stalker Definition From Selected (cria a StalkerDefinition).",
                 "OK");
         }
 
         // ------------------------------------------------------------------ 20. definição (liga ao sistema entre cenas)
-        [MenuItem("Tools/Horror FPS/20. Create Stalker Definition From Selected")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Definition From Selected", false, HorrorFPSMenu.StalkerOrder + 1)]
         public static void CreateDefinition()
         {
             GameObject go = Selection.activeGameObject;

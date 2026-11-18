@@ -67,6 +67,23 @@ namespace HorrorFPS
             return lastSeen.TryGetValue(t, out s) && Time.time - s <= seconds;
         }
 
+        /// <summary>
+        /// Quanto o jogador está fácil de ver para ESTE monstro (1 = normal; agachado e na sombra, menos; com a lanterna ligada, mais):
+        /// o fator do PlayerVisibility pesado por StalkerProfile.playerVisibilityWeight.
+        /// </summary>
+        public float VisibilityScale(StalkerTarget t)
+        {
+            StalkerProfile prof = brain != null ? brain.Profile : StalkerProfile.Default;
+            return Mathf.Lerp(1f, StalkerBridge.VisibilityFactor(t), prof.playerVisibilityWeight);
+        }
+
+        /// <summary>Até onde ele enxerga ESTE jogador agora: o alcance do nível de atenção, encurtado (ou alongado) pela visibilidade dele.</summary>
+        public float VisionRangeFor(StalkerTarget t, AttentionTuning tune)
+        {
+            StalkerProfile prof = brain != null ? brain.Profile : StalkerProfile.Default;
+            return tune.visionRange * Mathf.Lerp(1f, VisibilityScale(t), prof.visibilityRangeInfluence);
+        }
+
         // ------------------------------------------------------------------ visão
         public void Tick(float dt)
         {
@@ -124,10 +141,47 @@ namespace HorrorFPS
         float Visibility(StalkerTarget t, Vector3 eye, AttentionTuning tune, StalkerProfile prof)
         {
             if (t.hidden) return 0f;
+            float v = BodyVisibility(t, eye, tune, prof);
+            if (prof.detectsFlashlightBeam)
+            {
+                float b = BeamVisibility(t, eye, tune, prof);       // a luz da lanterna denuncia mesmo no escuro e fora do alcance normal
+                if (b > v) v = b;
+            }
+            return v;
+        }
+
+        /// <summary>
+        /// Habilidade de alguns monstros (StalkerProfile.detectsFlashlightBeam): enxerga a lanterna acesa do jogador. Vale a luz estar
+        /// dentro do cone de visão dele, dentro do alcance (beamDetectRange) e sem parede no caminho; o feixe apontado para o monstro conta mais.
+        /// A lanterna fica na mão do jogador, então enxergá-la é saber onde ele está (lastVisible guarda a posição do jogador).
+        /// </summary>
+        float BeamVisibility(StalkerTarget t, Vector3 eye, AttentionTuning tune, StalkerProfile prof)
+        {
+            EquipmentController.BeamInfo beam;
+            if (!EquipmentController.TryGetBeam(t.player, out beam)) return 0f;
+            float range = Mathf.Max(1f, prof.beamDetectRange);
+            Vector3 to = beam.origin - eye;
+            float dist = to.magnitude;
+            if (dist > range) return 0f;
+            if (dist > prof.nearSenseRange && Vector3.Angle(Forward, to) > tune.visionFov * 0.5f) return 0f;
+            if (!LineClear(eye, beam.origin, t)) return 0f;
+
+            float k = dist / range;
+            float v = prof.beamDetectStrength * (1f - 0.5f * k) * Mathf.Clamp01(beam.strength);
+            if (dist <= beam.range && beam.spotAngle > 1f && Vector3.Angle(beam.direction, -to) <= beam.spotAngle * 0.5f)
+                v *= Mathf.Max(1f, prof.beamLitBonus);              // está dentro do cone de luz
+            v = brain.ModifyVisibility(t, v);                       // traços exclusivos (cego à luz...) também contam aqui
+            return Mathf.Clamp01(v);
+        }
+
+        float BodyVisibility(StalkerTarget t, Vector3 eye, AttentionTuning tune, StalkerProfile prof)
+        {
             Vector3 chest = StalkerBridge.ChestPos(t);
             Vector3 to = chest - eye;
             float dist = to.magnitude;
-            if (dist > tune.visionRange) return 0f;
+            float scale = VisibilityScale(t);                 // agachado / sombra / lanterna ligada
+            float range = tune.visionRange * Mathf.Lerp(1f, scale, prof.visibilityRangeInfluence);
+            if (dist > range) return 0f;
             if (dist > prof.nearSenseRange && Vector3.Angle(Forward, to) > tune.visionFov * 0.5f) return 0f;
 
             int visible = 0;
@@ -136,8 +190,8 @@ namespace HorrorFPS
             if (LineClear(eye, StalkerBridge.FeetPos(t), t)) visible++;
             if (visible == 0) return 0f;
 
-            float k = dist / Mathf.Max(1f, tune.visionRange);
-            float v = (visible / 3f) * (1f - 0.6f * k * k);
+            float k = dist / Mathf.Max(1f, range);
+            float v = (visible / 3f) * (1f - 0.6f * k * k) * scale;
             if (t.speed < 0.25f) v *= prof.stillFactor;
             else if (t.speed > 4.2f) v *= prof.runningFactor;
             v = brain.ModifyVisibility(t, v);        // traços exclusivos (cego à luz, visão noturna...)
@@ -167,12 +221,18 @@ namespace HorrorFPS
             Transform src = StalkerBridge.SourceOf(ev);
             if (src != null && src.IsChildOf(transform)) return;
             if (src != null && src.GetComponentInParent<StalkerBrain>() != null) return;     // perseguidores não se alertam uns aos outros
+            if (src != null)
+            {
+                StalkerTarget maker = StalkerBridge.TargetOf(src);
+                if (maker != null && PlayerCheats.IsInvisible(maker.player)) return;           // jogador invisível (modo deus): nem o barulho dele chega
+            }
 
             AttentionTuning tune = brain.Tune;
             float vol = StalkerBridge.Loudness(ev, EyePos, tune.hearing * (1f + 0.15f * brain.Skill), brain.Profile.hearingOcclusion);
             if (vol <= 0f) return;
 
             StalkerNoiseTag tag = src != null ? src.GetComponentInParent<StalkerNoiseTag>() : null;
+            NoiseSourceTag generic = (tag == null && src != null) ? src.GetComponentInParent<NoiseSourceTag>() : null;     // etiqueta do framework (garrafa jogada, rádio...)
             StalkerNoise n = new StalkerNoise();
             n.position = ev.position;
             n.loudness = vol;
@@ -181,16 +241,17 @@ namespace HorrorFPS
             n.time = Time.time;
             n.target = StalkerBridge.TargetOf(src);
             n.playerMade = n.target != null;
-            n.tagMode = tag != null ? tag.mode : NoiseTagMode.Learn;
-            n.key = KeyOf(src, n.kind, tag);
+            n.tagMode = tag != null ? tag.mode : (generic != null && generic.alwaysInvestigate ? NoiseTagMode.AlwaysInvestigate : NoiseTagMode.Learn);
+            n.key = KeyOf(src, n.kind, tag, generic);
 
             if (n.tagMode != NoiseTagMode.AlwaysInvestigate && vol < tune.noiseThreshold) return;
             if (NoiseHeard != null) NoiseHeard(n);
         }
 
-        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag)
+        static string KeyOf(Transform src, string kind, StalkerNoiseTag tag, NoiseSourceTag generic)
         {
             if (tag != null && !string.IsNullOrEmpty(tag.key)) return tag.key;
+            if (generic != null && !string.IsNullOrEmpty(generic.key)) return generic.key;
             if (src == null) return "?:" + kind;
             string n = src.name.Replace("(Clone)", "");
             int p = n.IndexOf(" (", StringComparison.Ordinal);

@@ -145,11 +145,29 @@ namespace HorrorFPS
 
         public static Vector3 FeetPos(StalkerTarget t) { return t.root.position + Vector3.up * 0.2f; }
 
+        /// <summary>
+        /// Quão fácil o jogador está de ver agora (PlayerVisibility): 1 normal, menos agachado ou na sombra, mais com a lanterna ligada.
+        /// 1 se o jogador não tem o módulo. Limitado a 0,1..2,5 para a visão do monstro nunca zerar nem explodir por um ajuste exagerado.
+        /// </summary>
+        public static float VisibilityFactor(StalkerTarget t)
+        {
+            if (t == null || !t.Valid) return 1f;
+            PlayerVisibility v = PlayerVisibility.Of(t.player);
+            return v != null ? Mathf.Clamp(v.Factor, 0.1f, 2.5f) : 1f;
+        }
+
         // ------------------------------------------------------------------ esconderijos
         static HidingSpot[] spots = new HidingSpot[0];
         static float nextSpotScan = -99f;
 
-        public static bool IsHidden(StalkerTarget t) { return t != null && t.Valid && HidingSpot.IsHidden(t.player); }
+        /// <summary>
+        /// Escondido: dentro de um esconderijo OU invisível (modo deus). O monstro não enxerga, não entrega pistas nem ataca quem está
+        /// "escondido"; reaproveitar isso dá a invisibilidade de teste sem tocar nos outros sistemas.
+        /// </summary>
+        public static bool IsHidden(StalkerTarget t)
+        {
+            return t != null && t.Valid && (HidingSpot.IsHidden(t.player) || PlayerCheats.IsInvisible(t.player));
+        }
 
         public static Component SpotOf(StalkerTarget t) { return (t != null && t.Valid) ? HidingSpot.SpotOf(t.player) : null; }
 

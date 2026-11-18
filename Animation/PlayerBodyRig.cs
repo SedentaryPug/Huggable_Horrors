@@ -132,7 +132,7 @@ namespace HorrorFPS
                 if (!warnedController)
                 {
                     warnedController = true;
-                    Debug.Log("[Anim] '" + name + "' ainda não tem Animator Controller: use Tools > Horror FPS > 15. Create Player Animator Controller e arraste no Animator.", this);
+                    Debug.Log("[Anim] '" + name + "' ainda não tem Animator Controller: use Tools > Horror FPS > Animation > Create Player Animator Controller e arraste no Animator.", this);
                 }
                 return;
             }

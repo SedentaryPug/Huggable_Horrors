@@ -5,7 +5,7 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 8. Character Catalog  e  9. Add Selected Player Prefab(s) as Characters.
+    /// Tools > Horror FPS > Player > Character Catalog  e  Tools > Horror FPS > Player > Add Selected Player Prefab(s) As Characters.
     /// Cria/abre o catálogo de personagens e transforma prefabs do jogador em personagens do catálogo.
     /// </summary>
     public static class CharacterCatalogUtil
@@ -61,7 +61,7 @@ namespace HorrorFPS.ItemsEditor
             return def;
         }
 
-        [MenuItem("Tools/Horror FPS/8. Character Catalog")]
+        [MenuItem(HorrorFPSMenu.Player + "Character Catalog", false, HorrorFPSMenu.PlayerOrder + 3)]
         static void OpenCatalog()
         {
             CharacterCatalog c = FindOrCreate();
@@ -69,7 +69,7 @@ namespace HorrorFPS.ItemsEditor
             EditorGUIUtility.PingObject(c);
         }
 
-        [MenuItem("Tools/Horror FPS/9. Add Selected Player Prefab(s) as Characters")]
+        [MenuItem(HorrorFPSMenu.Player + "Add Selected Player Prefab(s) As Characters", false, HorrorFPSMenu.PlayerOrder + 4)]
         static void AddSelected()
         {
             List<GameObject> prefabs = SelectedPlayerPrefabs();
@@ -91,7 +91,7 @@ namespace HorrorFPS.ItemsEditor
             WizardUtil.Msg(added + " personagem(ns) adicionado(s) ao catálogo.\n\nAbra cada personagem para ajustar id, nome e a regra do inventário, e escolha o personagem inicial no catálogo.");
         }
 
-        [MenuItem("Tools/Horror FPS/9. Add Selected Player Prefab(s) as Characters", true)]
+        [MenuItem(HorrorFPSMenu.Player + "Add Selected Player Prefab(s) As Characters", true)]
         static bool AddSelectedValidate()
         {
             return SelectedPlayerPrefabs().Count > 0;

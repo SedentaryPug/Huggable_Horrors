@@ -35,6 +35,7 @@ namespace HorrorFPS
         float[] baseIntensity;
         Material[] materials;
         float level;
+        float failure = 1f;
         Coroutine flicker;
 
         /// <summary>Posição do interruptor (independe de haver energia).</summary>
@@ -42,6 +43,12 @@ namespace HorrorFPS
         public bool HasPower { get { return string.IsNullOrEmpty(powerVariable) || PropsBridge.GetBool(powerVariable); } }
         /// <summary>Realmente acesa agora.</summary>
         public bool IsLit { get { return On && HasPower; } }
+        /// <summary>As luzes do conjunto (para quem precisa mexer em cada uma: SanityLight, LightFailure).</summary>
+        public Light[] Lights { get { return lights; } }
+        /// <summary>Quanto brilha agora, de 0 (apagada) a 1 (acesa), já com a falha (LightFailure) e a piscada do interruptor. VisibilityZone usa isto.</summary>
+        public float Level { get { Init(); return level * failure; } }
+        /// <summary>Multiplicador de falha atual (1 = sem falha).</summary>
+        public float Failure { get { return failure; } }
 
         void Init()
         {
@@ -76,14 +83,28 @@ namespace HorrorFPS
         void Apply(float k)
         {
             level = k;
+            float e = k * failure;   // k = o que o interruptor e a energia pedem; failure = o que o LightFailure tira
             for (int i = 0; i < baseIntensity.Length; i++)
             {
                 if (lights[i] == null) continue;
-                lights[i].enabled = k > 0.01f;
-                lights[i].intensity = baseIntensity[i] * k;
+                lights[i].enabled = e > 0.01f;
+                lights[i].intensity = baseIntensity[i] * e;
             }
             for (int i = 0; i < materials.Length; i++)
-                if (materials[i] != null) materials[i].SetColor("_EmissionColor", emissionColor * k);
+                if (materials[i] != null) materials[i].SetColor("_EmissionColor", emissionColor * e);
+        }
+
+        /// <summary>
+        /// Falha das luzes (0 = apagadas, 1 = normais), por cima do interruptor e da energia: é como o LightFailure pisca e apaga o conjunto
+        /// sem desfazer o que o jogador ligou. Volte a 1 para o conjunto ficar como estava.
+        /// </summary>
+        public void SetFailure(float multiplier)
+        {
+            Init();
+            multiplier = Mathf.Clamp01(multiplier);
+            if (Mathf.Approximately(multiplier, failure)) return;
+            failure = multiplier;
+            if (flicker == null) Apply(IsLit ? 1f : 0f);   // durante a piscada do interruptor, a próxima etapa já usa a falha
         }
 
         public void Toggle() { SetOn(!On, false); }

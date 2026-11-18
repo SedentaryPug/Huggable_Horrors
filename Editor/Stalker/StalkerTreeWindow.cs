@@ -6,7 +6,7 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Janela de edição da árvore do perseguidor (Tools > Horror FPS > 24. Stalker Tree Editor, ou duplo clique num StalkerTreeAsset).
+    /// Janela de edição da árvore do perseguidor (Tools > Horror FPS > Stalker > Stalker Tree Editor, ou duplo clique num StalkerTreeAsset).
     /// À esquerda a árvore em lista indentada: clique para selecionar, "+" adiciona um filho, ▲▼ muda a ordem, "···" (ou botão
     /// direito) abre o menu do nó (inserir, envolver, duplicar, copiar/colar, mover para dentro/fora, desligar). À direita os
     /// parâmetros e as condições do nó selecionado. Em Play, escolha o perseguidor no canto da barra e veja cada nó "ao vivo"

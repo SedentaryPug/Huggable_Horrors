@@ -3,7 +3,7 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Regras da reanimação em co-op. Asset em Assets/Resources/HorrorFPS/ReviveProfile (o menu 21 cria e já tenta preencher o id do
+    /// Regras da reanimação em co-op. Asset em Assets/Resources/HorrorFPS/ReviveProfile (o menu Revive > Create Revive Profile cria e já tenta preencher o id do
     /// kit médico). Sem asset, valem os padrões deste arquivo.
     /// </summary>
     [CreateAssetMenu(menuName = "HorrorFPS/Revive Profile", fileName = "ReviveProfile")]
@@ -65,7 +65,7 @@ namespace HorrorFPS
 
         // ------------------------------------------------------------------ reanimar
         [Header("Reanimar")]
-        [Tooltip("Ids de ItemData tratados como kit médico (o primeiro que o reanimador tiver é gasto). Confira o id do seu kit: o menu 21 tenta achar.")]
+        [Tooltip("Ids de ItemData tratados como kit médico (o primeiro que o reanimador tiver é gasto). Confira o id do seu kit: o menu Revive > Create Revive Profile tenta achar.")]
         public string[] medkitItemIds = { "kit_medico", "kit_medico_pequeno", "kitmedico", "kit-medico", "medkit" };
         [Tooltip("Se o reanimador tem um kit, ele é gasto e o jogador levanta bem. Desligado, o kit nunca é usado.")]
         public bool useKitWhenAvailable = true;

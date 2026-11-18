@@ -5,7 +5,7 @@ namespace HorrorFPS
     /// <summary>
     /// Instalador dos módulos novos (itens/inventário, sanidade, corpo) em cada jogador. Sem configurar nada, todo PlayerContext
     /// que aparecer em cena ganha o que lhe faltar, com valores padrão. Quem prefere montar no prefab usa o menu
-    /// Tools > Horror FPS > 4. Add Item, Sanity and Body modules to Player Prefab — o instalador só completa o que não existir.
+    /// Tools > Horror FPS > Player > Add Item, Sanity and Body Modules To Player Prefab — o instalador só completa o que não existir.
     /// Para desligar o automático: PlayerModules.AutoInstall = false (cedo, ex.: em Awake de um objeto da cena Core) ou o símbolo
     /// de compilação HORRORFPS_NO_AUTOINSTALL.
     /// </summary>
@@ -39,16 +39,30 @@ namespace HorrorFPS
             Ensure<Hotbar>(player);
             Ensure<HotbarHUD>(player);
             Ensure<InventoryScreen>(player);
-            Ensure<EquipmentController>(player);      // lanterna, armas brancas e de fogo (ItemData.equip)
+            Ensure<EquipmentController>(player);      // lanterna (item de mão), armas brancas e de fogo (ItemData.equip)
             Ensure<EquipmentHUD>(player);
+
+            // objetivos, diário e dicas de tutorial na tela do jogador
+            Ensure<ObjectivesHUD>(player);
+            Ensure<TutorialHUD>(player);
+            Ensure<TutorialDirector>(player);
+            Ensure<NoiseMeterHUD>(player);            // indicador de ruído (agachar = menos barulho)
+            Ensure<VisibilityHUD>(player);            // indicador de visibilidade (agachar/sombra = mais difícil de ver)
+            Ensure<JournalReader>(player);            // lê notas na tela e põe documentos pegos no diário
 
             // corpo (a sonda de movimento primeiro: os outros dependem dela)
             Ensure<PlayerMotionProbe>(player);
+            Ensure<PlayerVisibility>(player);         // quão fácil de ver (agachado, sombra, lanterna): lido pela visão do perseguidor
+            Ensure<FootstepAudio>(player);            // som dos passos por tipo de piso (NoiseSurface, material, piso da área)
             Ensure<BreathingComponent>(player);
             Ensure<HeartbeatComponent>(player);
             Ensure<HeartbeatHUD>(player);
             Ensure<DynamicHeadBob>(player);
             Ensure<DamageReaction>(player);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Ensure<GodMode>(player);                  // modo deus de teste (F1..F5): só no Editor e em Development Build
+#endif
 
             // sanidade
             Ensure<SanityComponent>(player);

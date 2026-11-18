@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae4058cc189d45c8943377c16d0c3dfd, type: 3}
+  m_Name: ObjectiveCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.ObjectiveCatalog
+  objectives:
+  - id: sample_explore
+    title: Explorar o local
+    description: "Olhe ao redor e procure uma sa\xEDda."
+    autoStart: 1
+    startAfter: []
+    completeVariable: sample.explored
+    counterVariable: 
+    target: 1
+    optional: 0
+    notify: 1
+  - id: sample_batteries
+    title: Juntar pilhas
+    description: "Cada pilha encontrada soma ao contador (vari\xE1vel sample.batteries)."
+    autoStart: 0
+    startAfter:
+    - sample_explore
+    completeVariable: 
+    counterVariable: sample.batteries
+    target: 3
+    optional: 0
+    notify: 1
+  - id: sample_escape
+    title: Fugir pela porta da frente
+    description: "Termina quando a vari\xE1vel sample.escaped ficar verdadeira."
+    autoStart: 0
+    startAfter:
+    - sample_batteries
+    completeVariable: sample.escaped
+    counterVariable: 
+    target: 1
+    optional: 0
+    notify: 1
+  - id: sample_note
+    title: Ler o bilhete
+    description: "Objetivo opcional: some quando voc\xEA terminar de ler."
+    autoStart: 1
+    startAfter: []
+    completeVariable: sample.note_read
+    counterVariable: 
+    target: 1
+    optional: 1
+    notify: 1

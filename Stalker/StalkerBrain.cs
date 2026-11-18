@@ -19,8 +19,12 @@ namespace HorrorFPS
         public bool showHud;
 
         [Header("Árvore de comportamento")]
-        [Tooltip("Vazio = a árvore padrão do código (tudo como sempre foi). Com um asset: a árvore montada na janela Tools > Horror FPS > 24. Stalker Tree Editor. Se este campo estiver vazio, vale a da Definição.")]
+        [Tooltip("Vazio = a árvore padrão do código (tudo como sempre foi). Com um asset: a árvore montada na janela Tools > Horror FPS > Stalker > Stalker Tree Editor. Se este campo estiver vazio, vale a da Definição.")]
         public StalkerTreeAsset tree;
+
+        [Header("Perfil em grafo (opcional)")]
+        [Tooltip("As características do monstro como grafo (Create > HorrorFPS > Stalker Profile Graph): visão, audição, locomoção, ataques... Vazio = só o Perfil de números, tudo como sempre foi. Se este campo estiver vazio, vale o da Definição.")]
+        public StalkerProfileGraph profileGraph;
 
         [Header("Identidade (vários perseguidores e troca de cena)")]
         [Tooltip("Quem este perseguidor é para o sistema entre cenas (seguir, ser invocado, recuar). Opcional se ele vive só na própria cena.")]
@@ -37,7 +41,14 @@ namespace HorrorFPS
         public event System.Action<StalkerTarget> Spotted;       // notou um jogador (bom para música/susto)
         public event System.Action<StalkerHint> HintReceived;    // recebeu uma pista (bom para um "tell" para o jogador)
 
-        public StalkerProfile Profile
+        /// <summary>
+        /// Os números em uso. Com perfil em grafo é a CÓPIA deste monstro (o perfil base mais o que as características escreveram nele);
+        /// sem grafo, o perfil de sempre (o do cérebro, o da Definição ou o padrão).
+        /// </summary>
+        public StalkerProfile Profile { get { return runtimeProfile != null ? runtimeProfile : NumbersProfile; } }
+
+        /// <summary>Os números "de fábrica" deste cérebro, sem as características do grafo: o campo Profile, o da Definição ou o padrão.</summary>
+        StalkerProfile NumbersProfile
         {
             get
             {
@@ -92,6 +103,28 @@ namespace HorrorFPS
         public StalkerSenses Senses { get; private set; }
         public NavMeshAgent Agent { get; private set; }
         public StalkerModules Modules { get; private set; }
+
+        /// <summary>As características do perfil em grafo montadas para este monstro. null = ele usa só o Perfil de números.</summary>
+        public StalkerTraitSet Traits { get; private set; }
+
+        /// <summary>
+        /// O contrato do monstro: o que ele é e pode fazer (números, marcas e ataques), publicado pelas características do grafo.
+        /// A árvore de comportamento só consulta isto. Sem grafo, vem do Perfil de números (mesmas chaves).
+        /// </summary>
+        public readonly StalkerCapabilities Capabilities = new StalkerCapabilities();
+
+        /// <summary>O perfil em grafo em uso: o deste cérebro ou, se não houver, o da Definição. null = só o Perfil de números.</summary>
+        public StalkerProfileGraph ProfileGraph { get { return profileGraph != null ? profileGraph : (definition != null ? definition.profileGraph : null); } }
+
+        /// <summary>Sanidade que o último golpe tirou do alvo: a do ataque do grafo ou, sem ele, a do Perfil. O Finalizador usa.</summary>
+        public float AttackSanityLoss
+        {
+            get
+            {
+                StalkerAttack last = Capabilities.LastAttack;
+                return last != null ? last.sanityDamage : Profile.attackSanityLoss;
+            }
+        }
 
         /// <summary>A árvore editável em uso: a deste cérebro ou, se não houver, a da Definição. null = a árvore padrão do código.</summary>
         public StalkerTreeAsset Tree
@@ -148,6 +181,7 @@ namespace HorrorFPS
         bool ready, held;
         StalkerMemory memory;
         string memoryKey, threatKey;
+        StalkerProfile runtimeProfile;      // a cópia dos números deste monstro (só com perfil em grafo); destruída em OnDestroy
 
         /// <summary>Os ramos da árvore desta instância, por prioridade (debug).</summary>
         public string TreeSummary { get; private set; }
@@ -158,6 +192,7 @@ namespace HorrorFPS
             Agent = GetComponent<NavMeshAgent>();
             Senses = GetComponent<StalkerSenses>();
             if (Senses == null) Senses = gameObject.AddComponent<StalkerSenses>();
+            BuildTraits();                              // o perfil em grafo (se houver) vira os números e o contrato deste monstro
             Tune = Profile.Get(StalkerAttention.Calm);
             Modules = new StalkerModules(this);
             Modules.Collect();                          // os módulos se ligam ao cérebro aqui (use OnAttach, não o Awake deles)
@@ -199,6 +234,55 @@ namespace HorrorFPS
             }
             root = built;
             TreeSummary = summary;
+        }
+
+        /// <summary>
+        /// Monta as características. Com perfil em grafo: a cópia dos números deste monstro + o contrato publicado pelas características.
+        /// Sem grafo: os números são os de sempre e o contrato é derivado do Perfil (mesmas chaves, para a mesma árvore servir aos dois).
+        /// </summary>
+        void BuildTraits()
+        {
+            if (runtimeProfile != null)
+            {
+                Destroy(runtimeProfile);
+                runtimeProfile = null;
+            }
+            Traits = null;
+            StalkerProfileGraph graph = ProfileGraph;
+            if (graph == null)
+            {
+                StalkerProfileGraph.PublishLegacy(NumbersProfile, Capabilities);
+                return;
+            }
+            StalkerProfile numbers = graph.baseProfile != null ? graph.baseProfile : NumbersProfile;
+            Traits = StalkerTraitSet.Build(this, graph, numbers, Capabilities);
+            runtimeProfile = Traits.Profile;
+        }
+
+        /// <summary>
+        /// Remonta o perfil em grafo e a árvore (depois de editar o grafo em Play, ou de trocar o campo Profile Graph em jogo).
+        /// A memória e o conhecimento ficam; o estado interno das características e dos nós zera (recargas voltam a "prontas").
+        /// </summary>
+        public void RebuildTraits()
+        {
+            if (actions == null) return;        // o Awake ainda não rodou: ele monta sozinho
+            if (root != null) root.Abort();
+            BuildTraits();
+            Tune = Profile.Get(Level);
+            BuildTree();
+        }
+
+        /// <summary>Troca o perfil em grafo em jogo (ex.: o monstro "evolui"). null = volta ao da Definição ou ao Perfil de números.</summary>
+        public void SetProfileGraph(StalkerProfileGraph graph)
+        {
+            profileGraph = graph;
+            RebuildTraits();
+        }
+
+        void OnDestroy()
+        {
+            if (runtimeProfile != null) Destroy(runtimeProfile);
+            runtimeProfile = null;
         }
 
         /// <summary>Troca a árvore em jogo (ex.: outra fase do chefe). null = volta à da Definição ou à padrão do código.</summary>

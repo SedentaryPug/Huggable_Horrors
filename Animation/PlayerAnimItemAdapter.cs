@@ -29,6 +29,7 @@ namespace HorrorFPS
 
         public string flashlightSlot = "lanterna";
         public string handSlot = "mao";
+        public string leftHandSlot = "mao_esq";
         [Tooltip("Lidas de cima para baixo; vale a primeira que casa. Sem regra: item genérico.")]
         public List<Rule> rules = new List<Rule>
         {
@@ -76,8 +77,9 @@ namespace HorrorFPS
             }
             if (owner == null) yield break;
             yield return null;
+            Sync(leftHandSlot, true);       // a esquerda primeiro: se as duas mãos têm item, a direita (a principal) vale
             Sync(handSlot, true);
-            Sync(flashlightSlot, true);
+            Sync(flashlightSlot, true);     // saves antigos: a lanterna ainda no slot próprio
         }
 
         void Sync(string slot, bool equipped)
@@ -133,6 +135,7 @@ namespace HorrorFPS
         bool IsFlashlight(ItemInstance it)
         {
             if (it == null || it.data == null) return false;
+            if (it.data.equip != null && it.data.equip.kind == EquipKind.Flashlight) return true;       // a lanterna agora ocupa uma mão
             string slot = SlotOf(it);
             if (!string.IsNullOrEmpty(slot) && slot == flashlightSlot) return true;
             string id = (it.data.Id ?? "").ToLowerInvariant();

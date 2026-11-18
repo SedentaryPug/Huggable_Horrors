@@ -7,9 +7,9 @@ namespace HorrorFPS
     /// <summary>
     /// Sons gerados por código (nenhum arquivo de áudio necessário): batimento, respiração, sussurros, batidas, zumbido...
     /// São só um ponto de partida para o jogo funcionar sem assets: cada componente aceita um AudioClip seu no lugar.
-    /// Os clipes são criados uma vez e guardados.
+    /// Os clipes são criados uma vez e guardados. Ambientes, música, passos por piso e rádio ficam em ProceduralAudio.Ambience.cs.
     /// </summary>
-    public static class ProceduralAudio
+    public static partial class ProceduralAudio
     {
         const int Rate = 22050;
         static readonly Dictionary<string, AudioClip> cache = new Dictionary<string, AudioClip>();

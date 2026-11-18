@@ -36,31 +36,85 @@ namespace HorrorFPS
 
         public void BuildBranches(StalkerTreeBuilder tree) { for (int i = 0; i < list.Length; i++) list[i].BuildBranches(tree); }
 
-        public void ModifyTuning(ref AttentionTuning t) { for (int i = 0; i < list.Length; i++) list[i].ModifyTuning(ref t); }
+        // Em todos os ganchos abaixo, as características do PERFIL EM GRAFO (brain.Traits, se houver) rodam primeiro e os módulos
+        // (MonoBehaviour) depois: primeiro o que a espécie é, depois o que esta cena acrescenta, que tem a última palavra.
+        public void ModifyTuning(ref AttentionTuning t)
+        {
+            StalkerTraitSet traits = brain.Traits;
+            if (traits != null) traits.ModifyTuning(ref t);
+            for (int i = 0; i < list.Length; i++) list[i].ModifyTuning(ref t);
+        }
 
         public float ModifyVisibility(StalkerTarget target, float v)
         {
+            StalkerTraitSet traits = brain.Traits;
+            if (traits != null) v = traits.ModifyVisibility(target, v);
             for (int i = 0; i < list.Length; i++) v = list[i].ModifyVisibility(target, v);
             return v;
         }
 
         public bool FilterNoise(ref StalkerNoise n)
         {
+            StalkerTraitSet traits = brain.Traits;
+            if (traits != null && !traits.FilterNoise(ref n)) return false;
             for (int i = 0; i < list.Length; i++) if (!list[i].FilterNoise(ref n)) return false;
             return true;
         }
 
-        public void Spotted(StalkerTarget t) { for (int i = 0; i < list.Length; i++) list[i].OnSpotted(t); }
-        public void LostSight(StalkerTarget t) { for (int i = 0; i < list.Length; i++) list[i].OnLostSight(t); }
-        public void Hint(StalkerHint h) { for (int i = 0; i < list.Length; i++) list[i].OnHint(h); }
-        public void ModeChanged(StalkerMode from, StalkerMode to) { for (int i = 0; i < list.Length; i++) list[i].OnModeChanged(from, to); }
-        public void AttentionChanged(StalkerAttention from, StalkerAttention to) { for (int i = 0; i < list.Length; i++) list[i].OnAttentionChanged(from, to); }
-        public void Arrived(string reason) { for (int i = 0; i < list.Length; i++) list[i].OnArrived(reason); }
-        public void Tick(float dt) { for (int i = 0; i < list.Length; i++) list[i].BrainTick(dt); }
+        public void Spotted(StalkerTarget t)
+        {
+            if (brain.Traits != null) brain.Traits.Spotted(t);
+            for (int i = 0; i < list.Length; i++) list[i].OnSpotted(t);
+        }
 
-        /// <summary>O primeiro módulo que responder algo diferente de Normal decide o golpe.</summary>
+        public void LostSight(StalkerTarget t)
+        {
+            if (brain.Traits != null) brain.Traits.LostSight(t);
+            for (int i = 0; i < list.Length; i++) list[i].OnLostSight(t);
+        }
+
+        public void Hint(StalkerHint h)
+        {
+            if (brain.Traits != null) brain.Traits.Hint(h);
+            for (int i = 0; i < list.Length; i++) list[i].OnHint(h);
+        }
+
+        public void ModeChanged(StalkerMode from, StalkerMode to)
+        {
+            if (brain.Traits != null) brain.Traits.ModeChanged(from, to);
+            for (int i = 0; i < list.Length; i++) list[i].OnModeChanged(from, to);
+        }
+
+        public void AttentionChanged(StalkerAttention from, StalkerAttention to)
+        {
+            if (brain.Traits != null) brain.Traits.AttentionChanged(from, to);
+            for (int i = 0; i < list.Length; i++) list[i].OnAttentionChanged(from, to);
+        }
+
+        public void Arrived(string reason)
+        {
+            if (brain.Traits != null) brain.Traits.Arrived(reason);
+            for (int i = 0; i < list.Length; i++) list[i].OnArrived(reason);
+        }
+
+        public void Tick(float dt)
+        {
+            if (brain.Traits != null) brain.Traits.Tick(dt);       // devolve os ataques aos valores da definição e deixa as características ajustá-los
+            for (int i = 0; i < list.Length; i++) list[i].BrainTick(dt);
+        }
+
+        /// <summary>
+        /// O primeiro que responder algo diferente de Normal decide o golpe: as características do grafo antes, os módulos depois.
+        /// Quem vem antes pode mudar o dano (ref damage) e quem decide por último (o Finalizador) já vê o dano final.
+        /// </summary>
         public AttackDecision DecideAttack(StalkerTarget t, ref float damage)
         {
+            StalkerTraitSet traits = brain.Traits;
+            if (traits != null)
+            {
+                AttackDecision g = traits.DecideAttack(t, ref damage);
+                if (g != AttackDecision.Normal) return g;
+            }
             for (int i = 0; i < list.Length; i++)
             {
                 AttackDecision d = list[i].DecideAttack(t, ref damage);

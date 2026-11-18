@@ -5,7 +5,7 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 7. Player Starting Inventory
+    /// Tools > Horror FPS > Player > Starting Inventory
     /// Edita os itens iniciais do inventário de um PREFAB (o do jogador ou o de qualquer personagem do catálogo) sem abrir o prefab:
     /// escolha o prefab, a aba do inventário (Mochila, Chaves...), arraste os itens e confira a prévia da grade.
     /// Funciona para qualquer prefab com ItemContainer (baús, armários...), não só para o jogador.
@@ -23,7 +23,7 @@ namespace HorrorFPS.ItemsEditor
         Vector2 scroll;
         bool dirty;
 
-        [MenuItem("Tools/Horror FPS/7. Player Starting Inventory")]
+        [MenuItem(HorrorFPSMenu.Player + "Starting Inventory", false, HorrorFPSMenu.PlayerOrder + 2)]
         static void Open()
         {
             PlayerInventoryWindow w = GetWindow<PlayerInventoryWindow>("Inventário inicial");

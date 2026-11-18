@@ -6,15 +6,20 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Faz o que o item EQUIPADO faz de verdade (ItemData.equip): mostra o modelo na mão, liga a lanterna, golpeia, atira, recarrega.
-    /// Um por jogador. O jogador tem DUAS mãos (esquerda e direita), cada uma com o seu item, e a lanterna fica à parte (os três ao mesmo tempo).
+    /// Um por jogador. O jogador tem DUAS mãos (esquerda e direita), cada uma com o seu item; a lanterna é um item de mão como os outros
+    /// (escolhe-se a mão ao equipar, e o botão daquela mão liga e desliga a luz).
     ///
     /// Controles (só com o inventário fechado):
-    ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia ou atira);
+    ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia, atira, joga ou liga a lanterna);
+    ///    arremessável (garrafa, sinalizador, rádio): segurar o botão carrega a força, soltar joga UMA unidade (ver ThrownDistraction);
     ///  • G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da esquerda; com as duas mãos, qualquer botão usa o item
     ///    e o item da outra mão fica guardado até voltar para uma mão só (apertar G de novo);
-    ///  • Q / Select mira (arma de fogo, segurando: zoom, menos dispersão, arma no centro);
+    ///  • NÃO há tecla de mirar: a arma de fogo só mira (zoom, menos dispersão, arma no centro) enquanto está nas DUAS mãos (G);
+    ///    a dispersão abre andando/correndo e atirando em sequência (a mira na tela, EquipmentHUD, mostra a abertura); com as duas mãos fica menor;
+    ///    arma PESADA com uma mão só: dispersão e coice bem maiores e a arma pode escapar da mão (vira item no chão);
     ///  • R / D-pad baixo recarrega (arma pesada, como espingarda, só recarrega com as duas mãos);
-    ///  • F / D-pad cima liga e desliga a lanterna (equipa uma, se não houver).
+    ///  • lanterna: equipe numa mão (atalho + clique esquerdo/direito) e use o botão dessa mão para ligar e desligar. O feixe de luz
+    ///    pode denunciar o jogador a perseguidores com StalkerProfile.detectsFlashlightBeam (ver TryGetBeam).
     /// Quem está em qual mão é decidido pelo InventoryOwner (EquipToHand): este componente só mostra e executa.
     /// Dano: vai para quem tiver IDamageable (StatsComponent do framework) e/ou IItemHittable (HitTarget, seus scripts).
     /// </summary>
@@ -37,6 +42,16 @@ namespace HorrorFPS
         [Tooltip("Com as duas mãos, o item vai para perto do centro da tela: esta fração do afastamento lateral normal (0 = no meio).")]
         [SerializeField, Range(0f, 1f)] float twoHandSideFactor = 0.25f;
 
+        [Header("Precisão e coice")]
+        [Tooltip("Com as duas mãos numa arma de fogo (G), a dispersão fica nesta fração (0,7 = 30% menor).")]
+        [SerializeField, Range(0.1f, 1f)] float twoHandSpreadFactor = 0.7f;
+        [Tooltip("Com as duas mãos numa arma de fogo, o coice fica nesta fração.")]
+        [SerializeField, Range(0.1f, 1f)] float twoHandRecoilFactor = 0.8f;
+        [Tooltip("Velocidade (por segundo) com que a abertura da mira acompanha o movimento: sobe ao andar e correr, fecha ao parar.")]
+        [SerializeField] float moveSpreadFollow = 5f;
+        [Tooltip("Aviso 'segure com as duas mãos' ao atirar com arma pesada numa mão só: no máximo de tantos em tantos segundos (0 = nunca avisa).")]
+        [SerializeField] float oneHandHintSeconds = 25f;
+
         /// <summary>Uma mão: o item que ela segura, o modelo e o estado das animações (golpe, recarga, coice).</summary>
         class HandState
         {
@@ -48,41 +63,52 @@ namespace HorrorFPS
             public bool busy, reloading;
             public float nextAttack;
             public float swingT = -1f, reloadT = -1f, kick;
+            public float bloom;            // dispersão somada pelos tiros seguidos (graus); fecha sozinha quando para de atirar
             public bool charging;          // segurando o botão para o golpe forte (arma branca)
             public float chargeT;          // há quanto tempo segura
             public bool heavyReady;        // já segurou o bastante: soltar dá o golpe forte
             public float amp = 1f;         // exagero da pose de armar/golpear (1 = fraco, 1,35 = forte)
+            public float windT;            // 0..1: o braço indo para trás enquanto carrega o arremesso
+            public float releaseT = -1f;   // 0..1: o braço indo para a frente depois de soltar (-1 = parado)
             public Coroutine action;
+            public Light beam;             // lanterna: a luz do feixe (filha de 'root')
+            public float batteryAcc;       // lanterna: fração de segundo ainda não descontada da bateria
+            public float seed;             // lanterna: semente da falha da luz com a bateria no fim
         }
 
         PlayerContext player;
+        bool wasDead;
         InventoryOwner owner;
         ItemInput input;
         InventoryScreen screen;
         HotbarHUD hud;
         ItemTremor tremor;
+        PlayerMotionProbe motion;
         Camera cam;
         AudioSource audioSrc;
         bool ready;
 
         readonly HandState right = new HandState { side = HandSide.Right };
         readonly HandState left = new HandState { side = HandSide.Left };
-        ItemInstance lamp;
-        Transform lampRoot;
-        Light flashlight;
-        float batteryAcc, lampSeed;
 
         float aimT;                 // 0 = arma baixa, 1 = mirando
+        float moveT;                // 0..1: quanto o movimento está abrindo a mira (parado 0, andando ~0,5, correndo/no ar 1)
+        float nextHint;
         float nextSync;
         float twoDown = -1f;        // instante em que G foi apertado (-1 = solto)
         bool twoHoldDone;
+        float dropDown = -1f;       // instante em que o botão de largar foi apertado (-1 = solto)
+        bool dropHoldDone;
         readonly List<ItemInstance> buffer = new List<ItemInstance>();
 
         /// <summary>O item principal: o que está nas duas mãos, senão o da mão direita, senão o da esquerda.</summary>
         public ItemInstance Hand { get { HandState m = Main(); return m != null ? m.item : null; } }
         public ItemInstance RightHand { get { return right.item; } }
         public ItemInstance LeftHand { get { return left.item; } }
-        public ItemInstance Lamp { get { return lamp; } }
+        /// <summary>A lanterna que está em uma das mãos e pode agir (não guardada, jogador vivo). A acesa tem prioridade. Null se não há.</summary>
+        public ItemInstance Lamp { get { HandState h = LampHand(); return h != null ? h.item : null; } }
+        /// <summary>True se há uma lanterna acesa e emitindo luz agora.</summary>
+        public bool FlashlightOn { get { HandState h = LampHand(); return h != null && h.beam != null && h.beam.enabled; } }
         /// <summary>Qual mão segura o item com as duas mãos (None = cada mão segura o seu).</summary>
         public HandSide TwoHandSide { get { return TwoSide; } }
         public bool IsReloading { get { return right.reloading || left.reloading; } }
@@ -91,9 +117,44 @@ namespace HorrorFPS
         public bool IsAiming { get { return aimT > 0.5f; } }
         public float ReloadProgress { get { return Mathf.Max(Mathf.Max(0f, right.reloadT), Mathf.Max(0f, left.reloadT)); } }
         /// <summary>O controlador cuida dos botões de usar (o jeito antigo — ação principal do item — fica desligado).</summary>
-        public bool OwnsPrimary { get { return right.item != null || left.item != null || lamp != null; } }
+        public bool OwnsPrimary { get { return right.item != null || left.item != null; } }
 
         HandSide TwoSide { get { return owner != null ? owner.TwoHandSide : HandSide.None; } }
+
+        /// <summary>O que a mira na tela precisa saber (ver GetCrosshair).</summary>
+        public struct CrosshairInfo
+        {
+            /// <summary>Meio ângulo do cone onde os tiros caem agora, em graus (o mesmo valor que o tiro usa).</summary>
+            public float spreadDegrees;
+            /// <summary>Para onde a arma realmente aponta em relação ao centro da câmera (tangentes: x direita, y cima). Zero sem tremor.</summary>
+            public Vector2 driftTan;
+            /// <summary>0..1: quanto o jogador já está mirando (arma nas duas mãos).</summary>
+            public float aim;
+            public bool empty, reloading;
+        }
+
+        /// <summary>
+        /// Dados da mira na tela. False quando não há arma de fogo para mirar na mão (arma branca, mãos vazias, ou o outro item está nas duas mãos).
+        /// A abertura já soma movimento, tiros seguidos, mira, pegada (uma ou duas mãos) e tremor: é exatamente o cone do próximo tiro.
+        /// </summary>
+        public bool GetCrosshair(out CrosshairInfo info)
+        {
+            info = new CrosshairInfo();
+            if (!ready) return false;
+            HandState h = FirearmHand();
+            if (h == null) return false;
+            ItemEquip eq = h.item.data.equip;
+            info.aim = AimFor(h);
+            info.spreadDegrees = CurrentSpread(h, eq);
+            if (tremor != null)
+            {
+                Vector3 f = tremor.FirearmOffset(aimT, eq.pellets) * Vector3.forward;
+                if (f.z > 0.05f) info.driftTan = new Vector2(f.x / f.z, f.y / f.z);
+            }
+            info.empty = EquipState.AmmoOf(h.item) <= 0;
+            info.reloading = h.reloading;
+            return true;
+        }
 
         HandState Main()
         {
@@ -107,6 +168,7 @@ namespace HorrorFPS
         bool Usable(HandState h)
         {
             if (h.item == null) return false;
+            if (player != null && player.IsDead) return false;          // morto: as mãos somem da tela
             HandSide two = TwoSide;
             return two == HandSide.None || two == h.side;
         }
@@ -123,7 +185,9 @@ namespace HorrorFPS
             if (player == null || owner == null || input == null) return false;
             screen = PlayerRef.Find<InventoryScreen>(this);
             hud = PlayerRef.Find<HotbarHUD>(this);
-            lampSeed = Random.value * 50f;
+            motion = PlayerRef.Find<PlayerMotionProbe>(this);
+            right.seed = Random.value * 50f;
+            left.seed = Random.value * 50f;
             if (heartTremor)
             {
                 tremor = PlayerRef.Find<ItemTremor>(this);
@@ -133,6 +197,7 @@ namespace HorrorFPS
             owner.Unequipped += OnUnequipped;
             owner.HandsChanged += OnHandsChanged;
             CameraFx.Register(this);
+            if (!all.Contains(this)) all.Add(this);
             ready = true;
             Sync();
             return true;
@@ -140,6 +205,7 @@ namespace HorrorFPS
 
         void OnDestroy()
         {
+            all.Remove(this);
             CameraFx.Unregister(this);
             if (owner != null) { owner.Equipped -= OnEquipped; owner.Unequipped -= OnUnequipped; owner.HandsChanged -= OnHandsChanged; }
         }
@@ -153,35 +219,22 @@ namespace HorrorFPS
         void OnEquipped(ItemInstance it)
         {
             if (it == null || it.data == null || it.data.equip == null) return;
-            if (it.data.equip.kind == EquipKind.Flashlight) AttachLamp(it);
-            else SyncHands();
+            SyncHands();
         }
 
         void OnUnequipped(ItemInstance it)
         {
             if (it == null) return;
-            if (it == lamp) DetachLamp(true);
-            else SyncHands();
+            SyncHands();
         }
 
         void OnHandsChanged() { ApplyStow(); }
 
-        /// <summary>Confere o que está equipado (restauração de save, item jogado fora, item quebrado) e ajusta as mãos e a lanterna.</summary>
+        /// <summary>Confere o que está equipado (restauração de save, item jogado fora, item quebrado) e ajusta as mãos.</summary>
         void Sync()
         {
-            if (lamp != null && (lamp.container == null || !owner.IsEquipped(lamp))) DetachLamp(false);
+            if (motion == null) motion = PlayerRef.Find<PlayerMotionProbe>(this);
             SyncHands();
-            if (lamp != null) return;
-
-            buffer.Clear();
-            owner.GetAllItems(buffer);
-            for (int i = 0; i < buffer.Count; i++)
-            {
-                ItemInstance it = buffer[i];
-                if (it.data == null || it.data.equip == null || it.data.equip.kind != EquipKind.Flashlight || !owner.IsEquipped(it)) continue;
-                AttachLamp(it);
-                break;
-            }
         }
 
         void SyncHands()
@@ -194,7 +247,8 @@ namespace HorrorFPS
         static bool IsHandKind(ItemInstance it)
         {
             if (it == null || it.data == null || it.data.equip == null) return false;
-            return it.data.equip.kind == EquipKind.Melee || it.data.equip.kind == EquipKind.Firearm;
+            EquipKind k = it.data.equip.kind;
+            return k == EquipKind.Melee || k == EquipKind.Firearm || k == EquipKind.Throwable || k == EquipKind.Flashlight;
         }
 
         void SyncHand(HandState h)
@@ -228,20 +282,29 @@ namespace HorrorFPS
             float dt = Time.deltaTime;
             if (Time.unscaledTime >= nextSync) { nextSync = Time.unscaledTime + 0.4f; Sync(); }
 
-            TickLamp(dt);
+            bool dead = player.IsDead;
+            if (dead != wasDead)
+            {
+                wasDead = dead;
+                ApplyStow();                    // esconde (ou volta a mostrar) o modelo das mãos
+                if (dead) { CancelCharge(right); CancelCharge(left); }
+            }
+
+            TickLamp(right, dt);
+            TickLamp(left, dt);
             TickAim(dt);
+            TickPrecision(dt);
             TickViewModel(right, dt);
             TickViewModel(left, dt);
-            TickLampPose();
             TickMuzzle(right);
             TickMuzzle(left);
 
-            if (!Allowed()) { twoDown = -1f; CancelCharge(right); CancelCharge(left); return; }
+            if (dead || !Allowed()) { twoDown = -1f; dropDown = -1f; CancelCharge(right); CancelCharge(left); return; }
 
-            if (ItemInput.Pressed(input.ToggleLight)) ToggleLamp();
             TickTwoHandKey();
+            TickDropKey();
 
-            UpdateHand(right);       // só a lanterna: liga e desliga com F / D-pad cima (os botões do mouse continuam livres para arrastar)
+            UpdateHand(right);
             UpdateHand(left);
             if (ItemInput.Pressed(input.Reload)) TryReloadAny();
         }
@@ -256,6 +319,8 @@ namespace HorrorFPS
             if (!Usable(h)) return;
             ItemEquip eq = h.item.data.equip;
             if (eq.kind == EquipKind.Melee) UpdateMelee(h, eq);
+            else if (eq.kind == EquipKind.Throwable) UpdateThrowable(h, eq);
+            else if (eq.kind == EquipKind.Flashlight) { if (UsePressed(h)) ToggleLamp(h); }
             else if (eq.kind == EquipKind.Firearm)
             {
                 bool fire = eq.automatic ? UseHeld(h) : UsePressed(h);
@@ -295,14 +360,68 @@ namespace HorrorFPS
             }
         }
 
+        /// <summary>
+        /// Q / D-pad cima: larga o item equipado no chão, com o estado dele (lanterna acesa, munição, bateria, durabilidade).
+        /// Com um item nas duas mãos, larga esse. Senão, como o G: toque = item da mão direita (ou o da esquerda, se a direita está vazia);
+        /// segurar um tempinho = o da mão esquerda.
+        /// </summary>
+        void TickDropKey()
+        {
+            if (ItemInput.Pressed(input.DropEquipped))
+            {
+                HandSide two = TwoSide;
+                if (two != HandSide.None) { DropFromHand(two); return; }
+                dropDown = Time.unscaledTime; dropHoldDone = false;
+            }
+            if (dropDown < 0f) return;
+
+            if (!ItemInput.Held(input.DropEquipped))
+            {
+                if (!dropHoldDone) DropFromHand(right.item != null ? HandSide.Right : (left.item != null ? HandSide.Left : HandSide.Right));
+                dropDown = -1f;
+                return;
+            }
+            if (!dropHoldDone && Time.unscaledTime - dropDown >= Mathf.Max(0.1f, twoHandHoldSeconds))
+            {
+                dropHoldDone = true;
+                DropFromHand(HandSide.Left);
+            }
+        }
+
+        /// <summary>Larga o item da mão 'side' no chão à frente do jogador. O mesmo ItemInstance vira o item do chão: nada do estado dele se perde.</summary>
+        public void DropFromHand(HandSide side)
+        {
+            if (!ready || side == HandSide.None) return;
+            HandState h = side == HandSide.Left ? left : right;
+            ItemInstance it = h.item;
+            if (it == null) { Say(side == HandSide.Left ? "Mão esquerda vazia." : "Mão direita vazia."); return; }
+            if (!it.data.canDrop) { Say("Não dá para largar isto."); return; }
+
+            string itemName = it.GetName(this);
+            WorldItem w = owner.Drop(it);
+            if (w == null) { Say("Não há onde largar isto."); return; }
+            Say("Largou: " + itemName);
+            Play(ProceduralAudio.Thud(), 0.5f);
+            Emit(6f, NoiseKind.Item);
+        }
+
         void ToggleTwoHands(HandSide side)
         {
             Say(owner.ToggleTwoHanded(side));
             Play(ProceduralAudio.DryClick(), 0.35f);
         }
 
-        /// <summary>A mão que mira: a que está com as duas mãos; senão a direita, se tiver arma de fogo; senão a esquerda.</summary>
+        /// <summary>A mão que MIRA (zoom, dispersão menor): só a arma de fogo segurada com as duas mãos. Uma mão só nunca mira.</summary>
         HandState AimHand()
+        {
+            HandSide two = TwoSide;
+            if (two == HandSide.None) return null;
+            HandState t = two == HandSide.Left ? left : right;
+            return IsFirearm(t) ? t : null;
+        }
+
+        /// <summary>A arma de fogo na mão (uma ou duas mãos, a direita primeiro): é a que a mira na tela acompanha.</summary>
+        HandState FirearmHand()
         {
             HandSide two = TwoSide;
             if (two != HandSide.None)
@@ -322,7 +441,7 @@ namespace HorrorFPS
 
         float AimFor(HandState h) { return h == AimHand() ? aimT : 0f; }
 
-        /// <summary>Segurar o botão de mirar (arma de fogo na mão): entra e sai da mira suavemente.</summary>
+        /// <summary>Arma de fogo nas duas mãos (G): mira sozinha, sem outra tecla. Entra e sai da mira suavemente.</summary>
         void TickAim(float dt)
         {
             float target = 0f;
@@ -331,9 +450,54 @@ namespace HorrorFPS
             if (a != null)
             {
                 seconds = Mathf.Max(0.01f, a.item.data.equip.aimSeconds);
-                if (!a.reloading && Allowed() && ItemInput.Held(input.Aim)) target = 1f;
+                if (!a.reloading && Allowed() && Usable(a)) target = 1f;
             }
             aimT = Mathf.MoveTowards(aimT, target, dt / seconds);
+        }
+
+        /// <summary>Movimento abre a mira (suave) e os tiros seguidos fecham devagar quando o jogador para de atirar.</summary>
+        void TickPrecision(float dt)
+        {
+            float want = 0f;
+            if (motion != null)
+            {
+                want = Mathf.Clamp01(motion.Exertion * 1.5f);       // andando ~0,5, agachado ~0,2, correndo 1
+                if (!motion.Grounded) want = 1f;
+            }
+            moveT = Mathf.MoveTowards(moveT, want, Mathf.Max(0.1f, moveSpreadFollow) * dt);
+            TickBloom(right, dt);
+            TickBloom(left, dt);
+        }
+
+        void TickBloom(HandState h, float dt)
+        {
+            if (h.bloom <= 0f) return;
+            if (h.item == null || !IsFirearm(h)) { h.bloom = 0f; return; }
+            if (Time.time < h.nextAttack) return;                  // ainda dentro do intervalo do tiro: a automática continua abrindo
+            float speed = Mathf.Max(0f, h.item.data.equip.bloomRecover);
+            if (tremor != null) speed = tremor.KickRecoverSpeed(speed);      // mão tremendo firma mais devagar
+            h.bloom = Mathf.MoveTowards(h.bloom, 0f, speed * dt);
+        }
+
+        /// <summary>Pegada: duas mãos firmam a arma de fogo; arma pesada com uma mão só abre muito a dispersão.</summary>
+        float GripSpread(HandState h, ItemEquip eq)
+        {
+            if (TwoHanded(h)) return twoHandSpreadFactor;
+            return eq.IsHeavy ? Mathf.Max(1f, eq.oneHandSpreadMultiplier) : 1f;
+        }
+
+        /// <summary>
+        /// Meio ângulo (graus) do cone onde o tiro da mão 'h' cai agora. É a base da arma, mais o movimento, mais os tiros seguidos;
+        /// mirar (arma nas duas mãos) reduz tudo isso (aimSpreadMultiplier), a pegada multiplica, e a mão tremendo soma um pouco nas armas de um projétil.
+        /// Fire usa este valor e a mira na tela (GetCrosshair) mostra o mesmo.
+        /// </summary>
+        float CurrentSpread(HandState h, ItemEquip eq)
+        {
+            float aim = AimFor(h);
+            float steady = Mathf.Lerp(1f, eq.aimSpreadMultiplier, aim);
+            float spread = (eq.spread + Mathf.Max(0f, eq.moveSpread) * moveT + h.bloom) * steady * GripSpread(h, eq);
+            if (tremor != null && eq.pellets <= 1) spread += tremor.ExtraSpreadDegrees(aim);
+            return spread;
         }
 
         /// <summary>Zoom da mira: só na imagem da câmera deste jogador (a lógica do jogo continua vendo a câmera normal).</summary>
@@ -390,6 +554,7 @@ namespace HorrorFPS
                 go = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 Vector3 size = eq.kind == EquipKind.Melee ? new Vector3(0.05f, 0.5f, 0.05f)
                              : eq.kind == EquipKind.Flashlight ? new Vector3(0.18f, 0.045f, 0.045f)
+                             : eq.kind == EquipKind.Throwable ? new Vector3(0.07f, 0.16f, 0.07f)
                              : new Vector3(0.22f, 0.07f, 0.04f);
                 go.transform.localScale = size;
                 Renderer r = go.GetComponent<Renderer>();
@@ -452,6 +617,7 @@ namespace HorrorFPS
                 h.muzzle.shadows = LightShadows.None;
                 h.muzzle.enabled = false;
             }
+            else if (it.data.equip.kind == EquipKind.Flashlight) AttachBeam(h, it);
             h.nextAttack = Time.time + 0.25f;      // pequena pausa ao sacar
             h.kick = 0f; h.swingT = -1f; h.reloadT = -1f;
         }
@@ -459,9 +625,12 @@ namespace HorrorFPS
         void DetachHand(HandState h)
         {
             StopAction(h);
+            // guardada na mochila, a lanterna apaga; JOGADA no chão ela continua acesa (e com a bateria que tinha)
+            if (h.item != null && IsFlashlight(h) && h.item.HasFlag(EquipState.Lit) && h.item.container != null && (owner == null || owner.DroppingItem != h.item))
+                h.item.SetFlag(EquipState.Lit, false);
             if (h.root != null) Destroy(h.root.gameObject);
-            h.root = null; h.muzzle = null; h.item = null;
-            h.swingT = -1f; h.reloadT = -1f; h.kick = 0f;
+            h.root = null; h.muzzle = null; h.beam = null; h.item = null;
+            h.swingT = -1f; h.reloadT = -1f; h.kick = 0f; h.bloom = 0f; h.batteryAcc = 0f;
         }
 
         void StopAction(HandState h)
@@ -470,67 +639,63 @@ namespace HorrorFPS
             h.busy = false; h.reloading = false;
             h.swingT = -1f; h.reloadT = -1f;
             h.charging = false; h.heavyReady = false; h.chargeT = 0f; h.amp = 1f;
+            h.windT = 0f; h.releaseT = -1f;
         }
 
-        // ------------------------------------------------------------------ lanterna
-        void AttachLamp(ItemInstance it)
+        // ------------------------------------------------------------------ lanterna (item de mão)
+        static bool IsFlashlight(HandState h)
         {
-            DetachLamp(false);
-            if (!EnsureCamera()) return;
-            EquipState.Ensure(it);
-            lamp = it;
+            return h != null && h.item != null && h.item.data != null && h.item.data.equip != null && h.item.data.equip.kind == EquipKind.Flashlight;
+        }
+
+        /// <summary>A mão cuja lanterna pode agir agora (a acesa primeiro). Null se nenhuma mão tem lanterna utilizável.</summary>
+        HandState LampHand()
+        {
+            HandState a = IsFlashlight(right) && Usable(right) ? right : null;
+            HandState b = IsFlashlight(left) && Usable(left) ? left : null;
+            if (a != null && b != null) return (b.beam != null && b.beam.enabled && !(a.beam != null && a.beam.enabled)) ? b : a;
+            return a != null ? a : b;
+        }
+
+        /// <summary>Cria a luz do feixe presa ao modelo da lanterna na mão. Ela herda a pose da mão (balanço e tremor): aponta para onde a mão aponta.</summary>
+        void AttachBeam(HandState h, ItemInstance it)
+        {
             ItemEquip eq = it.data.equip;
-            lampRoot = NewRoot("HeldLamp", eq.heldPosition);
-            SpawnModel(it, lampRoot);
-
             GameObject lg = new GameObject("Flashlight");
-            lg.transform.SetParent(lampRoot, false);
+            lg.transform.SetParent(h.root, false);
             lg.transform.localPosition = new Vector3(0f, 0f, 0.1f);
-            flashlight = lg.AddComponent<Light>();
-            flashlight.type = LightType.Spot;
-            flashlight.range = eq.lightRange;
-            flashlight.spotAngle = eq.lightAngle;
-            flashlight.innerSpotAngle = eq.lightAngle * 0.55f;
-            flashlight.intensity = eq.lightIntensity;
-            flashlight.color = eq.lightColor;
-            flashlight.shadows = LightShadows.Soft;
-            flashlight.enabled = lamp.HasFlag(EquipState.Lit) && EquipState.BatteryOf(lamp) > 0 || (lamp.HasFlag(EquipState.Lit) && eq.batterySeconds <= 0);
+            Light l = lg.AddComponent<Light>();
+            l.type = LightType.Spot;
+            l.range = eq.lightRange;
+            l.spotAngle = eq.lightAngle;
+            l.innerSpotAngle = eq.lightAngle * 0.55f;
+            l.intensity = eq.lightIntensity;
+            l.color = eq.lightColor;
+            l.shadows = LightShadows.Soft;
+            l.enabled = it.HasFlag(EquipState.Lit) && (eq.batterySeconds <= 0 || EquipState.BatteryOf(it) > 0);
             lg.AddComponent<SanityLight>();      // com a sanidade baixa, a luz falha para quem olha (só a imagem)
+            h.beam = l;
         }
 
-        void DetachLamp(bool turnOff)
+        /// <summary>Liga/desliga a lanterna da mão 'h' (o botão daquela mão).</summary>
+        void ToggleLamp(HandState h)
         {
-            if (lamp != null && turnOff && lamp.HasFlag(EquipState.Lit)) lamp.SetFlag(EquipState.Lit, false);
-            if (lampRoot != null) Destroy(lampRoot.gameObject);
-            lampRoot = null; flashlight = null; lamp = null;
+            if (h == null || h.item == null || h.beam == null) return;
+            SetLight(h, !h.item.HasFlag(EquipState.Lit));
         }
 
-        void ToggleLamp()
+        void SetLight(HandState h, bool on)
         {
-            if (lamp == null)
-            {
-                ItemInstance f = FindFlashlight();
-                if (f == null) { Say("Você não tem uma lanterna."); return; }
-                owner.ToggleEquip(f);                         // OnEquipped liga o modelo e a luz
-                if (lamp == null) return;
-                SetLight(true);
-                return;
-            }
-            SetLight(!lamp.HasFlag(EquipState.Lit));
-        }
-
-        void SetLight(bool on)
-        {
-            if (lamp == null || flashlight == null) return;
-            ItemEquip eq = lamp.data.equip;
-            if (on && eq.batterySeconds > 0 && EquipState.BatteryOf(lamp) <= 0)
+            if (h == null || h.item == null || h.beam == null) return;
+            ItemEquip eq = h.item.data.equip;
+            if (on && eq.batterySeconds > 0 && EquipState.BatteryOf(h.item) <= 0)
             {
                 Say("Sem pilhas.");
                 Play(ProceduralAudio.DryClick(), 0.7f);
                 return;
             }
-            lamp.SetFlag(EquipState.Lit, on);
-            flashlight.enabled = on;
+            h.item.SetFlag(EquipState.Lit, on);
+            h.beam.enabled = on;
             Play(eq.useSound != null ? eq.useSound : ProceduralAudio.DryClick(), 0.8f);
         }
 
@@ -543,28 +708,30 @@ namespace HorrorFPS
             return null;
         }
 
-        void TickLamp(float dt)
+        /// <summary>Bateria e falha da luz. Só corre com a lanterna utilizável (guardada ou jogador morto = luz apagada e bateria parada).</summary>
+        void TickLamp(HandState h, float dt)
         {
-            if (lamp == null || flashlight == null) return;
-            bool on = lamp.HasFlag(EquipState.Lit);
-            if (flashlight.enabled != on) flashlight.enabled = on;
+            if (!IsFlashlight(h) || h.beam == null) return;
+            ItemInstance lamp = h.item;
+            bool on = lamp.HasFlag(EquipState.Lit) && Usable(h);
+            if (h.beam.enabled != on) h.beam.enabled = on;
             if (!on) return;
 
             ItemEquip eq = lamp.data.equip;
             float frac = 1f;
             if (eq.batterySeconds > 0)
             {
-                batteryAcc += dt;
-                if (batteryAcc >= 1f)
+                h.batteryAcc += dt;
+                if (h.batteryAcc >= 1f)
                 {
-                    int s = Mathf.FloorToInt(batteryAcc);
-                    batteryAcc -= s;
-                    int batteryLeft = lamp.AddCounter(EquipState.Battery, -s);
+                    int sec = Mathf.FloorToInt(h.batteryAcc);
+                    h.batteryAcc -= sec;
+                    int batteryLeft = lamp.AddCounter(EquipState.Battery, -sec);
                     if (batteryLeft <= 0)
                     {
                         lamp.SetCounter(EquipState.Battery, 0);
                         lamp.SetFlag(EquipState.Lit, false);
-                        flashlight.enabled = false;
+                        h.beam.enabled = false;
                         Say("A lanterna ficou sem pilhas.");
                         Play(ProceduralAudio.DryClick(), 0.7f);
                         return;
@@ -577,10 +744,58 @@ namespace HorrorFPS
             float intensity = eq.lightIntensity * Mathf.Lerp(1f, 0.55f, k);
             if (k > 0f)
             {
-                float n = Mathf.PerlinNoise(Time.time * 15f, lampSeed);
+                float n = Mathf.PerlinNoise(Time.time * 15f, h.seed);
                 if (n < 0.15f + 0.45f * k) intensity *= 0.12f;         // falha cada vez mais
             }
-            flashlight.intensity = intensity;
+            h.beam.intensity = intensity;
+        }
+
+        // ------------------------------------------------------------------ o feixe como pista para o perseguidor
+        /// <summary>Onde está a lanterna acesa de um jogador e para onde ela aponta (lido pela visão de perseguidores com detectsFlashlightBeam).</summary>
+        public struct BeamInfo
+        {
+            /// <summary>Posição da luz no mundo (perto da mão do jogador: onde o jogador está).</summary>
+            public Vector3 origin;
+            /// <summary>Direção do feixe.</summary>
+            public Vector3 direction;
+            public float range;
+            /// <summary>Abertura total do cone, em graus.</summary>
+            public float spotAngle;
+            /// <summary>Intensidade atual em relação à normal (0..1): a luz falhando quase não denuncia.</summary>
+            public float strength;
+        }
+
+        static readonly List<EquipmentController> all = new List<EquipmentController>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { all.Clear(); }
+
+        /// <summary>O feixe da lanterna acesa deste jogador. False se ele não tem lanterna acesa (apagada, guardada, sem pilhas, morto).</summary>
+        public static bool TryGetBeam(PlayerContext p, out BeamInfo info)
+        {
+            info = new BeamInfo();
+            if (p == null) return false;
+            for (int i = 0; i < all.Count; i++)
+            {
+                EquipmentController c = all[i];
+                if (c == null || c.player != p) continue;
+                return c.GetBeam(out info);
+            }
+            return false;
+        }
+
+        bool GetBeam(out BeamInfo info)
+        {
+            info = new BeamInfo();
+            HandState h = LampHand();
+            if (h == null || h.beam == null || !h.beam.enabled) return false;
+            float normal = Mathf.Max(0.01f, h.item.data.equip.lightIntensity);
+            info.strength = Mathf.Clamp01(h.beam.intensity / normal);
+            info.origin = h.beam.transform.position;
+            info.direction = h.beam.transform.forward;
+            info.range = h.beam.range;
+            info.spotAngle = h.beam.spotAngle;
+            return true;
         }
 
         // ------------------------------------------------------------------ pose do modelo na mão (balanço, golpe, coice, recarga)
@@ -593,6 +808,18 @@ namespace HorrorFPS
             float aim = AimFor(h);
             float mirror = h.side == HandSide.Left ? -1f : 1f;      // a mão esquerda é o espelho da direita
             bool two = TwoHanded(h);
+
+            if (eq.kind == EquipKind.Flashlight)
+            {
+                // lanterna: parada na mão (espelhada na esquerda), só com o tremor do batimento; o feixe acompanha a mão
+                Vector3 lampPos = eq.heldPosition;
+                lampPos.x *= mirror;
+                if (tremor == null) { h.root.localPosition = lampPos; h.root.localRotation = Quaternion.identity; return; }
+                Quaternion lq = tremor.Offset(ItemTremor.Channel.Lamp);
+                h.root.localPosition = lq * lampPos;
+                h.root.localRotation = lq;
+                return;
+            }
 
             Vector3 rest = eq.heldPosition;
             rest.x *= mirror * (two ? twoHandSideFactor : 1f);      // com as duas mãos o item vai para perto do centro
@@ -629,6 +856,22 @@ namespace HorrorFPS
             pos += new Vector3(0f, 0.012f * h.kick, -0.07f * h.kick);
             rot = rot * Quaternion.Euler(-9f * h.kick, 0f, 0f);
 
+            if (eq.kind == EquipKind.Throwable)
+            {
+                // braço para trás e para cima enquanto carrega; ao soltar, vai para a frente e volta
+                if (!h.charging) h.windT = Mathf.MoveTowards(h.windT, 0f, dt * 5f);
+                float rel = 0f;
+                if (h.releaseT >= 0f)
+                {
+                    h.releaseT += dt / 0.28f;
+                    if (h.releaseT >= 1f) h.releaseT = -1f;
+                    else rel = Mathf.Sin(h.releaseT * Mathf.PI);
+                }
+                float w = Mathf.SmoothStep(0f, 1f, h.windT);
+                pos += new Vector3(0.05f * mirror * w, 0.12f * w - 0.05f * rel, -0.14f * w + 0.28f * rel);
+                rot = rot * Quaternion.Euler(-35f * w + 70f * rel, 0f, -10f * w * mirror);
+            }
+
             if (tremor != null)
             {
                 // o modelo inteiro gira em torno do olho: é por onde ele aponta que o tiro sai (ver Fire)
@@ -641,17 +884,6 @@ namespace HorrorFPS
             h.root.localRotation = rot;
         }
 
-        /// <summary>A lanterna também é segurada: o feixe acompanha a mão que treme (gira em torno do olho, como a arma).</summary>
-        void TickLampPose()
-        {
-            if (lampRoot == null || lamp == null) return;
-            Vector3 basePos = lamp.data.equip.heldPosition;
-            if (tremor == null) { lampRoot.localPosition = basePos; lampRoot.localRotation = Quaternion.identity; return; }
-            Quaternion q = tremor.Offset(ItemTremor.Channel.Lamp);
-            lampRoot.localPosition = q * basePos;
-            lampRoot.localRotation = q;
-        }
-
         // ------------------------------------------------------------------ acertos
         bool IsOwn(Collider c)
         {
@@ -660,7 +892,6 @@ namespace HorrorFPS
             if (player != null && t.IsChildOf(player.transform)) return true;
             if (right.root != null && t.IsChildOf(right.root)) return true;
             if (left.root != null && t.IsChildOf(left.root)) return true;
-            if (lampRoot != null && t.IsChildOf(lampRoot)) return true;
             return false;
         }
 
@@ -851,6 +1082,85 @@ namespace HorrorFPS
             return true;
         }
 
+        // ------------------------------------------------------------------ arremessável (garrafa, sinalizador, rádio)
+        static float ThrowFull(ItemEquip eq) { return Mathf.Max(0.05f, eq.throwChargeSeconds); }
+
+        /// <summary>Força do arremesso agora (0..1): o toque rápido vale 'throwMinPower' e segurar o botão sobe até 1.</summary>
+        float ThrowPower(HandState h, ItemEquip eq)
+        {
+            return Mathf.Lerp(Mathf.Clamp01(eq.throwMinPower), 1f, Mathf.Clamp01(h.chargeT / ThrowFull(eq)));
+        }
+
+        /// <summary>Tocar o botão joga fraco (perto); segurar carrega a força e soltar joga. Cada arremesso gasta uma unidade da pilha.</summary>
+        void UpdateThrowable(HandState h, ItemEquip eq)
+        {
+            if (h.charging)
+            {
+                h.chargeT += Time.deltaTime;
+                h.windT = Mathf.Clamp01(h.chargeT / ThrowFull(eq));
+                if (!h.heavyReady && h.chargeT >= ThrowFull(eq))
+                {
+                    h.heavyReady = true;                      // força cheia: um estalinho de aviso
+                    Play(ProceduralAudio.DryClick(), 0.25f);
+                }
+                if (!UseHeld(h)) ReleaseThrow(h, eq);
+                return;
+            }
+            if (h.busy || Time.time < h.nextAttack || !EnsureCamera() || !UsePressed(h)) return;
+            h.charging = true;
+            h.chargeT = 0f;
+            h.heavyReady = false;
+        }
+
+        void ReleaseThrow(HandState h, ItemEquip eq)
+        {
+            float power = ThrowPower(h, eq);
+            h.charging = false; h.heavyReady = false; h.chargeT = 0f;
+            h.releaseT = 0f;
+            h.nextAttack = Time.time + 0.45f;
+            DoThrow(h, eq, power);
+        }
+
+        void DoThrow(HandState h, ItemEquip eq, float power)
+        {
+            ItemInstance it = h.item;
+            if (it == null || it.data == null) return;
+            Transform ct = cam.transform;
+            Vector3 dir = ct.forward;
+            if (tremor != null) dir = ct.rotation * (tremor.MeleeStrike() * Vector3.forward);     // a mão tremendo desvia o arremesso
+            dir = (dir + Vector3.up * Mathf.Max(0f, eq.throwArc)).normalized;
+
+            // sai da frente do corpo, do lado da mão; com parede colada, sai logo antes dela (não nasce dentro)
+            float side = h.side == HandSide.Left ? -1f : 1f;
+            Vector3 origin = ct.position + ct.forward * 0.5f + ct.right * (0.12f * side) - ct.up * 0.1f;
+            RaycastHit wall;
+            if (Physics.SphereCast(ct.position, 0.1f, ct.forward, out wall, 0.55f, hitMask, QueryTriggerInteraction.Ignore) && !IsOwn(wall.collider))
+                origin = ct.position + ct.forward * Mathf.Max(0.05f, wall.distance - 0.1f);
+
+            float speed = Mathf.Max(1f, eq.throwSpeed) * power;
+            ThrownDistraction.Launch(it.data, origin, dir * speed, player.transform);
+
+            Play(ProceduralAudio.Swing(), 0.35f + 0.3f * power);
+            CameraImpulse.Recoil(this, 0.08f + 0.1f * power, 0.1f);
+            ConsumeThrown(it);              // por último: com a pilha acabada a mão fica sem item
+        }
+
+        /// <summary>Gasta uma unidade do que foi jogado. Acabou a pilha: a mão fica vazia e o item sai da mochila.</summary>
+        void ConsumeThrown(ItemInstance it)
+        {
+            string itemName = it.GetName(this);
+            if (it.stack > 1)
+            {
+                it.stack--;
+                it.NotifyModified();
+                return;
+            }
+            ItemContainer c = it.container;
+            owner.Unequip(it);              // o evento tira o modelo da mão
+            if (c != null) c.Remove(it);
+            Say(itemName + ": acabou.");
+        }
+
         // ------------------------------------------------------------------ arma de fogo
         void TryFire(HandState h)
         {
@@ -878,18 +1188,15 @@ namespace HorrorFPS
             Transform ct = cam.transform;
             int pellets = Mathf.Max(1, eq.pellets);
             float aim = AimFor(h);
+            bool two = TwoHanded(h);
+            bool oneHandHeavy = eq.IsHeavy && !two;
 
             // para onde a arma realmente aponta: a câmera + a deriva da mão (a mesma que o modelo mostra em TickViewModel)
             Quaternion aimQ = ct.rotation;
-            float extra = 0f;
-            if (tremor != null)
-            {
-                aimQ = ct.rotation * tremor.FirearmOffset(aim, pellets);
-                if (pellets == 1) extra = tremor.ExtraSpreadDegrees(aim);
-            }
+            if (tremor != null) aimQ = ct.rotation * tremor.FirearmOffset(aim, pellets);
             Vector3 baseDir = aimQ * Vector3.forward;
             Vector3 baseUp = aimQ * Vector3.up;
-            float spread = eq.spread * Mathf.Lerp(1f, eq.aimSpreadMultiplier, aim) + extra;
+            float spread = CurrentSpread(h, eq);        // movimento, tiros seguidos, mira, pegada e tremor: o mesmo cone que a mira na tela mostra
 
             for (int i = 0; i < pellets; i++)
             {
@@ -904,16 +1211,56 @@ namespace HorrorFPS
                 if (FirstHit(hits, out best)) ApplyHit(best, dir, eq.damage, weapon, true);
             }
 
+            // cada tiro abre a mira para o próximo (o primeiro tiro depois de parar é o mais certeiro)
+            h.bloom = Mathf.Min(Mathf.Max(0f, eq.bloomMax), h.bloom + Mathf.Max(0f, eq.bloomPerShot));
+
             bool heavy = pellets > 1;
             Play(eq.useSound != null ? eq.useSound : (heavy ? ProceduralAudio.ShotgunShot() : ProceduralAudio.Gunshot()), 1f);
             if (h.muzzle != null) { h.muzzle.enabled = true; h.muzzleOffAt = Time.time + muzzleFlashSeconds; }
-            h.kick = 1f;
-            CameraImpulse.Recoil(this, eq.recoil, 0.35f);
+
+            // coice: duas mãos seguram melhor; arma pesada com uma mão só tem o coice exagerado (passa de 1, a câmera e o modelo sobem mais)
+            float recoilMul = two ? twoHandRecoilFactor : (oneHandHeavy ? Mathf.Max(1f, eq.oneHandRecoilMultiplier) : 1f);
+            h.kick = Mathf.Clamp(recoilMul, 0.7f, 2.2f);
+            CameraImpulse.Recoil(this, eq.recoil * recoilMul, oneHandHeavy ? 0.7f : 0.35f);
             DynamicHeadBob bob = PlayerRef.Find<DynamicHeadBob>(this);
-            if (bob != null) bob.AddTrauma(Mathf.Clamp01(0.12f + eq.recoil * 0.2f));
+            if (bob != null) bob.AddTrauma(Mathf.Clamp01(0.12f + eq.recoil * recoilMul * 0.2f));
             HeartbeatComponent heart = PlayerRef.Find<HeartbeatComponent>(this);
             if (heart != null) heart.Boost(6f, 3f);
             Emit(eq.noise, NoiseKind.Gunshot);
+
+            if (oneHandHeavy) OneHandAftermath(h, weapon, eq);      // por último: a arma pode sair da mão e 'h' deixa de ter item
+        }
+
+        /// <summary>Tiro com arma pesada numa mão só: às vezes o coice arranca a arma da mão; senão, de tempos em tempos, lembra do G.</summary>
+        void OneHandAftermath(HandState h, ItemInstance weapon, ItemEquip eq)
+        {
+            float chance = Mathf.Clamp01(eq.oneHandDropChance * (1f + 0.5f * (tremor != null ? tremor.Tremor01 : 0f)));     // mão tremendo segura pior
+            if (chance > 0f && Random.value < chance) { FlingFromHand(h, weapon); return; }
+            if (oneHandHintSeconds > 0f && Time.unscaledTime >= nextHint)
+            {
+                nextHint = Time.unscaledTime + oneHandHintSeconds;
+                Say("Coice forte com uma mão só: segure com as duas (G).");
+            }
+        }
+
+        /// <summary>A arma escapa da mão: sai pelo lado e para cima, cai no chão perto do jogador (e pode ser pega de novo) e o barulho atrai quem estiver por perto.</summary>
+        void FlingFromHand(HandState h, ItemInstance weapon)
+        {
+            string weaponName = weapon.GetName(this);
+            float side = h.side == HandSide.Left ? -1f : 1f;
+            Transform ct = cam.transform;
+            Vector3 ahead = Vector3.ProjectOnPlane(ct.forward, Vector3.up);
+            ahead = ahead.sqrMagnitude > 0.001f ? ahead.normalized : Vector3.forward;
+
+            WorldItem dropped = owner.Drop(weapon);
+            if (dropped != null)
+                dropped.Throw(Vector3.up * 3.4f + ct.right * side * 2.2f + ahead * 0.6f, Random.onUnitSphere * 9f);
+            else
+                owner.Unequip(weapon);          // item que não pode ficar no cenário: só sai da mão e continua na mochila
+
+            Say(weaponName + " escapou da sua mão!");
+            Play(ProceduralAudio.Thud(), 0.9f);
+            Emit(12f, NoiseKind.Item);
         }
 
         int ReserveOf(ItemEquip eq)
@@ -1013,6 +1360,6 @@ namespace HorrorFPS
             Play(ProceduralAudio.ReloadClack(), 0.5f);
         }
 
-        ItemInstance TargetFlashlight() { return lamp != null ? lamp : FindFlashlight(); }
+        ItemInstance TargetFlashlight() { ItemInstance l = Lamp; return l != null ? l : FindFlashlight(); }
     }
 }

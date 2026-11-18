@@ -11,25 +11,25 @@ namespace HorrorFPS
     /// <summary>
     /// Menu de pausa (criado automaticamente ao iniciar o jogo, não precisa estar na cena).
     /// Qualquer jogador pausa com a action Pause; o jogador que pausou é o dono do menu e remapeia os controles dele.
-    /// Páginas: principal, salvar, carregar, controles (remapeamento), opções e confirmação (menu principal / sair).
+    /// Páginas: principal, salvar, carregar, objetivos, diário, controles (remapeamento), como jogar (dicas), opções e confirmação (menu principal / sair).
     /// Um SavePoint abre direto a página de salvar: PauseMenu.OpenSaveMenu(jogador).
     /// </summary>
     public class PauseMenu : MonoBehaviour
     {
-        enum Page { Main, Controls, Settings, Save, Load, Confirm }
+        enum Page { Main, Controls, Settings, Save, Load, Confirm, Exit }
 
         static PauseMenu instance;
 
         GameObject rootGo;
         Text titleText, ownerText, noticeText, confirmText;
-        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage;
-        Selectable mainFirst, confirmDefault;
-        Button saveButton, loadButton, menuButton;
+        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, exitPage;
+        Selectable mainFirst, confirmDefault, exitFirst;
+        Button saveButton, loadButton;
         ControlsPanel controls;
         SettingsPanel settings;
         SaveSlotsPanel slots;
         UnityAction pendingConfirm;
-        Page page;
+        Page page, confirmBack = Page.Main;
         bool shown, openSaveOnShow;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -189,6 +189,8 @@ namespace HorrorFPS
         void Back()
         {
             if (page == Page.Main) PauseManager.Resume();
+            else if (page == Page.Controls) ShowPage(Page.Settings);        // Controles mora dentro de Opções
+            else if (page == Page.Confirm) ShowPage(confirmBack);
             else ShowPage(Page.Main);
         }
 
@@ -205,10 +207,12 @@ namespace HorrorFPS
             settingsPage.SetActive(next == Page.Settings);
             slotsPage.SetActive(willSlots);
             confirmPage.SetActive(next == Page.Confirm);
+            exitPage.SetActive(next == Page.Exit);
 
             switch (next)
             {
                 case Page.Controls: titleText.text = UIText.ControlsTitle; break;
+                case Page.Exit: titleText.text = UIText.ExitTitle; break;
                 case Page.Settings: titleText.text = UIText.SettingsTitle; break;
                 case Page.Save: titleText.text = UIText.SaveSlotsTitle; break;
                 case Page.Load: titleText.text = UIText.LoadSlotsTitle; break;
@@ -231,14 +235,22 @@ namespace HorrorFPS
             bool inGame = GameSession.IsActive;
             saveButton.gameObject.SetActive(inGame);
             saveButton.interactable = SaveSystem.CanSave;
-            menuButton.gameObject.SetActive(inGame);
             loadButton.interactable = SaveSystem.HasAnySave();
         }
 
-        void AskConfirm(string message, UnityAction onYes)
+        /// <summary>"Sair": em partida pergunta para onde (menu principal ou fechar o jogo); fora de partida só há fechar o jogo.</summary>
+        void OpenExit()
+        {
+            if (GameSession.IsActive) ShowPage(Page.Exit);
+            else AskConfirm(UIText.ConfirmQuit, SceneDirector.Quit, Page.Main);
+        }
+
+        /// <summary>Pergunta "tem certeza?"; Sim roda a ação e Não volta para a página 'back'.</summary>
+        void AskConfirm(string message, UnityAction onYes, Page back)
         {
             confirmText.text = message;
             pendingConfirm = onYes;
+            confirmBack = back;
             ShowPage(Page.Confirm);
         }
 
@@ -255,6 +267,7 @@ namespace HorrorFPS
             {
                 case Page.Controls: return controls.FirstSelectable;
                 case Page.Settings: return settings.FirstSelectable;
+                case Page.Exit: return exitFirst;
                 case Page.Save:
                 case Page.Load: return slots.FirstSelectable;
                 case Page.Confirm: return confirmDefault;
@@ -288,7 +301,7 @@ namespace HorrorFPS
             UIFactory.AddImage(dim.gameObject, null, new Color(0f, 0f, 0f, 0.78f), true);
 
             RectTransform panel = UIFactory.Anchored("Panel", rootGo.transform, new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 880f));
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 940f));
             UIFactory.AddImage(panel.gameObject, UISprites.RoundedRect, UIFactory.PanelColor, true);
 
             RectTransform title = UIFactory.Anchored("Title", panel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
@@ -311,16 +324,17 @@ namespace HorrorFPS
 
             RectTransform settingsRoot = UIFactory.Stretch("SettingsPage", area);
             settingsPage = settingsRoot.gameObject;
-            settings = new SettingsPanel(settingsRoot, delegate { ShowPage(Page.Main); });
+            settings = new SettingsPanel(settingsRoot, delegate { ShowPage(Page.Main); }, delegate { ShowPage(Page.Controls); });
 
             RectTransform controlsRoot = UIFactory.Stretch("ControlsPage", area);
             controlsPage = controlsRoot.gameObject;
-            controls = new ControlsPanel(controlsRoot, delegate { ShowPage(Page.Main); });
+            controls = new ControlsPanel(controlsRoot, delegate { ShowPage(Page.Settings); });
 
             RectTransform slotsRoot = UIFactory.Stretch("SlotsPage", area);
             slotsPage = slotsRoot.gameObject;
             slots = new SaveSlotsPanel(slotsRoot, delegate { ShowPage(Page.Main); });
 
+            BuildExitPage(area);
             BuildConfirmPage(area);
         }
 
@@ -328,18 +342,29 @@ namespace HorrorFPS
         {
             RectTransform pageRt = UIFactory.Stretch("MainPage", area);
             mainPage = pageRt.gameObject;
-            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRt, 14);
-            col.padding = new RectOffset(120, 120, 20, 0);
+            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRt, 10);
+            col.padding = new RectOffset(120, 120, 16, 0);
 
-            mainFirst = UIFactory.MenuButton(pageRt, UIText.Resume, delegate { PauseManager.Resume(); }, 560f, 64f);
-            saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, 64f);
-            loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, 64f);
-            UIFactory.MenuButton(pageRt, UIText.Controls, delegate { ShowPage(Page.Controls); }, 560f, 64f);
-            UIFactory.MenuButton(pageRt, UIText.Settings, delegate { ShowPage(Page.Settings); }, 560f, 64f);
-            menuButton = UIFactory.MenuButton(pageRt, UIText.MainMenuButton,
-                delegate { AskConfirm(UIText.ConfirmMainMenu, SceneDirector.ReturnToMainMenu); }, 560f, 64f);
+            const float h = 56f;
+            mainFirst = UIFactory.MenuButton(pageRt, UIText.Resume, delegate { PauseManager.Resume(); }, 560f, h);
+            saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, h);
+            loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, h);
+            UIFactory.MenuButton(pageRt, UIText.Settings, delegate { ShowPage(Page.Settings); }, 560f, h);
+            UIFactory.MenuButton(pageRt, UIText.ExitButton, delegate { OpenExit(); }, 560f, h);
+        }
+
+        void BuildExitPage(RectTransform area)
+        {
+            RectTransform pageRt = UIFactory.Stretch("ExitPage", area);
+            exitPage = pageRt.gameObject;
+            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRt, 16);
+            col.padding = new RectOffset(120, 120, 60, 0);
+
+            exitFirst = UIFactory.MenuButton(pageRt, UIText.MainMenuButton,
+                delegate { AskConfirm(UIText.ConfirmMainMenu, SceneDirector.ReturnToMainMenu, Page.Exit); }, 560f, 64f);
             UIFactory.MenuButton(pageRt, UIText.QuitGame,
-                delegate { AskConfirm(UIText.ConfirmQuit, SceneDirector.Quit); }, 560f, 64f);
+                delegate { AskConfirm(UIText.ConfirmQuit, SceneDirector.Quit, Page.Exit); }, 560f, 64f);
+            UIFactory.MenuButton(pageRt, UIText.Back, delegate { ShowPage(Page.Main); }, 560f, 64f);
         }
 
         void BuildConfirmPage(RectTransform area)
@@ -355,7 +380,7 @@ namespace HorrorFPS
             confirmText.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             UIFactory.MenuButton(pageRt, UIText.Yes, delegate { RunConfirm(); }, 560f, 68f);
-            confirmDefault = UIFactory.MenuButton(pageRt, UIText.No, delegate { ShowPage(Page.Main); }, 560f, 68f);
+            confirmDefault = UIFactory.MenuButton(pageRt, UIText.No, delegate { ShowPage(confirmBack); }, 560f, 68f);
         }
     }
 }

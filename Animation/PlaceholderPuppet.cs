@@ -6,7 +6,7 @@ namespace HorrorFPS
     /// Corpo de TESTE feito de primitivas (cabeça, torso, braços, pernas) que lê o mesmo <see cref="PlayerAnimState"/>
     /// do corpo de verdade: balança pernas e braços com a velocidade, agacha, vira a cabeça com o olhar, levanta os braços
     /// ao segurar item, recua os braços perto da parede, cai quando morre. Serve para ver no split-screen as regras de
-    /// visibilidade (o dono sem cabeça, os outros com tudo) antes de ter modelo ou clipes. Criado pelo menu 14.
+    /// visibilidade (o dono sem cabeça, os outros com tudo) antes de ter modelo ou clipes. Criado pelo menu Animation > Add Animation Rig To Player Prefab (placeholder body).
     /// Convenção dos pivôs: membros pendurados em -Y; rotação positiva em X leva o membro para trás.
     /// </summary>
     [DefaultExecutionOrder(200)]

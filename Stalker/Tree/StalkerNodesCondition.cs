@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace HorrorFPS
@@ -96,6 +97,15 @@ namespace HorrorFPS
 
         public override string Summary() { return StalkerCompareUtil.Symbol(compare) + " " + level; }
 
+        // depende só do nível: a conferência da árvore usa isto para achar condições que se contradizem (ex.: ">= Hunting" dentro de "<= Alert")
+        public override int AttentionMask()
+        {
+            int mask = 0;
+            for (int i = 0; i < 4; i++)
+                if (StalkerCompareUtil.Test(compare, i, (int)level)) mask |= 1 << i;
+            return mask;
+        }
+
         protected override bool Check() { return StalkerCompareUtil.Test(compare, (int)Brain.Level, (int)level); }
     }
 
@@ -179,6 +189,16 @@ namespace HorrorFPS
         public float value = 1f;
 
         public override string Summary() { return key + " " + StalkerCompareUtil.Symbol(compare) + " " + value.ToString("0.##"); }
+
+        public override void Validate(List<string> report, string who)
+        {
+            if (string.IsNullOrEmpty(key)) report.Add(who + ": o nome da variável está vazio (ela sempre vale 0).");
+        }
+
+        public override void CollectVariables(List<string> reads, List<string> writes)
+        {
+            if (!string.IsNullOrEmpty(key)) reads.Add(key);
+        }
 
         protected override bool Check() { return StalkerCompareUtil.Test(compare, Brain.Blackboard.GetFloat(key, 0f), value); }
     }

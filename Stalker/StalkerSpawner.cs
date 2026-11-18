@@ -22,7 +22,7 @@ namespace HorrorFPS
         {
             pos = Vector3.zero; rot = Quaternion.identity;
             if (def == null) return false;
-            StalkerProfile prof = def.profile != null ? def.profile : StalkerProfile.Default;
+            StalkerProfile prof = def.EffectiveProfile;
             LayerMask mask = prof.sightMask;
             List<StalkerTarget> players = StalkerBridge.Players;
             bool arrivalReq = (kind & StalkerSpawnKind.Arrival) != 0;

@@ -8,13 +8,13 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 31. Mixamo: Humanoid + Locomotion Controller
+    /// Tools > Horror FPS > Animation > Mixamo: Humanoid + Locomotion Controller
     /// Passo a passo para pôr o Y Bot (ou outro modelo do Mixamo) com os clipes de locomoção no corpo do jogador:
     /// 1) converte o modelo e os FBX de animação para Humanoid (clipes Generic não animam um corpo Humanoid, e é o Humanoid que dá IK
     /// de pés/mãos/olhar), com loop, rotação, altura e deslocamento ajustados por clipe;
     /// 2) lista os clipes reconhecidos pelo nome (walking, running, sneaking_left...);
     /// 3) cria o PlayerBody.controller com a locomoção montada;
-    /// 4) liga o modelo ao jogador (o mesmo do menu 16, que ainda separa a cabeça do corpo para o dono não enxergá-la).
+    /// 4) liga o modelo ao jogador (o mesmo do menu Animation > Setup Selected Model As Player Body, que ainda separa a cabeça do corpo para o dono não enxergá-la).
     /// </summary>
     public class MixamoSetupWindow : EditorWindow
     {
@@ -27,7 +27,7 @@ namespace HorrorFPS
         LocoClipSet set;
         readonly List<string> notes = new List<string>();
 
-        [MenuItem("Tools/Horror FPS/31. Mixamo: Humanoid + Locomotion Controller")]
+        [MenuItem(HorrorFPSMenu.Animation + "Mixamo: Humanoid + Locomotion Controller", false, HorrorFPSMenu.AnimationOrder + 3)]
         public static void Open()
         {
             MixamoSetupWindow w = GetWindow<MixamoSetupWindow>(false, "Mixamo Locomotion", true);
@@ -99,7 +99,7 @@ namespace HorrorFPS
             GUILayout.Space(6f);
             GUILayout.Label("4. Jogador", EditorStyles.boldLabel);
             EditorGUI.BeginDisabledGroup(!hasModel);
-            if (GUILayout.Button("Instalar o modelo no jogador (igual ao menu 16)", GUILayout.Height(26f))) Install();
+            if (GUILayout.Button("Instalar o modelo no jogador (igual ao menu Animation > Setup Selected Model As Player Body)", GUILayout.Height(26f))) Install();
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndScrollView();
@@ -241,7 +241,7 @@ namespace HorrorFPS
         void Install()
         {
             if (model == null) return;
-            Selection.activeObject = model;     // o menu 16 trabalha com a seleção
+            Selection.activeObject = model;     // o menu Animation > Setup Selected Model As Player Body trabalha com a seleção
             ModelBodySetup.Run();
         }
     }

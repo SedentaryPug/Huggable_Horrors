@@ -5,7 +5,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Ajustes da "foto" do ícone de um item (ângulo, zoom, luz...). Guardados no próprio ItemData para a janela
-    /// Tools > Horror FPS > 10. Item Studio reabrir exatamente o mesmo enquadramento e permitir refazer a foto depois.
+    /// Tools > Horror FPS > Items > Item Studio reabrir exatamente o mesmo enquadramento e permitir refazer a foto depois.
     /// Só o Editor usa; em jogo o que vale é ItemData.icon.
     /// </summary>
     [Serializable]

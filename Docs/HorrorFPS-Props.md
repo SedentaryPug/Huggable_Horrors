@@ -23,7 +23,7 @@ Assets/HorrorFPS/Props/               (runtime)
   BearTrap.cs           armadilha de urso
   MirrorSurface.cs + MirrorPhantom.cs   espelho de verdade (um reflexo por jogador) que reage à sanidade de quem olha   [lote 2]
   CoopButton.cs + CoopLock.cs           botão duplo e portas que exigem o grupo junto (apertar juntos, segurar juntos, todos perto)   [lote 2]
-Assets/HorrorFPS/Editor/Props/PropsDemoBuilder*.cs   menu 17 (a bancada do lote 2 está em PropsDemoBuilder.Coop.cs)
+(a bancada de teste `PropsDemoBuilder*`, antigo menu 17, foi removida junto com a cena Showcase; está no histórico do Git, no commit anterior a "Remove a cena Showcase")
 ```
 
 Requisitos: os mesmos do framework (Unity 2022.3 LTS ou Unity 6, Input System, uGUI). Namespace `HorrorFPS`. Sem `.asmdef`. Depende dos módulos de **itens/sanidade/corpo** (inventário, `NoiseSystem`, `CameraImpulse`, `HeartbeatComponent`...). O módulo de **animação** é opcional (só é chamado por reflexão).
@@ -31,7 +31,7 @@ Requisitos: os mesmos do framework (Unity 2022.3 LTS ou Unity 6, Input System, u
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` para o projeto e espere compilar.
-2. Abra uma cena de teste e use **Tools > Horror FPS > 17. Create Props Demo In Open Scene**. Cria `[Props Demo]` na frente da vista do editor: dois guarda-roupas, uma cômoda de 3 gavetas (a 3ª trancada), 4 barris, 2 caixas, uma mesa com vaso, um interruptor com lâmpada e uma armadilha de urso. Mais adiante no eixo X (lote 2): um **espelho com dois vultos**, uma **porta de botão duplo** (dois pedestais a 12 m um do outro) e um **portão de proximidade**. Tudo de primitivas.
+2. Monte uma cena de teste com os props a partir de `Add Component > HorrorFPS > Props` (a bancada pronta que o antigo menu 17 criava foi removida). Ela criava `[Props Demo]` na frente da vista do editor: dois guarda-roupas, uma cômoda de 3 gavetas (a 3ª trancada), 4 barris, 2 caixas, uma mesa com vaso, um interruptor com lâmpada e uma armadilha de urso. Mais adiante no eixo X (lote 2): um **espelho com dois vultos**, uma **porta de botão duplo** (dois pedestais a 12 m um do outro) e um **portão de proximidade**. Tudo de primitivas.
 3. Dê Play:
    - **Guarda-roupa**: Interagir → você entra, a porta fecha, o olhar é limitado (mouse/analógico direito), a respiração fica presa. **E / X / Backspace / B** sai. O de 2 vagas aceita dois jogadores.
    - **Gavetas**: a 1ª e a 2ª abrem e passam o item direto para a mochila (ids `pilhas` e `bandagem`, dos itens de exemplo). A 3ª só destranca com a variável `tem_chave` ligada.
@@ -94,7 +94,7 @@ Cilindro com `Rigidbody` + `ExplosiveBarrel`.
 `Rigidbody` opcional + `Breakable`. Quebra por vida zero (golpes, tiros, explosões) **ou por impacto**: `Impact Break Speed` (m/s relativos; 0 desliga). Vira `Shard Count` estilhaços com física (somem em `Shard Lifetime`), faz barulho, toca som (`Glass` liga o som/forma de vidro) e instancia `Spawn On Break` (ponha aqui o prefab de um item no chão). `onBroken` é um `UnityEvent`.
 
 ### 4.5 `SwitchableLights` + `LightSwitch` — luzes
-`SwitchableLights` (no lustre/abajur) controla `Lights` e `Emissive Renderers`; `Power Variable` (ex.: `energia_ligada`) faz as luzes só acenderem com energia (e reagirem sozinhas quando a variável muda: bom para quadro de fusíveis e cutscenes). `LightSwitch` é o interruptor (aceita vários conjuntos). Por código: `lights.SetOn(false)`, `lights.Toggle()`, `lights.IsLit`. Luzes de tempo real convivem com o `SanityLight`.
+`SwitchableLights` (no lustre/abajur) controla `Lights` e `Emissive Renderers`; `Power Variable` (ex.: `energia_ligada`) faz as luzes só acenderem com energia (e reagirem sozinhas quando a variável muda: bom para quadro de fusíveis e cutscenes). `LightSwitch` é o interruptor (aceita vários conjuntos). Por código: `lights.SetOn(false)`, `lights.Toggle()`, `lights.IsLit`. Luzes de tempo real convivem com o `SanityLight`. Para a luz **piscar e apagar sozinha** (sanidade, medo, variável) ponha um `LightFailure` no mesmo objeto: ele usa `lights.SetFailure(0..1)` por cima do interruptor e da energia, e `lights.Level` dá o brilho de agora (ver `HorrorFPS-Iluminacao-Niveis.md`). Uma `Lever` que liga a variável de `Power Variable` acende o conjunto.
 
 ### 4.6 `BearTrap` — armadilha
 Objeto com colisor **Trigger** (o próprio objeto) + `BearTrap`. Quem pisa leva `Damage`, fica `Trap Seconds` com `Speed While Trapped` (status "Preso" no `StatsComponent`), gera barulho (`Noise Radius`), sacode a câmera e dá susto/perda de sanidade. `Jaw A/B` (opcional) fecham com animação. Mirar nela dá **Desarmar** (e **Rearmar** se `Rearmable`). `Trigger By Others` inclui monstros (qualquer `IDamageable`).

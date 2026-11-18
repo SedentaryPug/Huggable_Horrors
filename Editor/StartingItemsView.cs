@@ -193,7 +193,7 @@ namespace HorrorFPS.ItemsEditor
             GenericMenu menu = new GenericMenu();
             if (all.Count == 0)
             {
-                menu.AddDisabledItem(new GUIContent("Nenhum ItemData no projeto (Tools > Horror FPS > 5. Create Sample Items)"));
+                menu.AddDisabledItem(new GUIContent("Nenhum ItemData no projeto (Tools > Horror FPS > Demo > Create Sample Items)"));
             }
             for (int i = 0; i < all.Count; i++)
             {

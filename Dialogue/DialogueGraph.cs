@@ -5,7 +5,7 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Árvore de diálogo (ScriptableObject). Edite com Tools > Horror FPS > 11. Dialogue Editor
+    /// Árvore de diálogo (ScriptableObject). Edite com Tools > Horror FPS > Dialogue > Dialogue Editor
     /// (ou dê dois cliques no asset). Referências a objetos de cena NÃO ficam aqui: use ids de ator
     /// (DialogueActor) e ids de evento (DialogueEventRelay).
     /// </summary>

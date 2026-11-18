@@ -273,6 +273,16 @@ namespace HorrorFPS
 
         public override bool CanFail { get { return false; } }
 
+        public override void Validate(List<string> report, string who)
+        {
+            if (string.IsNullOrEmpty(key)) report.Add(who + ": o nome da variável está vazio (o nó não faz nada).");
+        }
+
+        public override void CollectVariables(List<string> reads, List<string> writes)
+        {
+            if (!string.IsNullOrEmpty(key)) writes.Add(key);
+        }
+
         protected override BTStatus OnTick()
         {
             if (add) Brain.Blackboard.Add(key, value);

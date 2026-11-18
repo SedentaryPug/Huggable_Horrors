@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f9bcbcfd7e34ecba65b1abe7d558e9d, type: 3}
+  m_Name: JournalCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::HorrorFPS.JournalCatalog
+  autoCollectRecords: 1
+  entries:
+  - id: sample_diario
+    title: "Di\xE1rio do zelador"
+    kind: 1
+    author: Zelador
+    date: 3 de outubro
+    text: "Terceira noite seguida em que ou\xE7o passos no corredor do por\xE3o.
+      Fui olhar: nada, s\xF3 a porta da caldeira balan\xE7ando.\n\nHoje deixei a
+      lanterna no arm\xE1rio e desci sem ela. N\xE3o fa\xE7a isso. N\xE3o fa\xE7a
+      isso nunca mais.\n\n<i>(a letra fica mais apertada daqui para baixo)</i> Ela
+      s\xF3 anda quando eu paro de olhar."
+    itemId: 
+    unlockVariable: 
+    notify: 1
+  - id: sample_bilhete
+    title: Bilhete rasgado
+    kind: 0
+    author: 
+    date: 
+    text: "N\xE3o abra a porta do por\xE3o depois das tr\xEAs.\n\nSe ouvir algu\xE9m
+      chamando seu nome, n\xE3o responda."
+    itemId: 
+    unlockVariable: 
+    notify: 1
+  - id: sample_gravacao
+    title: Fita 07
+    kind: 2
+    author: Dra. Lenz
+    date: 14 de outubro
+    text: "[chiado]\n\n\xC9 a fita sete. Ele continua repetindo a mesma frase, mas
+      hoje a voz n\xE3o era a dele.\n\nVou parar a grava\xE7\xE3o. Se algu\xE9m ouvir
+      isto: saia pela escada de servi\xE7o, n\xE3o pelo elevador."
+    itemId: 
+    unlockVariable: 
+    notify: 1

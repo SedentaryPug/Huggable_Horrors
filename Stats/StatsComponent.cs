@@ -30,6 +30,11 @@ namespace HorrorFPS
 
         public bool IsAlive { get; private set; } = true;
         public bool Invulnerable { get { return invulnerable; } set { invulnerable = value; } }
+        /// <summary>
+        /// Modo deus (ligado por Debug/GodMode): não leva dano e Kill() não mata. Separado de Invulnerable, que o jogo usa para
+        /// invulnerabilidade de cena (cutscene, efeito temporário) e que não impede um Kill() scriptado.
+        /// </summary>
+        public bool Immortal { get; set; }
         public StatType VitalStat { get { return vitalStat; } }
         public IReadOnlyList<ActiveEffect> ActiveEffects { get { return effects; } }
 
@@ -121,7 +126,7 @@ namespace HorrorFPS
         {
             Init();
             Stat vital;
-            if (!IsAlive || invulnerable || !lookup.TryGetValue(vitalStat, out vital)) return 0f;
+            if (!IsAlive || invulnerable || Immortal || !lookup.TryGetValue(vitalStat, out vital)) return 0f;
 
             float amount = Mathf.Max(0f, info.amount);
             float armor = GetValue(StatType.Armor, 0f);
@@ -145,7 +150,7 @@ namespace HorrorFPS
         public void Kill(GameObject source = null)
         {
             Stat vital;
-            if (!IsAlive || !TryGet(vitalStat, out vital)) return;
+            if (!IsAlive || Immortal || !TryGet(vitalStat, out vital)) return;
             vital.Modify(-vital.Max);
             Die(new DamageInfo(0f, DamageType.Generic, source));
         }

@@ -166,10 +166,10 @@ namespace HorrorFPS
             AddTrauma(0.2f + 0.5f * strength);
         }
 
-        /// <summary>Uso de arma: a câmera sobe e volta, com leve desvio lateral.</summary>
+        /// <summary>Uso de arma: a câmera sobe e volta, com leve desvio lateral. strength 0..1 (até 2 = coice exagerado, como arma pesada numa mão só).</summary>
         public void Recoil(float strength, float sideways = 0f)
         {
-            strength = Mathf.Clamp01(strength);
+            strength = Mathf.Clamp(strength, 0f, 2f);
             Impulse(new Vector3(sideways * 0.2f * strength, 0.35f * strength, -0.9f * strength),
                     new Vector3(-150f * strength, sideways * 40f * strength, sideways * 25f * strength));
             AddTrauma(0.08f + 0.18f * strength);

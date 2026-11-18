@@ -7,11 +7,11 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Tools > Horror FPS > 15. Create Player Animator Controller
+    /// Tools > Horror FPS > Animation > Create Player Animator Controller
     /// Cria o PlayerBody.controller já com todos os parâmetros do contrato (PlayerAnimParams), as layers
-    /// Base / Upper Body / Flashlight / Additive, as máscaras de avatar e as transições. Pelo menu 15 os estados vêm VAZIOS (sem clipes):
+    /// Base / Upper Body / Flashlight / Additive, as máscaras de avatar e as transições. Pelo menu Animation > Create Player Animator Controller os estados vêm VAZIOS (sem clipes):
     /// arraste os seus clipes de animação nos estados e blend trees. Ver HorrorFPS-Animacao-Corpo.md para a tabela de clipes.
-    /// A janela do menu 31 (Mixamo) usa <see cref="CreateFromClips"/>: monta a layer Base já com os clipes de locomoção.
+    /// A janela do menu Animation > Mixamo: Humanoid + Locomotion Controller (Mixamo) usa <see cref="CreateFromClips"/>: monta a layer Base já com os clipes de locomoção.
     /// </summary>
     public static class PlayerAnimatorControllerBuilder
     {
@@ -28,7 +28,7 @@ namespace HorrorFPS
         /// <summary>Giro (graus/s) a partir do qual o corpo parado toca o clipe de girar.</summary>
         const float TurnRateTrigger = 120f;
 
-        [MenuItem("Tools/Horror FPS/15. Create Player Animator Controller")]
+        [MenuItem(HorrorFPSMenu.Animation + "Create Player Animator Controller", false, HorrorFPSMenu.AnimationOrder + 1)]
         public static void Run()
         {
             AnimationEditorUtil.EnsureFolder(AnimationEditorUtil.Dir);
@@ -59,12 +59,12 @@ namespace HorrorFPS
             Selection.activeObject = c;
             EditorGUIUtility.PingObject(c);
             Debug.Log("[Anim] Controller criado: " + ControllerPath + ". Os estados estão vazios: arraste seus clipes (Locomotion, Crouch, Air, Hold_*, Attack...). " +
-                      "Use o menu 16 para ligar um modelo humanoide, ou arraste o controller no Animator do corpo. " +
-                      "Com clipes do Mixamo, o menu 31 monta a locomoção sozinho.");
+                      "Use o menu Animation > Setup Selected Model As Player Body para ligar um modelo humanoide, ou arraste o controller no Animator do corpo. " +
+                      "Com clipes do Mixamo, o menu Animation > Mixamo: Humanoid + Locomotion Controller monta a locomoção sozinho.");
         }
 
         /// <summary>
-        /// Cria o PlayerBody.controller com a locomoção montada a partir dos clipes (janela do menu 31). Pergunta antes de recriar um controller
+        /// Cria o PlayerBody.controller com a locomoção montada a partir dos clipes (janela do menu Animation > Mixamo: Humanoid + Locomotion Controller). Pergunta antes de recriar um controller
         /// que já existe. Devolve null se o usuário cancelar. <paramref name="crouchPosePhase"/> (0..1) é o instante do ciclo de andar agachado
         /// usado como pose de "agachado parado" quando não há clipe de agachado parado.
         /// </summary>
@@ -127,7 +127,7 @@ namespace HorrorFPS
                       (missing.Count > 0 ? string.Join(", ", missing.ToArray()) : "nenhum") + ".");
             if (generic.Count > 0)
                 Debug.LogWarning("[Anim] " + generic.Count + " clipe(s) são Generic e NÃO animam um corpo Humanoid: " + string.Join(", ", generic.ToArray()) +
-                                 ". Rode o passo 1 da janela do menu 31 (converte os FBX do Mixamo para Humanoid) e monte o controller de novo.");
+                                 ". Rode o passo 1 da janela do menu Animation > Mixamo: Humanoid + Locomotion Controller (converte os FBX do Mixamo para Humanoid) e monte o controller de novo.");
         }
 
         static void Safe(string what, Action a)
@@ -471,7 +471,7 @@ namespace HorrorFPS
             AnimatorState climb = OptionalState(sm, "Climb", 3, 5, k.Get(LocoRole.Climb));
             UseSpeedParam(climb, PlayerAnimParams.ClimbRate);   // 0 = parado no degrau, negativo = descendo (clipe ao contrário)
             OptionalState(sm, "Climb_Top", 4, 5, k.Get(LocoRole.ClimbTop));   // ainda sem transição: falta o aviso "chegou ao topo"
-            AnimatorState dead = Add(sm, "Dead", 4, 6);
+            AnimatorState dead = ClipState(sm, "Dead", 4, 6, k.Get(LocoRole.Death));   // sem clipe de morte: o estado fica vazio e o DeathSequence tomba o corpo por código
 
             float landExit = landClip != null ? Mathf.Clamp(0.7f / Mathf.Max(0.1f, landClip.length), 0.15f, 0.85f) : 0.8f;
 
@@ -545,7 +545,7 @@ namespace HorrorFPS
             t = Tr(climb, loco, 0.2f, -1f); IfNot(t, PlayerAnimParams.Climbing); Gt(t, PlayerAnimParams.Speed, 0.15f);
             t = Tr(climb, idle, 0.2f, -1f); IfNot(t, PlayerAnimParams.Climbing);
 
-            // ---- morte / reviver (estado vazio: ponha o clipe de morte quando tiver)
+            // ---- morte / reviver (com clipe de morte ele toca uma vez e fica no último quadro; sem clipe o estado é vazio)
             t = Any(sm, dead, 0.1f, false); If(t, PlayerAnimParams.Dead);
             t = Tr(dead, idle, 0.2f, -1f); IfNot(t, PlayerAnimParams.Dead);
         }

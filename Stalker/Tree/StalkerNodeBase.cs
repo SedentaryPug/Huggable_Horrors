@@ -9,6 +9,12 @@ namespace HorrorFPS
     public enum StalkerNodeKind { Composite, Decorator, Task, Condition }
 
     /// <summary>
+    /// A resposta de uma conferência ESTÁTICA (sem jogo rodando) sobre uma condição: com o que já se sabe do monstro (o contrato de
+    /// capacidades), ela vale sempre, nunca, ou depende do que acontece em jogo? Ver StalkerCondition.StaticTruth e StalkerTreeCheck.
+    /// </summary>
+    public enum StalkerTruth { Unknown, AlwaysTrue, AlwaysFalse }
+
+    /// <summary>
     /// Opcional. Põe o nó no menu "Adicionar" da janela da árvore num caminho à sua escolha ("Meu Monstro/Rugir") e dá a
     /// descrição que aparece ao selecionar o nó. Sem ele, o nó entra em "Personalizados/" com o nome da classe.
     /// </summary>
@@ -127,6 +133,39 @@ namespace HorrorFPS
 
         public string Title() { return StalkerNodeInfo.Title(GetType()); }
 
+        /// <summary>Acrescente avisos ao relatório (chave vazia, parâmetro inválido...). Não use Brain aqui: roda também no asset. "who" traz o caminho do nó e o nome desta condição.</summary>
+        public virtual void Validate(List<string> report, string who) { }
+
+        // ---- conferência estática (a janela e o menu Conferir da árvore usam; o jogo não). Os padrões nunca geram aviso: quem não
+        // ---- sobrescreve é tratado como "não sei" e fica de fora. Nenhum destes ganchos pode usar Brain.
+
+        /// <summary>
+        /// Com este contrato de capacidades, esta condição vale sempre, nunca, ou depende do jogo? Responda como se NÃO houvesse o
+        /// campo "NÃO" (a conferência aplica ele depois). Sobrescreva só se a resposta depende SÓ do contrato (como "Tem capacidade");
+        /// "why" é a frase do aviso ("ninguém publica 'vision.range'"). Padrão: Unknown.
+        /// </summary>
+        public virtual StalkerTruth StaticTruth(StalkerCapabilities caps, out string why)
+        {
+            why = "";
+            return StalkerTruth.Unknown;
+        }
+
+        /// <summary>A chave de capacidade que esta condição consulta (null = nenhuma). A conferência avisa quando nenhuma característica do projeto publica essa chave (erro de digitação).</summary>
+        public virtual string CapabilityKeyUsed() { return null; }
+
+        /// <summary>
+        /// Só para condições que dependem EXATAMENTE do nível de atenção e de mais nada (como "Atenção >= Alert"): em que níveis ela
+        /// vale, um bit por nível (bit 0 = Calm, 1 = Alert, 2 = Hunting, 3 = Frenzy), sem o campo "NÃO". Padrão: -1 (não depende só
+        /// disso / não sei). A conferência junta as condições do nó e dos nós acima: se nenhum nível sobra, o nó nunca roda.
+        /// </summary>
+        public virtual int AttentionMask() { return -1; }
+
+        /// <summary>
+        /// Variáveis do Blackboard que esta condição lê ("reads") e escreve ("writes"): acrescente os nomes. Sobrescreva se a sua usa
+        /// Brain.Blackboard; a conferência avisa quando uma variável é lida e nenhum nó da árvore a escreve. Padrão: nada.
+        /// </summary>
+        public virtual void CollectVariables(List<string> reads, List<string> writes) { }
+
         internal StalkerCondition Spawn(StalkerBrain brain)
         {
             StalkerCondition c = (StalkerCondition)MemberwiseClone();
@@ -213,6 +252,20 @@ namespace HorrorFPS
 
         /// <summary>Acrescente avisos ao relatório da janela (parâmetro inválido, nome que não existe...). "who" já traz o caminho e o nome do nó.</summary>
         public virtual void Validate(List<string> report, string who) { }
+
+        /// <summary>
+        /// Conferência estática: com este contrato de capacidades, este nó SEMPRE falha (nunca consegue fazer o que faz)? Devolva
+        /// true só se tiver certeza, e diga por quê em "why" ("o monstro não tem um ataque com o id 'investida'"). A conferência da
+        /// árvore mostra isso como informação ("neste perfil o nó não roda"). Padrão: false. Não use Brain aqui.
+        /// </summary>
+        public virtual bool ImpossibleWith(StalkerCapabilities caps, out string why)
+        {
+            why = "";
+            return false;
+        }
+
+        /// <summary>Variáveis do Blackboard que este nó lê e escreve (veja StalkerCondition.CollectVariables). Padrão: nada.</summary>
+        public virtual void CollectVariables(List<string> reads, List<string> writes) { }
 
         public string DisplayName()
         {

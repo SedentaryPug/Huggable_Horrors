@@ -25,6 +25,13 @@ namespace HorrorFPS
         static PromptMode promptMode = PromptMode.ButtonPrompt;
         static HoldMode grabMode = HoldMode.Hold;
         static HoldMode crouchMode = HoldMode.Hold;
+        static bool tips = true;
+        static bool tipsPause = true;
+        static bool noiseIndicator = true;
+        static bool softDamageFx;
+        static float masterVolume = 1f;
+        static float musicVolume = 0.8f;
+        static float ambienceVolume = 0.8f;
 
         public static event Action Changed;
 
@@ -45,6 +52,13 @@ namespace HorrorFPS
             promptMode = (PromptMode)PlayerPrefs.GetInt(Prefix + "PromptMode", (int)promptMode);
             grabMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "GrabMode", (int)grabMode);
             crouchMode = (HoldMode)PlayerPrefs.GetInt(Prefix + "CrouchMode", (int)crouchMode);
+            tips = PlayerPrefs.GetInt(Prefix + "Tips", tips ? 1 : 0) == 1;
+            tipsPause = PlayerPrefs.GetInt(Prefix + "TipsPause", tipsPause ? 1 : 0) == 1;
+            noiseIndicator = PlayerPrefs.GetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0) == 1;
+            softDamageFx = PlayerPrefs.GetInt(Prefix + "SoftDamageFx", softDamageFx ? 1 : 0) == 1;
+            masterVolume = PlayerPrefs.GetFloat(Prefix + "MasterVolume", masterVolume);
+            musicVolume = PlayerPrefs.GetFloat(Prefix + "MusicVolume", musicVolume);
+            ambienceVolume = PlayerPrefs.GetFloat(Prefix + "AmbienceVolume", ambienceVolume);
         }
 
         static void Save()
@@ -55,6 +69,13 @@ namespace HorrorFPS
             PlayerPrefs.SetInt(Prefix + "PromptMode", (int)promptMode);
             PlayerPrefs.SetInt(Prefix + "GrabMode", (int)grabMode);
             PlayerPrefs.SetInt(Prefix + "CrouchMode", (int)crouchMode);
+            PlayerPrefs.SetInt(Prefix + "Tips", tips ? 1 : 0);
+            PlayerPrefs.SetInt(Prefix + "TipsPause", tipsPause ? 1 : 0);
+            PlayerPrefs.SetInt(Prefix + "NoiseIndicator", noiseIndicator ? 1 : 0);
+            PlayerPrefs.SetInt(Prefix + "SoftDamageFx", softDamageFx ? 1 : 0);
+            PlayerPrefs.SetFloat(Prefix + "MasterVolume", masterVolume);
+            PlayerPrefs.SetFloat(Prefix + "MusicVolume", musicVolume);
+            PlayerPrefs.SetFloat(Prefix + "AmbienceVolume", ambienceVolume);
             Changed?.Invoke();
         }
 
@@ -95,6 +116,61 @@ namespace HorrorFPS
         {
             get { EnsureLoaded(); return crouchMode; }
             set { EnsureLoaded(); crouchMode = value; Save(); }
+        }
+
+        /// <summary>Dicas de tutorial na tela (aparecem uma vez cada; ver Tutorials). Desligue para quem já conhece o jogo.</summary>
+        public static bool TipsEnabled
+        {
+            get { EnsureLoaded(); return tips; }
+            set { EnsureLoaded(); tips = value; Save(); }
+        }
+
+        /// <summary>
+        /// As dicas de tutorial congelam o jogo e esperam o jogador apertar o botão de continuar (para dar tempo de ler). Cada dica pode
+        /// seguir esta opção, sempre pausar ou nunca pausar (TutorialEntry.pause). Só vale com as dicas ligadas.
+        /// </summary>
+        public static bool TipsPause
+        {
+            get { EnsureLoaded(); return tipsPause; }
+            set { EnsureLoaded(); tipsPause = value; Save(); }
+        }
+
+        /// <summary>Indicadores de furtividade no canto da tela: o medidor de ruído (NoiseMeterHUD) e o de visibilidade (VisibilityHUD). A chave salva continua "NoiseIndicator".</summary>
+        public static bool NoiseIndicator
+        {
+            get { EnsureLoaded(); return noiseIndicator; }
+            set { EnsureLoaded(); noiseIndicator = value; Save(); }
+        }
+
+        /// <summary>
+        /// Efeitos de dano e de morte suaves: sem clarões vermelhos, sem pulsar de tela e com a câmera de morte tombando menos
+        /// (DamageHUD, DeathSequence, PlayerHUD). Para quem se incomoda com flashes e balanço de câmera.
+        /// </summary>
+        public static bool SoftDamageFx
+        {
+            get { EnsureLoaded(); return softDamageFx; }
+            set { EnsureLoaded(); softDamageFx = value; Save(); }
+        }
+
+        /// <summary>Volume geral do jogo (0..1). Aplicado no AudioListener pelo AudioDirector.</summary>
+        public static float MasterVolume
+        {
+            get { EnsureLoaded(); return masterVolume; }
+            set { EnsureLoaded(); masterVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume da música e da camada de tensão (0..1), multiplicado pelo volume de cada área.</summary>
+        public static float MusicVolume
+        {
+            get { EnsureLoaded(); return musicVolume; }
+            set { EnsureLoaded(); musicVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume do ambiente e dos sons ocasionais (0..1), multiplicado pelo volume de cada área.</summary>
+        public static float AmbienceVolume
+        {
+            get { EnsureLoaded(); return ambienceVolume; }
+            set { EnsureLoaded(); ambienceVolume = Mathf.Clamp01(value); Save(); }
         }
     }
 }

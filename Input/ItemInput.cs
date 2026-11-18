@@ -41,17 +41,23 @@ namespace HorrorFPS
         public InputAction UseLeft { get; private set; }      // mão esquerda: botão esquerdo do mouse / LT (atirar, golpear com o item da mão esquerda)
         public InputAction UseRight { get; private set; }     // mão direita: botão direito do mouse / RT
         public InputAction TwoHand { get; private set; }      // G: toque = item da mão direita nas duas mãos; segurar = item da mão esquerda
-        public InputAction Aim { get; private set; }          // mirar com a arma de fogo (segurar): Q / botão Select do controle
+        public InputAction DropEquipped { get; private set; } // Q / D-pad cima: larga o item equipado no chão (toque = mão direita, segurar = mão esquerda)
         public InputAction Scroll { get; private set; }       // roda do mouse
         public InputAction HotbarPrev { get; private set; }
         public InputAction HotbarNext { get; private set; }
         public InputAction HotbarUse { get; private set; }
         public InputAction[] HotbarKeys { get; private set; }
         public InputAction Reload { get; private set; }       // recarregar a arma equipada
-        public InputAction ToggleLight { get; private set; }  // ligar/desligar a lanterna
         public InputAction TabPrev { get; private set; }      // aba anterior do inventário
         public InputAction TabNext { get; private set; }      // próxima aba do inventário
         public InputAction HoldBreath { get; private set; }   // segurar a respiração (esconderijo): H / clique do analógico direito
+        // modo deus / depuração (lidos só no Editor e em Development Build: ver Debug/GodMode)
+        public InputAction GodMaster { get; private set; }    // F1 / Select: liga/desliga o pacote de teste (invencível, invisível, estamina e munição infinitas)
+        public InputAction GodInvincible { get; private set; }// F2
+        public InputAction GodInvisible { get; private set; } // F3
+        public InputAction GodStamina { get; private set; }   // F4
+        public InputAction GodAmmo { get; private set; }      // F5
+        public InputAction Objectives { get; private set; }   // mostrar a lista de objetivos na tela: J / clique do analógico direito (ignorado escondido, onde esse botão segura o fôlego)
 
         /// <summary>True se o jogador usa mouse (cursor vem do delta do mouse); senão o cursor vem do analógico.</summary>
         public bool UsesMouse { get; private set; }
@@ -117,8 +123,9 @@ namespace HorrorFPS
             UseEquipped = Button("UseEquipped", "<Mouse>/leftButton", "<Mouse>/rightButton", "<Gamepad>/leftTrigger", "<Gamepad>/rightTrigger");
             // G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da mão esquerda (como no Dark Souls). RB no controle.
             TwoHand = Button("TwoHand", "<Keyboard>/g", "<Gamepad>/rightShoulder");
-            // a mira (zoom) saiu do botão direito, que agora é da mão direita
-            Aim = Button("Aim", "<Keyboard>/q", "<Gamepad>/select");
+            // largar o item equipado (a tecla Q e o D-pad cima ficaram livres quando a mira e a lanterna saíram deles)
+            DropEquipped = Button("DropEquipped", "<Keyboard>/q", "<Gamepad>/dpad/up");
+            // não há botão de mirar: a arma de fogo mira sozinha quando está nas DUAS mãos (G)
 
             // ações de valor (Vector2): forma curta do AddAction (nome, tipo, binding). Os controles já são Vector2,
             // então ReadValue<Vector2>() funciona sem declarar o tipo esperado.
@@ -141,13 +148,21 @@ namespace HorrorFPS
 
             // equipamentos em jogo (lidos pelo EquipmentController com o inventário fechado)
             Reload = Button("Reload", "<Keyboard>/r", "<Gamepad>/dpad/down");
-            ToggleLight = Button("ToggleLight", "<Keyboard>/f", "<Gamepad>/dpad/up");
+            // a lanterna é item de mão: liga e desliga com o botão da mão em que está (UseLeft / UseRight)
 
             // abas do inventário (só lidas com a tela aberta)
             TabPrev = Button("TabPrev", "<Keyboard>/z", "<Keyboard>/pageUp", "<Gamepad>/leftTrigger");
             TabNext = Button("TabNext", "<Keyboard>/x", "<Keyboard>/pageDown", "<Gamepad>/rightTrigger");
 
             HoldBreath = Button("HoldBreath", "<Keyboard>/h", "<Gamepad>/rightStickPress");
+            Objectives = Button("Objectives", "<Keyboard>/j", "<Gamepad>/rightStickPress");
+
+            // modo deus (só lido em Editor / Development Build)
+            GodMaster = Button("GodMaster", "<Keyboard>/f1", "<Gamepad>/select");
+            GodInvincible = Button("GodInvincible", "<Keyboard>/f2");
+            GodInvisible = Button("GodInvisible", "<Keyboard>/f3");
+            GodStamina = Button("GodStamina", "<Keyboard>/f4");
+            GodAmmo = Button("GodAmmo", "<Keyboard>/f5");
         }
 
         InputAction Button(string name, params string[] paths)

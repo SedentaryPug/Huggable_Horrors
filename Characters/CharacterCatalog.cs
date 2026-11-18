@@ -4,7 +4,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Lista dos personagens do jogo e qual deles é o inicial. Fica em uma pasta Resources, com o nome 'CharacterCatalog'
-    /// (Resources/HorrorFPS/CharacterCatalog.asset) — o menu Tools > Horror FPS > 8. Character Catalog cria e abre o arquivo.
+    /// (Resources/HorrorFPS/CharacterCatalog.asset) — o menu Tools > Horror FPS > Player > Character Catalog cria e abre o arquivo.
     /// Sem este arquivo, o sistema de personagens fica desligado e o jogo usa o prefab que o LocalPlayerManager já usa.
     /// </summary>
     [CreateAssetMenu(menuName = "HorrorFPS/Character Catalog", fileName = "CharacterCatalog")]

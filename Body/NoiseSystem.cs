@@ -16,7 +16,8 @@ namespace HorrorFPS
         Explosion,
         Voice,
         Custom,
-        Gunshot
+        Gunshot,
+        Distraction     // isca jogada pelo jogador (garrafa, sinalizador, rádio): chama a atenção sem ser o jogador
     }
 
     public struct NoiseEvent

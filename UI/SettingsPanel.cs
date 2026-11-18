@@ -5,8 +5,9 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar). Usada no menu de pausa e no
-    /// menu principal; tudo passa pelo GameSettings, que persiste sozinho.
+    /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar, dicas na tela, botão Controles) e a
+    /// subpágina "Áudio" (volume geral, música, ambiente). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings,
+    /// que persiste sozinho.
     /// </summary>
     public class SettingsPanel
     {
@@ -14,26 +15,48 @@ namespace HorrorFPS
         readonly Action onBack, onControls;
 
         public Selectable FirstSelectable { get; private set; }
+        bool showingAudio;
 
-        /// <param name="onControls">Se informado, mostra um botão "Controles" (o menu principal usa; a pausa tem o dela).</param>
+        /// <param name="onControls">Se informado, mostra o botão "Controles" ao lado de "Voltar" (pausa e menu principal usam).</param>
         public SettingsPanel(RectTransform pageRoot, Action onBack, Action onControls = null)
         {
             this.pageRoot = pageRoot;
             this.onBack = onBack;
             this.onControls = onControls;
-            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 12);
-            col.padding = new RectOffset(20, 20, 10, 0);
+            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 6);
+            col.padding = new RectOffset(20, 20, 6, 0);
             Refresh();
         }
 
-        /// <summary>Recria as linhas com os valores atuais (chame ao abrir a página: outro menu pode ter mudado as opções).</summary>
+        /// <summary>Recria as linhas com os valores atuais (chame ao abrir a página: outro menu pode ter mudado as opções). Abre sempre na página principal.</summary>
         public void Refresh()
+        {
+            showingAudio = false;
+            Build();
+        }
+
+        /// <summary>Troca entre a página principal e a de áudio sem sair do painel, devolvendo o foco do controle à primeira opção.</summary>
+        void SwitchPage(bool audio)
+        {
+            showingAudio = audio;
+            Build();
+            UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
+            if (es != null && FirstSelectable != null) es.SetSelectedGameObject(FirstSelectable.gameObject);
+        }
+
+        void Build()
         {
             for (int i = pageRoot.childCount - 1; i >= 0; i--)
             {
                 Transform child = pageRoot.GetChild(i);
                 child.SetParent(null, false);
                 UnityEngine.Object.Destroy(child.gameObject);
+            }
+
+            if (showingAudio)
+            {
+                BuildAudioPage();
+                return;
             }
 
             FirstSelectable = AddSliderRow(pageRoot, UIText.MouseSensitivity, 0.02f, 0.5f, "0.00",
@@ -57,22 +80,82 @@ namespace HorrorFPS
                 delegate { return GameSettings.CrouchMode == HoldMode.Hold ? UIText.ModeHold : UIText.ModeToggle; },
                 delegate { GameSettings.CrouchMode = GameSettings.CrouchMode == HoldMode.Hold ? HoldMode.Toggle : HoldMode.Hold; });
 
+            AddCycleRow(pageRoot, UIText.NoiseIndicator,
+                delegate { return GameSettings.NoiseIndicator ? UIText.On : UIText.Off; },
+                delegate { GameSettings.NoiseIndicator = !GameSettings.NoiseIndicator; });
+
+            AddCycleRow(pageRoot, UIText.SoftDamageFx,
+                delegate { return GameSettings.SoftDamageFx ? UIText.On : UIText.Off; },
+                delegate { GameSettings.SoftDamageFx = !GameSettings.SoftDamageFx; });
+
+            AddCycleRow(pageRoot, UIText.TipsLabel,
+                delegate { return TipsValue(); },
+                delegate { ToggleTips(); });
+
+            string[] replayText = { UIText.TipsReplayButton };
+            AddCycleRow(pageRoot, UIText.TipsReplay,
+                delegate { return replayText[0]; },
+                delegate { Tutorials.ResetSeen(); replayText[0] = UIText.TipsReplayDone; });
+
+            AddCycleRow(pageRoot, UIText.AudioSection,
+                delegate { return UIText.OpenAudio; },
+                delegate { SwitchPage(true); });
+
+            // Controles e Voltar lado a lado (a página já é longa)
+            RectTransform buttons = UIFactory.NewRect("Buttons", pageRoot);
+            UIFactory.SetLayout(buttons.gameObject, -1f, 64f);
+            HorizontalLayoutGroup bar = buttons.gameObject.AddComponent<HorizontalLayoutGroup>();
+            bar.spacing = 14f;
+            bar.childAlignment = TextAnchor.MiddleCenter;
+            bar.childControlWidth = true;
+            bar.childControlHeight = true;
+            bar.childForceExpandWidth = false;
+            bar.childForceExpandHeight = true;
+
             if (onControls != null)
             {
-                Button controls = UIFactory.CreateButton(pageRoot, UIText.Controls, new Vector2(300f, 64f),
+                Button controls = UIFactory.CreateButton(buttons, UIText.Controls, new Vector2(300f, 60f),
                     delegate { onControls(); });
-                UIFactory.SetLayout(controls.gameObject, 300f, 68f);
+                UIFactory.SetLayout(controls.gameObject, 300f, 60f);
             }
 
-            Button back = UIFactory.CreateButton(pageRoot, UIText.Back, new Vector2(300f, 64f),
+            Button back = UIFactory.CreateButton(buttons, UIText.Back, new Vector2(300f, 60f),
                 delegate { if (onBack != null) onBack(); });
+            UIFactory.SetLayout(back.gameObject, 300f, 60f);
+        }
+
+        static string TipsValue()
+        {
+            if (!GameSettings.TipsEnabled) return UIText.TipsValueOff;
+            return GameSettings.TipsPause ? UIText.TipsValueOnPause : UIText.TipsValueOn;
+        }
+
+        /// <summary>Desligado → Ligado → Ligado e pausa → Desligado.</summary>
+        static void ToggleTips()
+        {
+            if (!GameSettings.TipsEnabled) { GameSettings.TipsPause = false; GameSettings.TipsEnabled = true; }
+            else if (!GameSettings.TipsPause) GameSettings.TipsPause = true;
+            else GameSettings.TipsEnabled = false;
+        }
+
+        void BuildAudioPage()
+        {
+            FirstSelectable = AddSliderRow(pageRoot, UIText.MasterVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.MasterVolume; }, delegate (float v) { GameSettings.MasterVolume = v; });
+            AddSliderRow(pageRoot, UIText.MusicVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.MusicVolume; }, delegate (float v) { GameSettings.MusicVolume = v; });
+            AddSliderRow(pageRoot, UIText.AmbienceVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.AmbienceVolume; }, delegate (float v) { GameSettings.AmbienceVolume = v; });
+
+            Button back = UIFactory.CreateButton(pageRoot, UIText.Back, new Vector2(300f, 64f),
+                delegate { SwitchPage(false); });
             UIFactory.SetLayout(back.gameObject, 300f, 68f);
         }
 
         static RectTransform NewSettingsRow(RectTransform parent, string label)
         {
             RectTransform row = UIFactory.NewRect("Row", parent);
-            UIFactory.SetLayout(row.gameObject, -1f, 64f);
+            UIFactory.SetLayout(row.gameObject, -1f, 50f);
             Text text = UIFactory.Label(row, "Label", label, 26, TextAnchor.MiddleLeft, UIFactory.TextColor);
             RectTransform rt = text.rectTransform;
             rt.anchorMin = Vector2.zero;

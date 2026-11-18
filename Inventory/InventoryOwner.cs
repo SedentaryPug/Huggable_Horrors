@@ -351,7 +351,7 @@ namespace HorrorFPS
                 {
                     ItemInstance it = kv.Value;
                     if (it == null || it.data == null) continue;
-                    if (it.data.equip == null || it.data.equip.blocksGrab) return true;
+                    if (it.data.equip == null || it.data.equip.blocksGrab || it.data.equip.kind == EquipKind.Flashlight) return true;     // a lanterna usa o botão da mão para ligar
                 }
                 return false;
             }
@@ -566,10 +566,20 @@ namespace HorrorFPS
 
         public static string SlotOf(HandSide side) { return side == HandSide.Left ? LeftHandSlot : RightHandSlot; }
 
-        /// <summary>True se o item vai nas mãos (slot "mao"): é nele que o jogador escolhe esquerda ou direita.</summary>
+        /// <summary>
+        /// True se o item vai nas mãos: é nele que o jogador escolhe esquerda ou direita. Vale o slot "mao" e também a LANTERNA,
+        /// mesmo nos itens antigos que ainda têm o slot "lanterna": ela é segurada e ligada como qualquer outro item de mão.
+        /// </summary>
         public bool IsHandItem(ItemInstance item)
         {
-            return item != null && item.data != null && item.data.equipSlot == RightHandSlot;
+            if (item == null || item.data == null) return false;
+            if (item.data.equipSlot == RightHandSlot) return true;
+            return item.data.IsEquippable && IsFlashlight(item);
+        }
+
+        static bool IsFlashlight(ItemInstance item)
+        {
+            return item != null && item.data != null && item.data.equip != null && item.data.equip.kind == EquipKind.Flashlight;
         }
 
         public ItemInstance GetHandItem(HandSide side)
@@ -631,6 +641,7 @@ namespace HorrorFPS
             if (side == HandSide.None) return "";
             ItemInstance it = GetHandItem(side);
             if (it == null) return side == HandSide.Left ? "Mão esquerda vazia." : "Mão direita vazia.";
+            if (IsFlashlight(it)) return "A lanterna se segura com uma mão só.";
             if (twoHandSide == side)
             {
                 twoHandSide = HandSide.None;
@@ -728,11 +739,28 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ descartar no cenário
-        /// <summary>Joga o item (ou 'amount' unidades; 0 = tudo) no cenário. Fica no chão, interagível, e entra no save.</summary>
+        /// <summary>
+        /// O item que está sendo jogado fora agora (só durante Drop). Quem reage a Unequipped (EquipmentController) usa isto para saber que o item
+        /// NÃO vai para a mochila e, portanto, deve manter o estado (lanterna acesa, munição, bateria, durabilidade).
+        /// </summary>
+        public ItemInstance DroppingItem { get; private set; }
+
+        /// <summary>
+        /// Joga o item (ou 'amount' unidades; 0 = tudo) no cenário. Fica no chão, interagível, e entra no save.
+        /// O estado do item vai junto (flags e contadores: lanterna acesa, munição no carregador, bateria, durabilidade): a mesma
+        /// instância vira o item do chão e volta inteira para quem a pegar.
+        /// </summary>
         public WorldItem Drop(ItemInstance item, bool wholeStack = true, int amount = 0)
         {
             if (item == null || item.data == null) return null;
             if (!item.data.canDrop) return null;
+            DroppingItem = item;
+            try { return DropCore(item, wholeStack, amount); }
+            finally { DroppingItem = null; }
+        }
+
+        WorldItem DropCore(ItemInstance item, bool wholeStack, int amount)
+        {
 
             ItemInstance toDrop = item;
             int units = wholeStack || amount <= 0 || amount >= item.stack ? item.stack : amount;
@@ -827,7 +855,18 @@ namespace HorrorFPS
             for (int i = 0; i < s.equipSlots.Length && i < s.equipUids.Length; i++)
             {
                 ItemInstance it = FindByUid(s.equipUids[i]);
-                if (it != null && it.data.IsEquippable) { equipped[s.equipSlots[i]] = it; Action<ItemInstance> h = Equipped; if (h != null) h(it); ItemEvents.RaiseEquipped(this, it); }
+                if (it == null || !it.data.IsEquippable) continue;
+                string slot = s.equipSlots[i];
+                if (IsHandItem(it) && slot != RightHandSlot && slot != LeftHandSlot)
+                {
+                    // save antigo: a lanterna ficava no slot "lanterna", à parte das mãos. Agora ela ocupa uma mão (a direita, senão a esquerda).
+                    if (!equipped.ContainsKey(RightHandSlot)) slot = RightHandSlot;
+                    else if (!equipped.ContainsKey(LeftHandSlot)) slot = LeftHandSlot;
+                    else continue;
+                }
+                equipped[slot] = it;
+                Action<ItemInstance> h = Equipped; if (h != null) h(it);
+                ItemEvents.RaiseEquipped(this, it);
             }
             HandSide two = (HandSide)Mathf.Clamp(s.twoHand, 0, 2);
             if (two != HandSide.None && GetHandItem(two) != null) { twoHandSide = two; RaiseHandsChanged(); }

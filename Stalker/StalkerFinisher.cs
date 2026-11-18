@@ -147,7 +147,7 @@ namespace HorrorFPS
             float hp;
             if (!StalkerBridge.TryGetHealth(t, out hp) || hp <= 1.01f) return;
             StalkerBridge.Damage(t, hp - 1f, gameObject);                   // deixa 1 de vida: a cena mostra o fim
-            float loss = Brain.Profile.attackSanityLoss;
+            float loss = Brain.AttackSanityLoss;                            // do ataque que matou (perfil em grafo) ou do Perfil
             if (loss > 0f) StalkerBridge.LoseSanity(t, loss, "perseguidor");
         }
 

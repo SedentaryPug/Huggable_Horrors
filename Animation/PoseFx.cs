@@ -11,6 +11,8 @@ namespace HorrorFPS
     {
         /// <summary>Metros, no espaço do corpo (x direita, y cima, z frente).</summary>
         public Vector3 bodyOffset;
+        /// <summary>Graus que o corpo todo tomba em torno dos pés, no espaço do corpo: x = para frente (+) ou para trás (-), z = para a direita (+) ou esquerda (-). Usado na morte.</summary>
+        public Vector3 bodyEuler;
         /// <summary>Graus somados à direção do olhar: x = pitch (+ para baixo), y = yaw.</summary>
         public Vector2 lookOffset;
         /// <summary>Somado ao peso do IK de olhar (pode ser negativo).</summary>

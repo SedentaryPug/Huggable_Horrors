@@ -7,14 +7,14 @@ using UnityEngine;
 namespace HorrorFPS.ItemsEditor
 {
     /// <summary>
-    /// Tools > Horror FPS > 4. Add Item, Sanity and Body modules to Player Prefab — grava no(s) prefab(s) do jogador os módulos
+    /// Tools > Horror FPS > Player > Add Item, Sanity and Body Modules To Player Prefab — grava no(s) prefab(s) do jogador os módulos
     /// de inventário, sanidade e corpo (batimento, respiração, head bob dinâmico). Opcional: sem isso o jogo instala tudo
     /// sozinho em cada jogador na hora de jogar (PlayerModules.AutoInstall). Prefira gravar no prefab se quiser ajustar os valores.
     /// Se houver um prefab selecionado no Project, só ele é usado; senão, todos os prefabs com PlayerContext.
     /// </summary>
     public static class PlayerPrefabInstaller
     {
-        [MenuItem("Tools/Horror FPS/4. Add Item, Sanity and Body modules to Player Prefab")]
+        [MenuItem(HorrorFPSMenu.Player + "Add Item, Sanity and Body Modules To Player Prefab", false, HorrorFPSMenu.PlayerOrder + 1)]
         static void Menu()
         {
             List<string> paths = FromSelection();

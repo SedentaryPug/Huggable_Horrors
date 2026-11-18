@@ -17,7 +17,8 @@ namespace HorrorFPS
         readonly List<Text> tabTexts = new List<Text>();
 
         RectTransform content;                  // tudo que muda de aba mora aqui
-        RecordReader reader;
+        RecordBrowser records;                  // aba Registros: lista + leitor (diário, documentos e "Como jogar")
+        ObjectivesBrowser objectivesView;       // aba Objetivos: texto com rolagem
         MapViewer mapViewer;
         ItemInstance browseItem;                // registro/mapa selecionado
         ItemInstance shownBrowse;
@@ -32,7 +33,7 @@ namespace HorrorFPS
         /// <summary>Registro ou mapa selecionado nas abas Registros/Mapa (as listas destacam esta linha).</summary>
         public ItemInstance BrowseItem { get { return browseItem; } }
 
-        static bool IsBrowseTab(InventoryTab t) { return t == InventoryTab.Records || t == InventoryTab.Maps; }
+        static bool IsBrowseTab(InventoryTab t) { return t == InventoryTab.Maps; }
 
         static bool IsBrowse(ContainerView v)
         {
@@ -45,8 +46,15 @@ namespace HorrorFPS
             tabList.Clear();
             if (other != null) { activeTab = InventoryTab.Bag; return; }        // com baú aberto: só a mochila
             tabList.Add(InventoryTab.Bag);
-            InventoryTab[] extra = { InventoryTab.Keys, InventoryTab.Records, InventoryTab.Maps };
-            for (int i = 0; i < extra.Length; i++) if (owner.HasTab(extra[i])) tabList.Add(extra[i]);
+            InventoryTab[] extra = { InventoryTab.Keys, InventoryTab.Records, InventoryTab.Maps, InventoryTab.Objectives };
+            for (int i = 0; i < extra.Length; i++)
+            {
+                bool has;
+                if (extra[i] == InventoryTab.Records) has = RecordBrowser.HasAny(owner);
+                else if (extra[i] == InventoryTab.Objectives) has = ObjectivesBrowser.HasAny();
+                else has = owner.HasTab(extra[i]);
+                if (has) tabList.Add(extra[i]);
+            }
             if (!tabList.Contains(activeTab)) activeTab = InventoryTab.Bag;
         }
 
@@ -107,9 +115,14 @@ namespace HorrorFPS
                     int n = CountInTab(t, false);
                     if (n > 0) label += "  <color=#8a8a80>" + n + "</color>";
                 }
+                else if (t == InventoryTab.Objectives)
+                {
+                    int running = ObjectivesBrowser.ActiveCount();
+                    if (running > 0) label += "  <color=#e8c04a>" + running + "</color>";
+                }
                 else if (t == InventoryTab.Records)
                 {
-                    int unread = CountInTab(t, true);
+                    int unread = RecordBrowser.UnreadCount(owner);
                     if (unread > 0) label += "  <color=#e8c04a>● " + unread + "</color>";
                 }
                 tabTexts[i].text = label;
@@ -155,7 +168,8 @@ namespace HorrorFPS
             for (int i = 0; i < views.Count; i++) views[i].Destroy();
             views.Clear();
             tray = null;
-            if (reader != null) { reader.Destroy(); reader = null; }
+            if (records != null) { records.Destroy(); records = null; }
+            if (objectivesView != null) { objectivesView.Destroy(); objectivesView = null; }
             if (mapViewer != null) { mapViewer.Destroy(); mapViewer = null; }
             if (content != null) Destroy(content.gameObject);
             content = null;
@@ -196,8 +210,14 @@ namespace HorrorFPS
 
                 case InventoryTab.Records:
                 {
-                    LayoutColumn(owner, x, top, SideListW, contentH, 48f, false, (int)InventoryTab.Records, RowsFor(InventoryTab.Records, contentH));
-                    reader = new RecordReader(content, x + SideListW + 12f, top, w - SideListW - 12f, contentH);
+                    // lista simples, sem grade: diários, notas, gravações e documentos no mesmo lugar (o 'Journal' também mora aqui)
+                    records = new RecordBrowser(this, content, owner, x, top, w, contentH, SideListW + 40f);
+                    break;
+                }
+
+                case InventoryTab.Objectives:
+                {
+                    objectivesView = new ObjectivesBrowser(content, x, top, w, contentH);
                     break;
                 }
 
@@ -249,23 +269,12 @@ namespace HorrorFPS
 
         void RefreshBrowse()
         {
-            if (!IsBrowseTab(activeTab) || (reader == null && mapViewer == null)) return;
+            if (activeTab != InventoryTab.Maps || mapViewer == null) return;
 
             if (browseItem == null || browseItem.container == null || browseItem.container.Owner != owner || browseItem.container.Tab != activeTab)
                 browseItem = FirstOfTab(activeTab);
 
-            if (reader != null)
-            {
-                if (browseItem == null)
-                    reader.ShowEmpty("Nenhum registro ainda.\nDiários, notas e gravações que você encontrar ficam guardados aqui.");
-                else
-                {
-                    reader.Show(browseItem.GetName(this), "Registro  •  " + CategoryName(browseItem.data.category),
-                        browseItem.GetReadText(this), browseItem != shownBrowse);
-                    if (!browseItem.HasFlag("read")) browseItem.SetFlag("read");        // marca como lido (some o "● novo")
-                }
-            }
-            if (mapViewer != null) mapViewer.Show(browseItem);
+            mapViewer.Show(browseItem);
             shownBrowse = browseItem;
         }
 
@@ -274,8 +283,10 @@ namespace HorrorFPS
         {
             if (mapViewer != null)
                 mapViewer.Tick(cursor, ItemInput.Pressed(input.Select), ItemInput.Held(input.Select), scrollStep);
-            else if (reader != null && reader.Contains(cursor))
-                reader.Scroll(scrollStep);
+            else if (records != null)
+                records.Tick(cursor, ItemInput.Pressed(input.Select), scrollStep);
+            else if (objectivesView != null)
+                objectivesView.Tick(cursor, scrollStep);
             UpdateTabBar();
         }
     }

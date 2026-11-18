@@ -90,8 +90,10 @@ namespace HorrorFPS
         [Tooltip("Prefab com StalkerBrain + NavMeshAgent + StalkerSenses (e os módulos exclusivos dele). Pode ficar vazio se ele só existe numa cena.")]
         public GameObject prefab;
         public StalkerProfile profile;
-        [Tooltip("Árvore de comportamento editável (Create > HorrorFPS > Stalker Behavior Tree; janela em Tools > Horror FPS > 24). Vazio = a árvore padrão do código. O campo Tree do próprio Stalker Brain tem prioridade sobre este.")]
+        [Tooltip("Árvore de comportamento editável (Create > HorrorFPS > Stalker Behavior Tree; janela em Tools > Horror FPS > Stalker > Stalker Tree Editor). Vazio = a árvore padrão do código. O campo Tree do próprio Stalker Brain tem prioridade sobre este.")]
         public StalkerTreeAsset tree;
+        [Tooltip("As características do monstro como grafo (Create > HorrorFPS > Stalker Profile Graph): visão, audição, locomoção, ataques... Vazio = só o Perfil de números. O campo Profile Graph do próprio Stalker Brain tem prioridade sobre este.")]
+        public StalkerProfileGraph profileGraph;
         [Tooltip("Mesmo grupo = trocam pistas (precisa de Share Radius > 0 no perfil).")]
         public string group;
         [Tooltip("Mesma chave = mesma memória adaptativa. Vazio = memória própria.")]
@@ -108,6 +110,17 @@ namespace HorrorFPS
         public StalkerFollowRules follow = new StalkerFollowRules();
         public StalkerSummonRules summon = new StalkerSummonRules();
         public StalkerRetreatRules retreat = new StalkerRetreatRules();
+
+        /// <summary>Os números gerais desta definição: o Perfil dela ou, sem Perfil, o perfil base do grafo, ou os números padrão.</summary>
+        public StalkerProfile EffectiveProfile
+        {
+            get
+            {
+                if (profile != null) return profile;
+                if (profileGraph != null && profileGraph.baseProfile != null) return profileGraph.baseProfile;
+                return StalkerProfile.Default;
+            }
+        }
 
         public bool AllowedIn(string levelId)
         {

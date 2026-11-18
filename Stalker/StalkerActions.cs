@@ -39,7 +39,16 @@ namespace HorrorFPS
         /// <summary>Os ramos padrão, com nome e prioridade. Os módulos podem acrescentar, trocar ou remover ramos depois.</summary>
         public void Populate(StalkerTreeBuilder tree)
         {
-            tree.Add("Attack", StalkerTreeBuilder.PriAttack, new BTGuard("atacar", () => b.Knowledge.hasVisual && InAttackRange(), new BTAction("Attack", Attack, null)));
+            if (b.Traits != null && b.Capabilities.Attacks.Count > 0)
+            {
+                // perfil em grafo com ataques: o ramo padrão escolhe e executa os ataques do monstro (golpe, investida, à distância...)
+                StalkerAttackRunner runner = new StalkerAttackRunner(b);
+                tree.Add("Attack", StalkerTreeBuilder.PriAttack, new BTGuard("atacar", () => b.Knowledge.hasVisual && StalkerAttackRunner.Wants(b, StalkerAttackPick.Best, null), new BTAction("Attack", () => runner.Tick(StalkerAttackPick.Best, null), runner.Abort)));
+            }
+            else
+            {
+                tree.Add("Attack", StalkerTreeBuilder.PriAttack, new BTGuard("atacar", () => b.Knowledge.hasVisual && InAttackRange(), new BTAction("Attack", Attack, null)));
+            }
             tree.Add("Chase", StalkerTreeBuilder.PriChase, new BTGuard("perseguir", () => b.Knowledge.hasVisual, new BTAction("Chase", Chase, null)));
             tree.Add("CheckHiding", StalkerTreeBuilder.PriCheckHiding, new BTGuard("revistar", () => b.Knowledge.SuspectsHiding, new BTAction("CheckHiding", CheckHiding, AbortCheck)));
             tree.Add("Investigate", StalkerTreeBuilder.PriInvestigate, new BTGuard("investigar", () => b.Knowledge.hasLead && b.Knowledge.leadFresh, new BTAction("Investigate", Investigate, AbortInvestigate)));

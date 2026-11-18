@@ -59,6 +59,8 @@ namespace HorrorFPS
             InventoryOwner inv = PlayerRef.Find<InventoryOwner>(p);
             if (it == null || inv == null) return;
 
+            // pegar uma lanterna acesa do chão: ela vai para a mochila apagada (acesa só na mão)
+            if (it.data.equip != null && it.data.equip.kind == EquipKind.Flashlight) it.SetFlag(EquipState.Lit, false);
             inv.AddInstance(it);
             if (it.container == null && it.stack > 0) return;           // coube só uma parte: o resto continua no chão (se a instância inteira entrou, ela já está num contêiner)
 
@@ -175,6 +177,15 @@ namespace HorrorFPS
             return w;
         }
 
+        /// <summary>Dá velocidade e giro a um item que já está no cenário (a arma arrancada da mão pelo coice, por exemplo).</summary>
+        public void Throw(Vector3 velocity, Vector3 spin)
+        {
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb == null || rb.isKinematic) return;
+            SetVelocity(rb, velocity);
+            rb.angularVelocity = spin;
+        }
+
         static WorldItem Build(ItemInstance inst, Vector3 position, Quaternion rotation)
         {
             if (inst == null || inst.data == null) return null;
@@ -195,6 +206,10 @@ namespace HorrorFPS
             Rigidbody rb = go.GetComponent<Rigidbody>();
             if (rb == null) rb = go.AddComponent<Rigidbody>();
             rb.mass = Mathf.Clamp(0.25f * inst.data.shape.CellCount, 0.25f, 5f);
+
+            // lanterna no chão: se foi largada acesa, continua acesa (luz própria, gastando a bateria)
+            if (inst.data.equip != null && inst.data.equip.kind == EquipKind.Flashlight)
+                go.AddComponent<WorldItemLight>().Init(inst);
             return w;
         }
 

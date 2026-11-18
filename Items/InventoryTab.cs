@@ -9,7 +9,8 @@ namespace HorrorFPS
         Bag = 0,        // mochila (grade/lista de sempre)
         Keys = 1,       // itens-chave e de missão: não ocupam espaço da mochila
         Records = 2,    // diários, notas, gravações: lista + leitor de texto
-        Maps = 3        // mapas: lista + visualizador com zoom e a sua posição
+        Maps = 3,       // mapas: lista + visualizador com zoom e a sua posição
+        Objectives = 4  // só visual (não guarda itens): objetivos em andamento, concluídos e que falharam
     }
 
     /// <summary>Em qual aba um item entra. Auto decide pela categoria do item.</summary>
@@ -30,6 +31,7 @@ namespace HorrorFPS
                 case InventoryTab.Keys: return "Chaves";
                 case InventoryTab.Records: return "Registros";
                 case InventoryTab.Maps: return "Mapa";
+                case InventoryTab.Objectives: return "Objetivos";
                 default: return "Mochila";
             }
         }

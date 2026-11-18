@@ -11,7 +11,7 @@ Até aqui a árvore do perseguidor era montada em código (`StalkerActions` + tr
 
 > **Código escrito sem compilar no Unity**, só conferido por checagem estática. A janela usa a API do Editor (seção 9). Se algo não compilar ou se comportar de outro jeito, mande a mensagem do Console.
 >
-> **O que não é**: não é um canvas de grafo com caixas e setas. É uma árvore em lista indentada (como a Hierarquia). Foi uma escolha de robustez; os dados não dependem da interface, então um canvas pode ser feito depois (seção 12).
+> **Esta janela é uma lista, não um grafo**: a árvore aparece em lista indentada (como a Hierarquia), uma escolha de robustez. Como os dados não dependem da interface, existe também um **canvas de grafo** sobre os mesmos assets, com caixas e ligações e uma conferência da árvore contra o perfil do monstro (**Tools > Horror FPS > Stalker > Open Stalker Tree Canvas**; doc *Perfil em grafo*, seção 6). As duas janelas editam o mesmo asset: use a que preferir.
 
 ## 1. O que vem no pacote
 
@@ -29,7 +29,7 @@ Assets/HorrorFPS/Stalker/Tree/
   StalkerNodeExamples.cs    dois nós-modelo: uma ação (Rugir) e uma condição (Perto de casa)
 Assets/HorrorFPS/Editor/Stalker/
   StalkerTreeWindow.cs      a janela de edição
-  StalkerTreeMenu.cs        menus 24, 25, 26 e Assets > Create > HorrorFPS (script de nó), duplo clique no asset
+  StalkerTreeMenu.cs        menus Stalker > Stalker Tree Editor / Create Stalker Tree... e Assets > Create > HorrorFPS (script de nó), duplo clique no asset
   StalkerTreeAssetEditor.cs inspetor do asset (resumo, problemas, botão "Abrir")
 Arquivos que MUDARAM (sobrescreva): Stalker/StalkerBrain.cs, StalkerDefinition.cs, StalkerModule.cs, StalkerActions.cs
 ```
@@ -38,10 +38,10 @@ Sem `asmdef`, igual ao resto do framework. O que mudou nos quatro arquivos: o `S
 ## 2. Teste em 2 minutos
 
 1. Copie a pasta `Assets` por cima e espere compilar.
-2. Selecione o monstro (o da bancada do menu 18 serve) e use **Tools > Horror FPS > 25. Create Stalker Tree (Default)**. Ele cria o asset em `Assets/Resources/HorrorFPS/StalkerTrees`, **liga ao campo `Tree` do monstro selecionado se estiver vazio** e abre a janela. Se o campo já tinha uma árvore, ele avisa no Console e não troca; arraste o asset para lá.
+2. Selecione o monstro (qualquer monstro com `Stalker Brain` serve) e use **Tools > Horror FPS > Stalker > Create Stalker Tree (Default)**. Ele cria o asset em `Assets/Resources/HorrorFPS/StalkerTrees`, **liga ao campo `Tree` do monstro selecionado se estiver vazio** e abre a janela. Se o campo já tinha uma árvore, ele avisa no Console e não troca; arraste o asset para lá.
 3. A árvore padrão é **exatamente** o que o monstro já fazia: um Seletor com os seis ramos (Attack, Chase, CheckHiding, Investigate, Search, Patrol). Dê Play: o resultado deve ser igual ao de antes.
 4. Com o Play ligado, a janela mostra **ao vivo** o que o monstro está fazendo (bolinhas verdes, azuis, vermelhas, cinzas). Fique à vista dele e olhe a janela.
-5. Experimente o **26. Create Stalker Tree (Example: Roar On Spot)**: ele para, encara e manda a mensagem `OnRoar` ao avistar você, uma vez por perseguição. Ponha no monstro um componente com um método `void OnRoar()` para tocar o som (sem ele a mensagem é ignorada, e o resto funciona).
+5. Experimente o **Stalker > Create Stalker Tree (Example: Roar On Spot)**: ele para, encara e manda a mensagem `OnRoar` ao avistar você, uma vez por perseguição. Ponha no monstro um componente com um método `void OnRoar()` para tocar o som (sem ele a mensagem é ignorada, e o resto funciona).
 
 Duplo clique em qualquer `StalkerTreeAsset` abre a janela. Para a árvore vazia: **Create > HorrorFPS > Stalker Behavior Tree** (aí use o botão "Árvore padrão" da janela para ter um ponto de partida).
 
@@ -69,7 +69,7 @@ Duplo clique em qualquer `StalkerTreeAsset` abre a janela. Para a árvore vazia:
 
 **Em jogo:** `brain.SetTree(outroAsset)` troca a árvore (ex.: fase 2 de um chefe); `brain.RebuildTree()` remonta a atual (zera o estado interno dos nós; a memória adaptativa e o conhecimento ficam).
 
-## 4. A janela (Tools > Horror FPS > 24. Stalker Tree Editor)
+## 4. A janela (Tools > Horror FPS > Stalker > Stalker Tree Editor)
 
 ```
 [asset] [Novo] [Árvore padrão] [Validar] [Expandir] [Recolher]        (Play: [monstro] [Aplicar ao editar] [Aplicar agora]) [Travar]
@@ -91,7 +91,7 @@ Duplo clique em qualquer `StalkerTreeAsset` abre a janela. Para a árvore vazia:
 
 **Ao vivo (Play).** Escolha o monstro no canto da barra (só aparecem os que usam este asset). Bolinha **verde** = rodando, **azul** = terminou bem agora, **vermelha** = falhou agora, **cinza** = não foi consultado. As condições têm a bolinha delas (verde = valeu, vermelha = não). Abaixo do painel direito aparecem modo, atenção, se vê alguém, a pista e as **variáveis** do monstro. Editar em Play: com **Aplicar ao editar** ligado, cada alteração remonta a árvore dos monstros que usam o asset (zera o estado interno dos nós, o que pode reiniciar um "Esperar" no meio); desligado, use **Aplicar agora**. As alterações em Play **ficam** no asset (é um asset, não uma cena): desfaça se não quiser.
 
-**Inspetor do asset:** mostra as anotações (`Notes`), o número de nós, um resumo de uma linha da árvore, os problemas, e o botão que abre a janela.
+**Inspetor do asset:** mostra as anotações (`Notes`), o número de nós, um resumo de uma linha da árvore, os problemas, e os botões que abrem a janela de lista (*Abrir no editor de árvore*) e o canvas de grafo (*Abrir canvas (grafo)*).
 
 ## 5. Os nós prontos
 
@@ -245,6 +245,7 @@ Para um **composto** novo, herde de `StalkerComposite` e implemente `Create()` u
 7. `Summary()` e `Validate()` rodam também no asset (sem monstro): não use `Brain` neles.
 8. **Renomear ou apagar a classe de um nó faz ele sumir** das árvores que o usam (aparece "nó ausente" em vermelho). Ao renomear, use `[UnityEngine.Scripting.APIUpdating.MovedFrom(false, sourceClassName: "NomeAntigo")]` na classe nova.
 9. Build IL2CPP com *Managed Stripping Level* alto pode remover classes que só aparecem em assets: se um nó sumir só na build, ponha `[UnityEngine.Scripting.Preserve]` na classe.
+10. **Opcional, para o canvas:** os ganchos `StaticTruth`, `CapabilityKeyUsed`, `AttentionMask`, `ImpossibleWith` e `CollectVariables` deixam o seu nó participar da conferência "contra o perfil" do canvas (doc *Perfil em grafo*, seção 6.8). Sem eles o nó funciona igual e só fica de fora da conferência (nunca gera aviso falso). Também não podem usar `Brain`.
 
 ## 7. Receitas
 
@@ -275,7 +276,7 @@ Se `Attack` assumir no meio, a investida é interrompida e a recarga começa (op
 ```
 Ao chegar a menos de 12 m de casa a condição "NÃO Perto de casa" cai e a árvore segue para os ramos de baixo.
 
-**3. Rugidos variados** (o monstro ruge ao avistar, de um jeito sorteado; é o exemplo do menu 26 com um Sorteio). O `Definir variável` é sempre o **último** passo, porque a condição `rugiu <= 0` do Sorteio deixa de valer assim que ele roda:
+**3. Rugidos variados** (o monstro ruge ao avistar, de um jeito sorteado; é o exemplo do menu `Stalker > Create Stalker Tree (Example: Roar On Spot)` com um Sorteio). O `Definir variável` é sempre o **último** passo, porque a condição `rugiu <= 0` do Sorteio deixa de valer assim que ele roda:
 ```
 ├─ Sorteio "Reação ao avistar"    se Vê um jogador, Variável rugiu <= 0
 │    ├─ Sequência: Parar, Animator "Roar1", Esperar 2 s, Definir variável rugiu = 1
@@ -310,7 +311,7 @@ Os dois convivem: a árvore decide, o módulo mexe nos números e nos sentidos.
 
 ## 10. Limitações
 
-- **Não é um canvas de grafo.** Lista indentada; sem arrastar nós para reordenar (use ▲ ▼ e "Mover para dentro/fora").
+- **Esta janela não é um canvas de grafo**: sem arrastar nós para reordenar (use ▲ ▼ e "Mover para dentro/fora"). Para ver a árvore em caixas e mudar o pai de um nó arrastando uma ligação, use o **canvas da árvore** (doc *Perfil em grafo*, seção 6).
 - **Estado interno não sobrevive** a `RebuildTree`, a desativar/reativar o monstro nem à troca de cena; a memória adaptativa e o conhecimento sim. Variáveis do `Blackboard` não vão para o save.
 - **Editar o asset muda todos os monstros que o usam.** Para um monstro diferente, duplique o asset.
 - Um ramo do estoque usado **duas vezes** na mesma árvore divide o estado (aviso no Console); use cada "Ramo padrão" uma vez por árvore.
@@ -336,7 +337,7 @@ Os dois convivem: a árvore decide, o módulo mexe nos números e nos sentidos.
 
 ## 12. Ideias para melhorar (próximos passos)
 
-1. **Canvas de grafo** (`GraphView`) sobre os mesmos assets: caixas e setas, arrastar e soltar. Os dados já são independentes da interface.
+1. ~~Canvas de grafo~~ **feito** (doc *Perfil em grafo*, seção 6): caixas e ligações sobre os mesmos assets, com conferência contra o perfil. Falta poder mover as caixas à mão (hoje a posição vem da hierarquia).
 2. **Teste sem Play**: uma bancada que simula `Knowledge` (vê, pista, distância) e mostra o caminho que a árvore percorreria.
 3. **Tempo por nó** na visão ao vivo (quanto cada ramo rodou), para ajustar o ritmo do monstro.
 4. **Comentários** (notas soltas) e agrupamento de nós para árvores grandes.

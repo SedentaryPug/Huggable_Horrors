@@ -58,10 +58,24 @@ namespace HorrorFPS
         public float nearSenseRange = 1.8f;        // perto assim ele "sente" mesmo fora do cone
         public float stillFactor = 0.6f;           // jogador parado é mais difícil de notar
         public float runningFactor = 1.25f;
+        [Tooltip("Quanto o fator de visibilidade do jogador (agachado, sombra, lanterna ligada: PlayerVisibility) conta para este monstro. 0 = ignora (um monstro que não depende dos olhos); 1 = por inteiro.")]
+        [Range(0f, 1f)] public float playerVisibilityWeight = 1f;
+        [Tooltip("Quanto esse fator também encurta (ou alonga) o alcance da visão. 0 = só muda a velocidade com que ele nota o jogador; 1 = o alcance muda na mesma proporção.")]
+        [Range(0f, 1f)] public float visibilityRangeInfluence = 0.5f;
         public float forgetSeconds = 2.5f;         // tempo para a suspeita zerar sem ver o jogador
         public float glimpseAt = 0.35f;            // suspeita que vira "vi algo"
         public float hearingOcclusion = 0.6f;      // paredes reduzem o alcance a esta fração
         public LayerMask sightMask = ~0;           // o que bloqueia a visão
+
+        [Header("Lanterna do jogador (o feixe denuncia)")]
+        [Tooltip("Este monstro enxerga a luz da lanterna acesa do jogador e descobre onde ele está por ela. Desligado (padrão) = a lanterna só pesa no fator de visibilidade, como antes. Ligue só nos monstros que devem ter essa habilidade.")]
+        public bool detectsFlashlightBeam = false;
+        [Tooltip("Até que distância (m) ele nota a luz acesa. Costuma ser maior que a visão normal: a luz denuncia de longe, no escuro. Precisa de linha de visão até a lanterna e dela estar no cone de visão do monstro.")]
+        public float beamDetectRange = 40f;
+        [Tooltip("Quão rápido a luz o faz notar o jogador (1 = como vê-lo por inteiro, bem de perto). Menor = precisa ver a luz por mais tempo.")]
+        [Range(0.05f, 1.5f)] public float beamDetectStrength = 0.7f;
+        [Tooltip("Multiplicador quando o feixe aponta para o monstro (ele está dentro do cone de luz): ser iluminado denuncia mais.")]
+        [Range(1f, 3f)] public float beamLitBonus = 1.6f;
 
         [Header("Diretor: pistas (a informação que ele tem mas só libera às vezes)")]
         public bool pressureOnlyWhenCalm = true;   // dicas de pressão só com atenção Calm/Alert

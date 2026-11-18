@@ -7,7 +7,7 @@ using UnityEngine;
 namespace HorrorFPS
 {
     /// <summary>
-    /// Menus 24 a 26 (abrir a janela da árvore, criar a árvore padrão, criar o exemplo do rugido), "Assets > Create > HorrorFPS"
+    /// Menus da árvore (abrir a janela da árvore, criar a árvore padrão, criar o exemplo do rugido), "Assets > Create > HorrorFPS"
     /// para criar o script de um nó SEU (ação ou condição) já com o esqueleto pronto, e duplo clique num StalkerTreeAsset abre a janela.
     /// </summary>
     public static class StalkerTreeMenu
@@ -15,7 +15,7 @@ namespace HorrorFPS
         const string Folder = "Assets/Resources/HorrorFPS/StalkerTrees";
 
         // ------------------------------------------------------------------ 24. abrir a janela
-        [MenuItem("Tools/Horror FPS/24. Stalker Tree Editor")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Stalker Tree Editor", false, HorrorFPSMenu.StalkerOrder + 2)]
         public static void OpenEditor()
         {
             StalkerTreeAsset a = Selection.activeObject as StalkerTreeAsset;
@@ -29,7 +29,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ 25. árvore padrão
-        [MenuItem("Tools/Horror FPS/25. Create Stalker Tree (Default)")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Tree (Default)", false, HorrorFPSMenu.StalkerOrder + 3)]
         public static void CreateDefault()
         {
             StalkerTreeAsset a = Create(StalkerTreeTemplates.Default(), "StalkerTree_Padrao", true);
@@ -37,7 +37,7 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ 26. exemplo
-        [MenuItem("Tools/Horror FPS/26. Create Stalker Tree (Example: Roar On Spot)")]
+        [MenuItem(HorrorFPSMenu.Stalker + "Create Stalker Tree (Example: Roar On Spot)", false, HorrorFPSMenu.StalkerOrder + 4)]
         public static void CreateRoar()
         {
             StalkerTreeAsset a = Create(StalkerTreeTemplates.RoarOnSpot(), "StalkerTree_Rugido", true);
@@ -145,7 +145,7 @@ namespace HorrorFPS
 using UnityEngine;
 using HorrorFPS;
 
-// AÇÃO do perseguidor. Aparece sozinha no menu ""Adicionar"" da janela Tools > Horror FPS > 24. Stalker Tree Editor.
+// AÇÃO do perseguidor. Aparece sozinha no menu ""Adicionar"" da janela Tools > Horror FPS > Stalker > Stalker Tree Editor.
 // - Campo PÚBLICO = parâmetro editável na janela.
 // - Campo PRIVADO = estado deste perseguidor (cada perseguidor tem o seu; listas e arrays crie em OnBuild).
 // - OnEnter: começou.  OnTick: todo quadro (Running = continua; Success / Failure = terminou).  OnExit: terminou.  OnAbort: interrompida.

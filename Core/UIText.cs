@@ -148,5 +148,92 @@ namespace HorrorFPS
         public const string Open = "Abrir";
         public const string Close = "Fechar";
         public const string DeviceLost = "Controle desconectado";
+
+        // Objetivos
+        public const string ObjectivesButton = "Objetivos";
+        public const string ObjectivesTitle = "OBJETIVOS";
+        public const string ObjectivesHeader = "OBJETIVOS";
+        public const string ObjectiveNew = "NOVO OBJETIVO";
+        public const string ObjectiveDone = "OBJETIVO CONCLUÍDO";
+        public const string ObjectiveFailed = "OBJETIVO FALHOU";
+        public const string ObjectiveOptionalTag = "(opcional) ";
+        public const string ObjectivesMore = "+{0} objetivo(s)";
+        public const string NoObjectives = "Nenhum objetivo no momento";
+        public const string ObjectivesActive = "EM ANDAMENTO";
+        public const string ObjectivesDone = "CONCLUÍDOS";
+        public const string ObjectivesFailedSection = "FALHARAM";
+        public const string ObjectivesEmpty = "Nenhum objetivo ainda.";
+
+        // Diário
+        public const string JournalRead = "Ler";
+        public const string JournalUnreadable = "Ilegível";
+        public const string JournalUnlocked = "Novo registro (Inventário > Registros): {0}";
+        public const string JournalAlready = "Já está no diário: {0}";
+        public const string JournalKindNote = "Nota";
+        public const string JournalKindDiary = "Diário";
+        public const string JournalKindRecording = "Gravação";
+        public const string JournalKindDocument = "Documento";
+        public const string JournalHeaderNote = "NOTAS";
+        public const string JournalHeaderDiary = "DIÁRIOS";
+        public const string JournalHeaderRecording = "GRAVAÇÕES";
+        public const string JournalHeaderDocument = "DOCUMENTOS";
+        public const string RecordsHeader = "REGISTROS";
+        public const string JournalEmpty = "Nenhum registro ainda.\nNotas, diários e gravações que você achar ficam guardados aqui.";
+        public const string JournalCount = "{0} registro(s)";
+        public const string JournalCountUnread = "{0} registro(s)  •  {1} novo(s)";
+        public const string JournalNewTag = "● novo";
+        public const string JournalReaderHint = "{0} fecha  •  Setas ou roda do mouse rolam o texto";
+        public const string JournalReaderHintPad = "{0} fecha  •  Analógico direito rola o texto";
+
+        // Ruído e visibilidade (agachar silencioso)
+        public const string NoiseIndicator = "Indicadores de furtividade";
+        public const string SoftDamageFx = "Efeitos de dano suaves";
+        public const string AudioSection = "Áudio";
+        public const string OpenAudio = "Abrir";
+        public const string MasterVolume = "Volume geral";
+        public const string MusicVolume = "Música";
+        public const string AmbienceVolume = "Ambiente e efeitos";
+        public const string NoiseSilent = "Silencioso";
+        public const string NoiseQuiet = "Baixo";
+        public const string NoiseNormal = "Médio";
+        public const string NoiseLoud = "Alto";
+        public const string NoiseCrouched = "Agachado";
+        public const string VisibilityHidden = "Escondido";
+        public const string VisibilityLow = "Pouco visível";
+        public const string VisibilityNormal = "Visível";
+        public const string VisibilityHigh = "Muito visível";
+        public const string VisibilityCrouched = "agachado";
+        public const string VisibilityShadow = "na sombra";
+        public const string VisibilityLit = "iluminado";
+        public const string VisibilityLamp = "lanterna ligada";
+
+        // Dicas / Como jogar
+        public const string HowToPlayButton = "Como jogar";
+        public const string HowToPlayTitle = "COMO JOGAR";
+        public const string TipHeader = "DICA";
+        public const string TipsOn = "Dicas na tela: Ligado";
+        public const string TipsOnPause = "Dicas na tela: Ligado e pausa";
+        public const string TipsOff = "Dicas na tela: Desligado";
+        public const string TipContinue = "Aperte {0} para continuar";
+        public const string TipsReplay = "Rever dicas";
+        public const string TipsReplayDone = "As dicas vão aparecer de novo";
+        public const string HowToPlayEmpty = "Nenhuma dica cadastrada.";
+        public const string JournalHeaderHowTo = "COMO JOGAR";
+        public const string JournalKindTip = "Dica";
+        public const string TipsLabel = "Dicas na tela";
+        public const string TipsValueOn = "Ligado";
+        public const string TipsValueOnPause = "Ligado e pausa";
+        public const string TipsValueOff = "Desligado";
+        public const string TipsReplayButton = "Rever";
+        public const string ObjectivesSummary = "{0} em andamento  •  {1} concluído(s)  •  {2} falharam";
+        public const string ExitButton = "Sair";
+        public const string ExitTitle = "SAIR";
+        public const string KeyMoveKeyboard = "W A S D";
+        public const string KeyMovePad = "Analógico esq.";
+        public const string KeyLookKeyboard = "Mouse";
+        public const string KeyLookPad = "Analógico dir.";
+        public const string KeyScroll = "Scroll";
+        public const string KeyDpadUpDown = "D-pad cima/baixo";
+        public const string KeyDpadLeftRight = "D-pad esq./dir.";
     }
 }
