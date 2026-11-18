@@ -31,7 +31,10 @@ namespace HorrorFPS
             public string headerText;
             public JournalEntry entry;
             public ItemInstance item;
+<<<<<<< HEAD
             public TutorialEntry tip;           // categoria "Como jogar": as dicas de comandos
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         class Row
@@ -122,6 +125,7 @@ namespace HorrorFPS
         /// <summary>A aba Registros existe para este jogador? (tem documento, ou o jogo tem diário.)</summary>
         public static bool HasAny(InventoryOwner owner)
         {
+<<<<<<< HEAD
             return (owner != null && owner.HasTab(InventoryTab.Records)) || Journal.Count > 0 || HasTips();
         }
 
@@ -130,6 +134,9 @@ namespace HorrorFPS
             System.Collections.Generic.IList<TutorialEntry> all = Tutorials.All;
             for (int i = 0; i < all.Count; i++) if (all[i].enabled && all[i].inMenu) return true;
             return false;
+=======
+            return (owner != null && owner.HasTab(InventoryTab.Records)) || Journal.Count > 0;
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         /// <summary>Quantos registros (entradas do diário e documentos) ainda não foram lidos.</summary>
@@ -214,6 +221,7 @@ namespace HorrorFPS
                         model.Add(row);
                     }
             }
+<<<<<<< HEAD
 
             // categoria "Como jogar": as dicas de comandos (as mesmas que aparecem na tela), sempre por último
             System.Collections.Generic.IList<TutorialEntry> tips = Tutorials.All;
@@ -233,6 +241,8 @@ namespace HorrorFPS
                 row.tip = tips[i];
                 model.Add(row);
             }
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         void AddHeader(JournalKind kind)
@@ -253,7 +263,10 @@ namespace HorrorFPS
         {
             if (it == null || it.header) return null;
             if (it.entry != null) return "e:" + it.entry.id;
+<<<<<<< HEAD
             if (it.tip != null) return "t:" + it.tip.id;
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             return it.item != null && it.item.data != null ? "i:" + it.item.data.Id : null;
         }
 
@@ -272,7 +285,10 @@ namespace HorrorFPS
 
         bool IsRead(Item it)
         {
+<<<<<<< HEAD
             if (it.tip != null) return true;                // dica não tem "novo"
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (it.entry != null) return Journal.IsRead(it.entry.id);
             return it.item != null && it.item.HasFlag("read");
         }
@@ -291,7 +307,11 @@ namespace HorrorFPS
             int unread = 0, total = 0;
             for (int i = 0; i < model.Count; i++)
             {
+<<<<<<< HEAD
                 if (model[i].header || model[i].tip != null) continue;        // as dicas não entram na contagem de registros
+=======
+                if (model[i].header) continue;
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 total++;
                 if (!IsRead(model[i])) unread++;
             }
@@ -347,14 +367,20 @@ namespace HorrorFPS
 
         string TitleOf(Item it)
         {
+<<<<<<< HEAD
             if (it.tip != null) return string.IsNullOrEmpty(it.tip.title) ? it.tip.id : it.tip.title;
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (it.entry != null) return Journal.TitleOf(it.entry);
             return it.item.GetName(screen);
         }
 
         static string SubOf(Item it)
         {
+<<<<<<< HEAD
             if (it.tip != null) return UIText.JournalKindTip;
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (it.entry == null) return UIText.JournalKindDocument;
             string meta = string.Empty;
             if (!string.IsNullOrEmpty(it.entry.author)) meta = it.entry.author;
@@ -372,11 +398,15 @@ namespace HorrorFPS
             }
 
             Item it = model[idx];
+<<<<<<< HEAD
             if (it.tip != null)
             {
                 reader.Show(TitleOf(it), UIText.JournalHeaderHowTo, TutorialText.Resolve(it.tip.text, screen.Player), shownReset);
             }
             else if (it.entry != null)
+=======
+            if (it.entry != null)
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             {
                 reader.Show(Journal.TitleOf(it.entry), Journal.MetaOf(it.entry), Journal.TextOf(it.entry), shownReset);
                 Journal.MarkRead(it.entry.id);              // some o "● novo" (dispara Journal.Changed e a lista se redesenha)

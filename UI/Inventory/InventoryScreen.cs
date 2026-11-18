@@ -359,11 +359,14 @@ namespace HorrorFPS
                     Vector2 to;
                     if (records.Navigate(nav, cursor, out to)) cursor = overlay.ClampToViewport(to);
                 }
+<<<<<<< HEAD
                 else if (objectivesView != null)
                 {
                     Vector2 to;
                     if (objectivesView.Navigate(nav, cursor, out to)) cursor = overlay.ClampToViewport(to);
                 }
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 else Navigate(nav);
                 UpdateCursorVisual();
             }

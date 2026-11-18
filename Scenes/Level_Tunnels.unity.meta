@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Scenes/Level_Tunnels.unity.meta
 guid: 936fecf9071181f4e9cb4b9000a8834d
 DefaultImporter:
+========
+guid: b667a315dd4565a4985670b97c39cfeb
+TextScriptImporter:
+>>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae:Docs/HorrorFPS-Arquitetura.md.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

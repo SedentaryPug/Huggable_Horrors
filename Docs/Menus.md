@@ -58,11 +58,14 @@ As duas de zona e piso (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Vi
 | `Tools > Horror FPS > Stalker > Create Stalker Test Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Test Arena In Open Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
 | `Tools > Horror FPS > Stalker > Add Route Animator Parameters` | `Editor/Stalker/StalkerWorldMenu.cs` |
+<<<<<<< HEAD
 | `Tools > Horror FPS > Stalker > Create Stalker Profile Graph (From Selected)` | `Editor/Stalker/StalkerProfileGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Profile Graph (Default Monster)` | `Editor/Stalker/StalkerProfileGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Open Stalker Profile Graph Canvas` | `Editor/Stalker/Graph/StalkerGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Open Stalker Tree Canvas` | `Editor/Stalker/Graph/StalkerGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Check All Stalker Trees` | `Editor/Stalker/StalkerTreeCheckMenu.cs` |
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ### Hurtbox — zonas de dano
 
@@ -143,7 +146,11 @@ Como usar: [`HorrorFPS-Iluminacao-Niveis.md`](HorrorFPS-Iluminacao-Niveis.md). A
 | `Tools > Horror FPS > Demo > Create Sample Objectives` | `Editor/Objectives/ObjectivesMenu.cs` |
 | `Tools > Horror FPS > Demo > Create Sample Journal Entries` | `Editor/Journal/JournalMenu.cs` |
 
+<<<<<<< HEAD
 Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`), `Assets > Create > HorrorFPS > Stalker Trait Script (Characteristic)` e `(Modifier)` (`Editor/Stalker/StalkerProfileGraphMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects (entre eles o **Stalker Profile Graph**). Clique direito num Stalker Profile Graph: `Assets > Open Stalker Profile Graph Canvas`; num Stalker Tree Asset: `Assets > Open Stalker Tree Canvas` (`Editor/Stalker/Graph/StalkerGraphMenu.cs`). Os dois canvas também abrem pelo botão **Abrir canvas** do Inspector do asset. A ordem `StalkerOrder + 16` (*Check All Stalker Trees*) é a última em uso da área Stalker.
+=======
+Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects.
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ## De onde veio cada menu (número antigo → caminho novo)
 

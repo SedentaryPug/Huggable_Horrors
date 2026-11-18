@@ -17,8 +17,12 @@ namespace HorrorFPS
         readonly List<Text> tabTexts = new List<Text>();
 
         RectTransform content;                  // tudo que muda de aba mora aqui
+<<<<<<< HEAD
         RecordBrowser records;                  // aba Registros: lista + leitor (diário, documentos e "Como jogar")
         ObjectivesBrowser objectivesView;       // aba Objetivos: texto com rolagem
+=======
+        RecordBrowser records;                  // aba Registros: lista + leitor (diário e documentos juntos)
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         MapViewer mapViewer;
         ItemInstance browseItem;                // registro/mapa selecionado
         ItemInstance shownBrowse;
@@ -46,6 +50,7 @@ namespace HorrorFPS
             tabList.Clear();
             if (other != null) { activeTab = InventoryTab.Bag; return; }        // com baú aberto: só a mochila
             tabList.Add(InventoryTab.Bag);
+<<<<<<< HEAD
             InventoryTab[] extra = { InventoryTab.Keys, InventoryTab.Records, InventoryTab.Maps, InventoryTab.Objectives };
             for (int i = 0; i < extra.Length; i++)
             {
@@ -53,6 +58,12 @@ namespace HorrorFPS
                 if (extra[i] == InventoryTab.Records) has = RecordBrowser.HasAny(owner);
                 else if (extra[i] == InventoryTab.Objectives) has = ObjectivesBrowser.HasAny();
                 else has = owner.HasTab(extra[i]);
+=======
+            InventoryTab[] extra = { InventoryTab.Keys, InventoryTab.Records, InventoryTab.Maps };
+            for (int i = 0; i < extra.Length; i++)
+            {
+                bool has = extra[i] == InventoryTab.Records ? RecordBrowser.HasAny(owner) : owner.HasTab(extra[i]);
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 if (has) tabList.Add(extra[i]);
             }
             if (!tabList.Contains(activeTab)) activeTab = InventoryTab.Bag;
@@ -169,7 +180,10 @@ namespace HorrorFPS
             views.Clear();
             tray = null;
             if (records != null) { records.Destroy(); records = null; }
+<<<<<<< HEAD
             if (objectivesView != null) { objectivesView.Destroy(); objectivesView = null; }
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (mapViewer != null) { mapViewer.Destroy(); mapViewer = null; }
             if (content != null) Destroy(content.gameObject);
             content = null;
@@ -212,12 +226,15 @@ namespace HorrorFPS
                 {
                     // lista simples, sem grade: diários, notas, gravações e documentos no mesmo lugar (o 'Journal' também mora aqui)
                     records = new RecordBrowser(this, content, owner, x, top, w, contentH, SideListW + 40f);
+<<<<<<< HEAD
                     break;
                 }
 
                 case InventoryTab.Objectives:
                 {
                     objectivesView = new ObjectivesBrowser(content, x, top, w, contentH);
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                     break;
                 }
 
@@ -285,8 +302,11 @@ namespace HorrorFPS
                 mapViewer.Tick(cursor, ItemInput.Pressed(input.Select), ItemInput.Held(input.Select), scrollStep);
             else if (records != null)
                 records.Tick(cursor, ItemInput.Pressed(input.Select), scrollStep);
+<<<<<<< HEAD
             else if (objectivesView != null)
                 objectivesView.Tick(cursor, scrollStep);
+=======
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             UpdateTabBar();
         }
     }

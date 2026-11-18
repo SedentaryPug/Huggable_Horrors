@@ -36,7 +36,11 @@ namespace HorrorFPS
         public const int ItemsOrder     = 20;
         public const int DialogueOrder  = 30;
         public const int AnimationOrder = 40;
+<<<<<<< HEAD
         public const int StalkerOrder   = 50;   // 50 a 64 (em uso: +0 a +16)
+=======
+        public const int StalkerOrder   = 50;   // 50 a 59
+>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         public const int HurtboxOrder   = 60;
         public const int ReviveOrder    = 70;
         public const int ObjectivesOrder = 80;

@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Scenes/Test_Stalker.unity.meta
 guid: 3886e80121bb1bf4aa9862f76768aa99
 DefaultImporter:
+========
+guid: f331ad4b74d64aec8bc17e90f69b7876
+TextScriptImporter:
+>>>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae:Docs/HorrorFPS-Audio.md.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
