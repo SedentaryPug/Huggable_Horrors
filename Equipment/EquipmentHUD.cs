@@ -4,17 +4,10 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-<<<<<<< HEAD
     /// Canto inferior direito da tela do jogador: o item de cada mão (balas / durabilidade / bateria da lanterna, "[2 mãos]" quando
     /// segura com as duas) e a barra de recarga. Só aparece quando há algo equipado e o inventário está fechado.
     /// Também desenha a MIRA na tela quando há arma de fogo na mão: quatro traços cuja abertura é o cone real do próximo tiro
     /// (abre andando e atirando em sequência, fecha com a arma nas duas mãos, que é quando ela mira) e que acompanham a deriva da mão trêmula.
-=======
-    /// Canto inferior direito da tela do jogador: o item de cada mão (balas / durabilidade, "[2 mãos]" quando segura com as duas),
-    /// a bateria da lanterna e a barra de recarga. Só aparece quando há algo equipado e o inventário está fechado.
-    /// Também desenha a MIRA na tela quando há arma de fogo na mão: quatro traços cuja abertura é o cone real do próximo tiro
-    /// (abre andando e atirando em sequência, fecha mirando e com as duas mãos) e que acompanham a deriva da mão trêmula.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
     /// </summary>
     [AddComponentMenu("HorrorFPS/Equipment/Equipment HUD")]
     [PlayerModule("Equipamento", 1)]
@@ -24,11 +17,7 @@ namespace HorrorFPS
         public enum CrosshairMode { Always, OnlyWhileAiming, Off }
 
         [Header("Mira na tela (arma de fogo)")]
-<<<<<<< HEAD
         [Tooltip("Sempre = aparece com arma de fogo na mão; Só mirando = só com a arma nas duas mãos (G), que é quando ela mira; Desligada = nunca (o tiro continua com a mesma dispersão).")]
-=======
-        [Tooltip("Sempre = aparece com arma de fogo na mão; Só mirando = só segurando o botão de mirar (Q); Desligada = nunca (o tiro continua com a mesma dispersão).")]
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         [SerializeField] CrosshairMode crosshair = CrosshairMode.Always;
         [Tooltip("Afastamento mínimo dos traços do centro (pixels lógicos, tela de 720 de altura): a mira nunca fecha mais que isto.")]
         [SerializeField] float crosshairMinGap = 4f;
@@ -63,11 +52,7 @@ namespace HorrorFPS
 
             bool hidden = screen != null && screen.IsOpen;
             UpdateCrosshair(hidden);
-<<<<<<< HEAD
             bool any = equip.RightHand != null || equip.LeftHand != null;
-=======
-            bool any = equip.RightHand != null || equip.LeftHand != null || equip.Lamp != null;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             group.alpha = (!hidden && any) ? 1f : 0f;
             if (hidden || !any) return;
 
@@ -240,7 +225,6 @@ namespace HorrorFPS
                     case EquipKind.Throwable:
                         body = name + "   x" + Mathf.Max(1, w.stack);
                         break;
-<<<<<<< HEAD
                     case EquipKind.Flashlight:
                     {
                         string state = w.HasFlag(EquipState.Lit) ? "ligada" : "desligada";
@@ -250,8 +234,6 @@ namespace HorrorFPS
                         body = name + "   " + state + "  <color=" + bcolor + ">" + pct + "%</color>";
                         break;
                     }
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 }
             }
             string grip = two == side ? "  <color=#80ff8c>[2 mãos]</color>" : "";

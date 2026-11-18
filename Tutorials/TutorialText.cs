@@ -88,13 +88,8 @@ namespace HorrorFPS
                 case "Inventory": return items.Toggle;
                 case "Objectives": return items.Objectives;
                 case "Reload": return items.Reload;
-<<<<<<< HEAD
                 case "Flashlight": return items.UseRight;      // antigo: a lanterna agora liga com o botão da mão em que está
                 case "Aim": return items.TwoHand;              // antigo: a mira vem de segurar a arma com as duas mãos
-=======
-                case "Flashlight": return items.ToggleLight;
-                case "Aim": return items.Aim;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 case "HoldBreath": return items.HoldBreath;
                 case "TwoHand": return items.TwoHand;
                 case "Inspect": return items.Inspect;

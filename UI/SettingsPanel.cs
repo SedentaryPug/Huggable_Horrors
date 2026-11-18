@@ -5,14 +5,9 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-<<<<<<< HEAD
     /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar, dicas na tela, botão Controles) e a
     /// subpágina "Áudio" (volume geral, música, ambiente). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings,
     /// que persiste sozinho.
-=======
-    /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar) e a subpágina "Áudio" (volume geral,
-    /// música, ambiente). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings, que persiste sozinho.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
     /// </summary>
     public class SettingsPanel
     {
@@ -28,13 +23,8 @@ namespace HorrorFPS
             this.pageRoot = pageRoot;
             this.onBack = onBack;
             this.onControls = onControls;
-<<<<<<< HEAD
             VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 6);
             col.padding = new RectOffset(20, 20, 6, 0);
-=======
-            VerticalLayoutGroup col = UIFactory.VerticalColumn(pageRoot, 10);
-            col.padding = new RectOffset(20, 20, 10, 0);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             Refresh();
         }
 
@@ -98,7 +88,6 @@ namespace HorrorFPS
                 delegate { return GameSettings.SoftDamageFx ? UIText.On : UIText.Off; },
                 delegate { GameSettings.SoftDamageFx = !GameSettings.SoftDamageFx; });
 
-<<<<<<< HEAD
             AddCycleRow(pageRoot, UIText.TipsLabel,
                 delegate { return TipsValue(); },
                 delegate { ToggleTips(); });
@@ -108,14 +97,6 @@ namespace HorrorFPS
                 delegate { return replayText[0]; },
                 delegate { Tutorials.ResetSeen(); replayText[0] = UIText.TipsReplayDone; });
 
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
-            AddCycleRow(pageRoot, UIText.AudioSection,
-                delegate { return UIText.OpenAudio; },
-                delegate { SwitchPage(true); });
-
-<<<<<<< HEAD
-            // Controles e Voltar lado a lado (a página já é longa)
             RectTransform buttons = UIFactory.NewRect("Buttons", pageRoot);
             UIFactory.SetLayout(buttons.gameObject, -1f, 64f);
             HorizontalLayoutGroup bar = buttons.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -126,8 +107,6 @@ namespace HorrorFPS
             bar.childForceExpandWidth = false;
             bar.childForceExpandHeight = true;
 
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (onControls != null)
             {
                 Button controls = UIFactory.CreateButton(buttons, UIText.Controls, new Vector2(300f, 60f),
@@ -168,28 +147,10 @@ namespace HorrorFPS
             UIFactory.SetLayout(back.gameObject, 300f, 68f);
         }
 
-        void BuildAudioPage()
-        {
-            FirstSelectable = AddSliderRow(pageRoot, UIText.MasterVolume, 0f, 1f, "0%",
-                delegate { return GameSettings.MasterVolume; }, delegate (float v) { GameSettings.MasterVolume = v; });
-            AddSliderRow(pageRoot, UIText.MusicVolume, 0f, 1f, "0%",
-                delegate { return GameSettings.MusicVolume; }, delegate (float v) { GameSettings.MusicVolume = v; });
-            AddSliderRow(pageRoot, UIText.AmbienceVolume, 0f, 1f, "0%",
-                delegate { return GameSettings.AmbienceVolume; }, delegate (float v) { GameSettings.AmbienceVolume = v; });
-
-            Button back = UIFactory.CreateButton(pageRoot, UIText.Back, new Vector2(300f, 64f),
-                delegate { SwitchPage(false); });
-            UIFactory.SetLayout(back.gameObject, 300f, 68f);
-        }
-
         static RectTransform NewSettingsRow(RectTransform parent, string label)
         {
             RectTransform row = UIFactory.NewRect("Row", parent);
-<<<<<<< HEAD
             UIFactory.SetLayout(row.gameObject, -1f, 50f);
-=======
-            UIFactory.SetLayout(row.gameObject, -1f, 56f);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             Text text = UIFactory.Label(row, "Label", label, 26, TextAnchor.MiddleLeft, UIFactory.TextColor);
             RectTransform rt = text.rectTransform;
             rt.anchorMin = Vector2.zero;

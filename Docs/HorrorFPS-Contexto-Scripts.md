@@ -1136,7 +1136,6 @@ Arquivos: ReviveMenu
 
 Arquivos: StalkerCapKeyDrawer, StalkerLevelValueDrawer, StalkerMenu, StalkerProfileGraphEditor, StalkerProfileGraphMenu, StalkerTraitTypes, StalkerTreeAssetEditor, StalkerTreeCheckMenu, StalkerTreeMenu, StalkerTreeWindow, StalkerWorldMenu
 
-<<<<<<< HEAD
 **Editor/Stalker/Graph/**  (7 arquivos)
 
 Arquivos: StalkerGraphMenu, StalkerGraphNodes, StalkerGraphView, StalkerGraphWindow, StalkerTreeGraphNodes, StalkerTreeGraphView, StalkerTreeGraphWindow
@@ -1149,10 +1148,6 @@ Os dois canvas: o do **perfil em grafo** (`StalkerGraph*`) e o da **árvore de c
 
 **Equipment/**  (5 arquivos)
 
-=======
-**Equipment/**  (5 arquivos)
-
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 Arquivos: EquipmentController, EquipmentHUD, HitTarget, ItemHit, ThrownDistraction
 
 Tipos em arquivo de outro nome:

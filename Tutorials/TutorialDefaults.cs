@@ -39,19 +39,11 @@ namespace HorrorFPS
                 TutorialWhen.ItemPicked, "", 1.5f, 9f, ""));
             list.Add(Make("hotbar", "Atalhos rápidos", "Use {Hotbar} para usar rapidamente os itens da faixa de atalhos.",
                 TutorialWhen.ItemPicked, "", 16f, 8f, ""));
-<<<<<<< HEAD
             list.Add(Make("flashlight", "Lanterna", "A lanterna é um item de mão: equipe-a numa mão e use o botão dessa mão ({HandLeft} ou {HandRight}) para ligar e desligar. A bateria acaba: guarde pilhas. A luz ajuda você a ver, mas também deixa você mais fácil de ser visto, e alguns monstros enxergam o feixe de longe.",
                 TutorialWhen.ItemEquipped, "Flashlight", 1f, 9f, ""));
             list.Add(Make("melee", "Arma branca", "Golpeie com {HandRight} (mão direita) ou {HandLeft} (mão esquerda). Segure e solte para um golpe forte.",
                 TutorialWhen.ItemEquipped, "Melee", 1f, 10f, ""));
             list.Add(Make("firearm", "Arma de fogo", "Atire com {HandRight} ou {HandLeft} e recarregue com {Reload}. Segure a arma com as duas mãos ({TwoHand}) para mirar: zoom e tiro mais firme. Cada tiro faz barulho.",
-=======
-            list.Add(Make("flashlight", "Lanterna", "Use {Flashlight} para ligar e desligar a lanterna. A bateria acaba: guarde pilhas. A luz ajuda você a ver, mas também deixa você mais fácil de ser visto.",
-                TutorialWhen.ItemEquipped, "Flashlight", 1f, 9f, ""));
-            list.Add(Make("melee", "Arma branca", "Golpeie com {HandRight} (mão direita) ou {HandLeft} (mão esquerda). Segure e solte para um golpe forte.",
-                TutorialWhen.ItemEquipped, "Melee", 1f, 10f, ""));
-            list.Add(Make("firearm", "Arma de fogo", "Atire com {HandRight} ou {HandLeft}, mire com {Aim} e recarregue com {Reload}. Cada tiro faz barulho.",
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 TutorialWhen.ItemEquipped, "Firearm", 1f, 11f, ""));
             list.Add(Make("throwable", "Arremessar", "Segure {HandRight} ou {HandLeft} para carregar a força e solte para jogar; um toque joga perto. O barulho do que você joga atrai o monstro para lá, mas ele aprende truques repetidos.",
                 TutorialWhen.ItemEquipped, "Throwable", 1f, 11f, ""));

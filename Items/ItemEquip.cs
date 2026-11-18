@@ -33,12 +33,8 @@ namespace HorrorFPS
     /// durabilidade, lanterna ligada) fica na instância do item e vai para o save.
     /// Controles: botão esquerdo / LT usa o item da mão esquerda e botão direito / RT o da mão direita (com duas mãos, qualquer um);
     /// arma branca: toque = golpe fraco, segurar o botão e soltar = golpe forte; arremessável: segurar carrega a força, soltar joga;
-<<<<<<< HEAD
     /// G (toque) segura o item da mão direita com as duas mãos, G (segurar) o da esquerda; a arma de fogo só MIRA nas duas mãos (não há tecla de mirar);
     /// R recarrega; a lanterna é item de mão e liga/desliga com o botão da mão em que está.
-=======
-    /// Q mira (arma de fogo); G (toque) segura o item da mão direita com as duas mãos, G (segurar) o da esquerda; R recarrega; F liga/desliga a lanterna.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
     /// </summary>
     [Serializable]
     public class ItemEquip

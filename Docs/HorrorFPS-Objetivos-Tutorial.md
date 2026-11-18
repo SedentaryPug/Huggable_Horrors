@@ -24,11 +24,7 @@ Duas formas, que se misturam:
 | Campo | Para quê |
 |---|---|
 | `Id` | identificador único sem espaços (`achar_chave`). É por ele que eventos, scripts e o save se referem ao objetivo |
-<<<<<<< HEAD
 | `Title` / `Description` | texto da lista / dica longa (aba Objetivos do inventário e faixa de "novo objetivo") |
-=======
-| `Title` / `Description` | texto da lista / dica longa (página Objetivos do menu de pausa e faixa de "novo objetivo") |
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 | `Auto Start` | começa sozinho quando a partida começa |
 | `Start After` | começa sozinho quando **todos** os objetivos listados (ids) terminarem: forma de encadear |
 | `Complete Variable` | termina sozinho quando esta variável do jogo ficar verdadeira (a mesma de Pickup, Door, SmartEvent, Set Variable) |
@@ -38,11 +34,7 @@ Duas formas, que se misturam:
 
 2. **Código**: `Objectives.Register(new ObjectiveEntry { id = "...", title = "..." })`. Um objetivo registrado por código com o mesmo id de um do catálogo o substitui.
 
-<<<<<<< HEAD
 Sem catálogo nem código o sistema fica vazio e invisível (sem a aba Objetivos no inventário).
-=======
-Sem catálogo nem código o sistema fica vazio e invisível (sem botão no menu de pausa).
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ### Como usar em cena (sem programar)
 
@@ -85,12 +77,8 @@ Um cartão no lado esquerdo da tela explicando **como executar uma ação**, com
 - **Aparece uma única vez para cada jogador** (no co-op local, cada um vê as dicas dele, no dispositivo que ele usa: teclado mostra `Espaço`, controle mostra `A`). O "já vi" fica no perfil do computador (`PlayerPrefs`), vale para qualquer save: um Novo Jogo não repete.
 - Uma dica por vez, na ordem pedida. Fica parada com o jogo pausado, o inventário aberto ou em cutscene. Fecha logo depois de o jogador fazer a ação ensinada (`Dismiss Action`).
 - **Dicas que pausam**: com a opção ligada, a dica **congela o jogo** (para todos os jogadores), vai para o meio da tela com a tela escurecida e o aviso **"Aperte E / X para continuar"** (o botão do dispositivo de quem vê a dica); só fecha quando o dono da dica aperta esse botão (E/X, Backspace/B ou o botão de pegar). O jogo e o controle voltam logo depois. Se o jogador morrer ou começar uma cutscene, a dica é descartada e o jogo descongela sozinho. O congelamento usa `PauseManager.Hold(chave)` (não abre o menu de pausa; abrir a pausa por cima não solta nada).
-<<<<<<< HEAD
 - **Inventário > Registros > Como jogar**: a última categoria da lista de registros reúne todos os comandos, com os botões do jogador que abriu o inventário (no dispositivo que ele usa). É onde ele relê o que a tela mostrou uma vez. As dicas não contam como "não lidas".
 - **Pausa > Opções**: **Dicas na tela** alterna **Desligado → Ligado → Ligado e pausa** (para quem já conhece o jogo ou quer ler com calma; padrão: Ligado e pausa) e **Rever dicas** (esquece o que já foi visto). Também está nas Opções do menu principal.
-=======
-- **Pausa > Como jogar**: a lista de todos os comandos, com os botões do jogador que abriu o menu. É onde ele relê o que a tela mostrou uma vez. Na mesma página: o botão **Dicas na tela** alterna **Desligado → Ligado → Ligado e pausa** (para quem já conhece o jogo ou quer ler com calma; padrão: Ligado e pausa) e **Rever dicas** (esquece o que já foi visto).
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 - O texto troca `{Nome}` pelo botão. Nomes: `Move`, `Look`, `Jump`, `Sprint`, `Crouch`, `Interact`, `Grab`, `GrabDistance`, `Pause`, `Inventory`, `Objectives`, `Reload`, `Flashlight`, `Aim`, `HoldBreath`, `TwoHand`, `Inspect`, `HandLeft`, `HandRight`, `Hotbar`. Os botões respeitam o remapeamento (as ações do jogo base). As ações do inventário/mãos (`ItemInput`) ainda não são remapeáveis; o texto mostra o botão fixo delas.
 
 ### Dicas padrão
@@ -151,17 +139,12 @@ Para eventos, `Delay` é a espera depois do evento.
 | `Objectives/ObjectiveRunner.cs` | mantém o sistema vivo (variáveis, `Auto Start`) |
 | `Objectives/ObjectivesHUD.cs` | módulo do jogador: lista + faixa na tela dele, tecla J / R3 |
 | `Objectives/ObjectiveActions.cs`, `ObjectiveStep.cs` | uso em cena: componente para UnityEvent, passo de cutscene |
-<<<<<<< HEAD
 | `UI/Inventory/ObjectivesBrowser.cs` | aba "Objetivos" do inventário (substitui a página do menu de pausa) |
-=======
-| `Objectives/ObjectivesPanel.cs` | página "Objetivos" do menu de pausa |
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 | `Tutorials/TutorialTypes.cs`, `TutorialCatalog.cs`, `TutorialDefaults.cs` | dados: dica, catálogo, dicas padrão |
 | `Tutorials/Tutorials.cs` | API estática, regra "uma vez por jogador", pedido de dica |
 | `Tutorials/TutorialText.cs` | troca `{Nome}` pelo botão do jogador (teclado/controle) |
 | `Tutorials/TutorialHUD.cs`, `TutorialDirector.cs` | módulos do jogador: cartão na tela, gatilhos automáticos |
 | `Tutorials/TutorialTrigger.cs`, `TutorialStep.cs` | uso em cena: volume e passo de cutscene |
-<<<<<<< HEAD
 | `UI/Inventory/RecordBrowser.cs` | categoria "Como jogar" da aba Registros (lista as dicas com `inMenu` ligado) |
 | `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
 
@@ -174,16 +157,3 @@ Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `Tut
 - Se o jogador trocar de teclado para controle no meio de uma dica, o cartão já aberto não muda de texto (a categoria Como jogar, ao ser aberta, já mostra os botões do dispositivo atual).
 - O diário (reler notas, diários e gravações achados) e o "Como jogar" existem em **Inventário > Registros**: ver `HorrorFPS-Diario-Ruido.md`.
 - **Objetivos ficam no inventário.** A aba **Objetivos** (Z/X ou LT/RT para chegar nela; só aparece se o jogo tem algum objetivo cadastrado e só com a mochila aberta sozinha, sem baú) mostra Em andamento, Concluídos e Falharam num texto com rolagem (roda do mouse, analógico direito ou cima/baixo). O número amarelo na aba é quantos estão em andamento. O menu de pausa não tem mais página de Objetivos. A faixa na tela e a tecla J / R3 continuam como estavam.
-=======
-| `Tutorials/HowToPlayPanel.cs`, `UI/InfoPanelBase.cs` | página "Como jogar" do menu de pausa (e a base das páginas de leitura) |
-| `Editor/Objectives/ObjectivesMenu.cs`, `Editor/Tutorials/TutorialsMenu.cs` | menus do Editor |
-
-Alterados: `Core/PlayerModules.cs` (instala `ObjectivesHUD`, `TutorialHUD`, `TutorialDirector` em cada jogador), `Input/ItemInput.cs` (ação `Objectives`), `Input/InputGlyphs.cs` (texto de botão por dispositivo), `Core/GameSettings.cs` (`TipsEnabled`, `TipsPause`), `Core/PauseManager.cs` (`Hold`/`ReleaseHold`), `Core/UIText.cs` (textos), `UI/PauseMenu.cs` (botões e páginas; os botões da página principal têm 56 de altura), `SmartEvents/HorrorFPSConditions.cs` (condição de objetivo), `Editor/HorrorFPSMenu.cs` (áreas `Objectives` e `Tutorials`).
-
-## 4. Limites conhecidos
-
-- O **menu principal** (antes de começar a partida) não tem a página "Como jogar": as dicas existem dentro do jogo, no menu de pausa.
-- A tecla de objetivos (**J / R3**) vive no `ItemInput` e, como as outras ações dele, não aparece no painel de remapeamento (para mudar, edite os caminhos em `ItemInput.Build()`).
-- Se o jogador trocar de teclado para controle no meio de uma dica, o cartão já aberto não muda de texto (a lista Como jogar, ao ser aberta, já mostra os botões do dispositivo atual).
-- O diário (reler notas, diários e gravações achados) existe em **Inventário > Registros**: ver `HorrorFPS-Diario-Ruido.md`.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae

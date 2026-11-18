@@ -152,12 +152,7 @@ namespace HorrorFPS
 
             hidden = HidingSpot.IsHidden(context);
             crouching = probe != null ? probe.Crouching : (controller != null && controller.IsCrouching);
-<<<<<<< HEAD
             lampOn = equipment != null && equipment.FlashlightOn;       // acesa, na mão e emitindo luz (guardada ou sem pilhas não conta)
-=======
-            ItemInstance lamp = equipment != null ? equipment.Lamp : null;
-            lampOn = lamp != null && lamp.HasFlag(EquipState.Lit);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
             zoneTimer -= dt;
             if (zoneTimer <= 0f)

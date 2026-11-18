@@ -11,11 +11,7 @@ Dois sistemas: o **diário** (reler notas, páginas de diário e gravações que
 ### O que o jogador vê
 
 - **Aviso** no canto da tela quando um registro novo entra: `Novo registro (Inventário > Registros): <título>`.
-<<<<<<< HEAD
 - **Inventário > Registros** (o diário mora aqui, não há página no menu de pausa): uma **lista simples, sem grade**, com tudo o que o jogador pode ler, agrupado em Diários, Notas, Gravações, Documentos e **Como jogar** (as dicas de comandos do tutorial, com os botões do jogador; não contam como "não lidas"), e o **leitor** com o texto completo ao lado. `● novo` marca o que ainda não foi lido (e o mesmo contador aparece na aba). Mouse: clique escolhe, roda rola a lista ou o texto (conforme onde está o cursor). Teclado/controle: cima/baixo trocam de registro, direita/esquerda levam o cursor da lista para o texto e de volta, e no texto cima/baixo (ou o analógico direito) rolam. Z/X (LT/RT) trocam de aba. Documentos do jogador (itens da aba Registros) e entradas do diário aparecem juntos; um documento que já virou entrada do diário não aparece duas vezes.
-=======
-- **Inventário > Registros** (o diário mora aqui, não há página no menu de pausa): uma **lista simples, sem grade**, com tudo o que o jogador pode ler, agrupado em Diários, Notas, Gravações e Documentos, e o **leitor** com o texto completo ao lado. `● novo` marca o que ainda não foi lido (e o mesmo contador aparece na aba). Mouse: clique escolhe, roda rola a lista ou o texto (conforme onde está o cursor). Teclado/controle: cima/baixo trocam de registro, direita/esquerda levam o cursor da lista para o texto e de volta, e no texto cima/baixo (ou o analógico direito) rolam. Z/X (LT/RT) trocam de aba. Documentos do jogador (itens da aba Registros) e entradas do diário aparecem juntos; um documento que já virou entrada do diário não aparece duas vezes.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 - **Nota no mundo** (`JournalNote`): o jogador olha, aperta interagir (`Ler`) e o texto abre no meio da tela **sem pausar o jogo** (ler com um monstro por perto é arriscado). Enquanto lê ele fica parado; fecha com **Voltar** (Backspace / B) ou **E / X**; fecha sozinho ao levar dano, morrer ou começar uma cutscene. Rola com setas / W S / D-pad, roda do mouse ou analógico direito.
 - O diário é **do grupo** (como os objetivos): quem achou, achou para todos.
 
@@ -72,11 +68,7 @@ Journal.Unlocked += e => ...;                  // também Journal.Changed
 |---|---|
 | A nota diz `Ilegível` e não deixa interagir | `Catalog Id` não existe no catálogo (ou nota sem `Id`). Veja o aviso amarelo no Console |
 | O registro entrou mas não aparece em Inventário > Registros | o id não está no catálogo e a nota era de outra cena (veja acima); ou o id tem `;` |
-<<<<<<< HEAD
 | A aba Registros não aparece no inventário | não há registro achado, documento nem dica de tutorial com `In Menu` ligado (com as dicas padrão ela sempre aparece) |
-=======
-| A aba Registros não aparece no inventário | o jogador não tem a lista `[Registros]` e ainda não achou nada (instale os módulos no prefab do jogador ou pegue um documento) |
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 | Documento da aba Registros não vira registro | `Auto Collect Records` desligado, ou o item não é da aba Registros |
 | O leitor fecha na hora | alguém travou/pausou o jogo no mesmo instante (cutscene, loading), ou o jogador levou dano |
 

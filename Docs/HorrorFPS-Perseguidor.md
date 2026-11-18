@@ -85,11 +85,7 @@ Prioridade da árvore (reavaliada a cada quadro; um ramo de maior prioridade int
 | 5 | Search / 500 | depois de investigar/perder o jogador | N paradas aleatórias no raio da pista; revista esconderijos ao alcance |
 | 6 | Patrol / 900 | nada acontecendo | próximo `PatrolPoint` por peso, distância, tempo desde a última visita e **mapa de calor** |
 
-<<<<<<< HEAD
 **Editar a árvore sem código:** a tabela acima é a árvore padrão. Ela também pode ser um **asset** (campo `Tree` do `StalkerBrain` ou da `StalkerDefinition`), editado na janela do **menu `Stalker > Stalker Tree Editor` com sequências, condições, recargas e nós seus. O nó "Ramo padrão" reaproveita estes seis ramos (e os que os traços criam). Veja o doc *Árvore de comportamento*. A mesma árvore também abre como **grafo de caixas** (`Stalker > Open Stalker Tree Canvas`), com uma conferência contra o perfil do monstro ("este nó pergunta por uma capacidade que ninguém publica"): doc *Perfil em grafo*, seção 6.
-=======
-**Editar a árvore sem código:** a tabela acima é a árvore padrão. Ela também pode ser um **asset** (campo `Tree` do `StalkerBrain` ou da `StalkerDefinition`), editado na janela do **menu `Stalker > Stalker Tree Editor` com sequências, condições, recargas e nós seus. O nó "Ramo padrão" reaproveita estes seis ramos (e os que os traços criam). Veja o doc *Árvore de comportamento*.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ## 4. Atenção
 
@@ -465,8 +461,4 @@ O gerente grava elenco e memórias **antes de cada save**, a cada troca de níve
 10. **Tempo fora de cena**: ao voltar a um nível, reposicionar o monstro em função do tempo que passou (ele "andou"), em vez de reaparecer onde parou.
 11. **Finalizações por contexto**: `PickPrefab` escolhendo a cena pelo lugar (no armário, de costas, no escuro, em dupla com outro monstro) e `Hit Before Scene` com o ferimento visível na cena.
 12. **Depuração**: gizmo do raio de audição, histórico de decisões, botão de zerar a memória e o elenco na janela do Editor, e uma janela que lista o elenco e permite `Summon`/`Dismiss` em Play. (A árvore ao vivo já existe na janela do menu `Stalker > Stalker Tree Editor`.)
-<<<<<<< HEAD
 13. **Teste da árvore sem Play** com um `Knowledge` simulado: seção 12 do doc *Árvore de comportamento* e seção 14 do doc *Perfil em grafo*. O **canvas da árvore** e a **conferência da árvore contra o perfil** (cruzamento entre árvore e características) já existem: doc *Perfil em grafo*, seção 6.
-=======
-13. **Árvore em canvas de grafo** (`GraphView`) sobre os mesmos assets, e teste da árvore sem Play com um `Knowledge` simulado: seção 12 do doc *Árvore de comportamento*.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae

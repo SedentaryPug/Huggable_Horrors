@@ -16,25 +16,15 @@ namespace HorrorFPS
     /// </summary>
     public class PauseMenu : MonoBehaviour
     {
-<<<<<<< HEAD
         enum Page { Main, Controls, Settings, Save, Load, Confirm, Exit }
-=======
-        enum Page { Main, Controls, Settings, Save, Load, Confirm, Objectives, HowToPlay }
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
         static PauseMenu instance;
 
         GameObject rootGo;
         Text titleText, ownerText, noticeText, confirmText;
-<<<<<<< HEAD
         GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, exitPage;
         Selectable mainFirst, confirmDefault, exitFirst;
         Button saveButton, loadButton;
-=======
-        GameObject mainPage, controlsPage, settingsPage, slotsPage, confirmPage, objectivesPage, howToPlayPage;
-        Selectable mainFirst, confirmDefault;
-        Button saveButton, loadButton, menuButton, objectivesButton;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         ControlsPanel controls;
         SettingsPanel settings;
         SaveSlotsPanel slots;
@@ -219,22 +209,12 @@ namespace HorrorFPS
             settingsPage.SetActive(next == Page.Settings);
             slotsPage.SetActive(willSlots);
             confirmPage.SetActive(next == Page.Confirm);
-<<<<<<< HEAD
             exitPage.SetActive(next == Page.Exit);
-=======
-            objectivesPage.SetActive(next == Page.Objectives);
-            howToPlayPage.SetActive(next == Page.HowToPlay);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
             switch (next)
             {
                 case Page.Controls: titleText.text = UIText.ControlsTitle; break;
-<<<<<<< HEAD
                 case Page.Exit: titleText.text = UIText.ExitTitle; break;
-=======
-                case Page.Objectives: titleText.text = UIText.ObjectivesTitle; break;
-                case Page.HowToPlay: titleText.text = UIText.HowToPlayTitle; break;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 case Page.Settings: titleText.text = UIText.SettingsTitle; break;
                 case Page.Save: titleText.text = UIText.SaveSlotsTitle; break;
                 case Page.Load: titleText.text = UIText.LoadSlotsTitle; break;
@@ -246,8 +226,6 @@ namespace HorrorFPS
                 case Page.Main: RefreshMainButtons(); break;
                 case Page.Controls: if (PauseManager.Owner != null) controls.Show(PauseManager.Owner); break;
                 case Page.Settings: settings.Refresh(); break;
-                case Page.Objectives: objectives.Refresh(); break;
-                case Page.HowToPlay: howToPlay.Refresh(PauseManager.Owner); break;
                 case Page.Save: slots.Show(SaveSlotsPanel.Mode.Save); break;
                 case Page.Load: slots.Show(SaveSlotsPanel.Mode.Load); break;
             }
@@ -260,7 +238,6 @@ namespace HorrorFPS
             saveButton.gameObject.SetActive(inGame);
             saveButton.interactable = SaveSystem.CanSave;
             loadButton.interactable = SaveSystem.HasAnySave();
-            objectivesButton.gameObject.SetActive(inGame && Objectives.All.Count > 0);
         }
 
         /// <summary>"Sair": em partida pergunta para onde (menu principal ou fechar o jogo); fora de partida só há fechar o jogo.</summary>
@@ -292,12 +269,7 @@ namespace HorrorFPS
             {
                 case Page.Controls: return controls.FirstSelectable;
                 case Page.Settings: return settings.FirstSelectable;
-<<<<<<< HEAD
                 case Page.Exit: return exitFirst;
-=======
-                case Page.Objectives: return objectives.FirstSelectable;
-                case Page.HowToPlay: return howToPlay.FirstSelectable;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
                 case Page.Save:
                 case Page.Load: return slots.FirstSelectable;
                 case Page.Confirm: return confirmDefault;
@@ -364,18 +336,7 @@ namespace HorrorFPS
             slotsPage = slotsRoot.gameObject;
             slots = new SaveSlotsPanel(slotsRoot, delegate { ShowPage(Page.Main); });
 
-<<<<<<< HEAD
             BuildExitPage(area);
-=======
-            RectTransform objectivesRoot = UIFactory.Stretch("ObjectivesPage", area);
-            objectivesPage = objectivesRoot.gameObject;
-            objectives = new ObjectivesPanel(objectivesRoot, delegate { ShowPage(Page.Main); });
-
-            RectTransform howToRoot = UIFactory.Stretch("HowToPlayPage", area);
-            howToPlayPage = howToRoot.gameObject;
-            howToPlay = new HowToPlayPanel(howToRoot, delegate { ShowPage(Page.Main); });
-
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             BuildConfirmPage(area);
         }
 
@@ -388,7 +349,6 @@ namespace HorrorFPS
 
             const float h = 56f;
             mainFirst = UIFactory.MenuButton(pageRt, UIText.Resume, delegate { PauseManager.Resume(); }, 560f, h);
-<<<<<<< HEAD
             saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, h);
             loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, h);
             UIFactory.MenuButton(pageRt, UIText.Settings, delegate { ShowPage(Page.Settings); }, 560f, h);
@@ -407,18 +367,6 @@ namespace HorrorFPS
             UIFactory.MenuButton(pageRt, UIText.QuitGame,
                 delegate { AskConfirm(UIText.ConfirmQuit, SceneDirector.Quit, Page.Exit); }, 560f, 64f);
             UIFactory.MenuButton(pageRt, UIText.Back, delegate { ShowPage(Page.Main); }, 560f, 64f);
-=======
-            objectivesButton = UIFactory.MenuButton(pageRt, UIText.ObjectivesButton, delegate { ShowPage(Page.Objectives); }, 560f, h);
-            saveButton = UIFactory.MenuButton(pageRt, UIText.SaveGame, delegate { ShowPage(Page.Save); }, 560f, h);
-            loadButton = UIFactory.MenuButton(pageRt, UIText.LoadGame, delegate { ShowPage(Page.Load); }, 560f, h);
-            UIFactory.MenuButton(pageRt, UIText.Controls, delegate { ShowPage(Page.Controls); }, 560f, h);
-            UIFactory.MenuButton(pageRt, UIText.HowToPlayButton, delegate { ShowPage(Page.HowToPlay); }, 560f, h);
-            UIFactory.MenuButton(pageRt, UIText.Settings, delegate { ShowPage(Page.Settings); }, 560f, h);
-            menuButton = UIFactory.MenuButton(pageRt, UIText.MainMenuButton,
-                delegate { AskConfirm(UIText.ConfirmMainMenu, SceneDirector.ReturnToMainMenu); }, 560f, h);
-            UIFactory.MenuButton(pageRt, UIText.QuitGame,
-                delegate { AskConfirm(UIText.ConfirmQuit, SceneDirector.Quit); }, 560f, h);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         void BuildConfirmPage(RectTransform area)

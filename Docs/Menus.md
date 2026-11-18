@@ -58,99 +58,11 @@ As duas de zona e piso (furtividade): [`HorrorFPS-Visibilidade.md`](HorrorFPS-Vi
 | `Tools > Horror FPS > Stalker > Create Stalker Test Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Test Arena In Open Scene` | `Editor/HorrorFPSSetup.StalkerTest.cs` |
 | `Tools > Horror FPS > Stalker > Add Route Animator Parameters` | `Editor/Stalker/StalkerWorldMenu.cs` |
-<<<<<<< HEAD
 | `Tools > Horror FPS > Stalker > Create Stalker Profile Graph (From Selected)` | `Editor/Stalker/StalkerProfileGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Create Stalker Profile Graph (Default Monster)` | `Editor/Stalker/StalkerProfileGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Open Stalker Profile Graph Canvas` | `Editor/Stalker/Graph/StalkerGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Open Stalker Tree Canvas` | `Editor/Stalker/Graph/StalkerGraphMenu.cs` |
 | `Tools > Horror FPS > Stalker > Check All Stalker Trees` | `Editor/Stalker/StalkerTreeCheckMenu.cs` |
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
-
-### Hurtbox — zonas de dano
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Hurtbox > Add Humanoid Hurtboxes To Selected` | `Editor/Hurtbox/HurtboxMenu.cs` |
-| `Tools > Horror FPS > Hurtbox > Add Simple Hurtbox Zones (Head/Torso/Legs) To Selected` | `Editor/Hurtbox/HurtboxMenu.cs` |
-| `Tools > Horror FPS > Hurtbox > Remove Hurtboxes From Selected` | `Editor/Hurtbox/HurtboxMenu.cs` |
-| `Tools > Horror FPS > Hurtbox > Create Hurtbox Test Dummy` | `Editor/Hurtbox/HurtboxMenu.cs` |
-| `Tools > Horror FPS > Hurtbox > Create 'Hurtbox' Physics Layer` | `Editor/Hurtbox/HurtboxMenu.cs` |
-
-### Revive — reanimação em co-op
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Revive > Create Revive Profile` | `Editor/Revive/ReviveMenu.cs` |
-| `Tools > Horror FPS > Revive > Toggle Revive Debug Keys` | `Editor/Revive/ReviveMenu.cs` |
-| `Tools > Horror FPS > Revive > Revive Diagnostics (Play Mode)` | `Editor/Revive/ReviveMenu.cs` |
-
-### Objectives — objetivos da partida
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Objectives > Create Objective Catalog` | `Editor/Objectives/ObjectivesMenu.cs` |
-| `Tools > Horror FPS > Objectives > Add Objective Actions To Selected` | `Editor/Objectives/ObjectivesMenu.cs` |
-
-### Journal — diário
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Journal > Create Journal Catalog` | `Editor/Journal/JournalMenu.cs` |
-| `Tools > Horror FPS > Journal > Create Journal Note In Scene` | `Editor/Journal/JournalMenu.cs` |
-| `Tools > Horror FPS > Journal > Add Journal Actions To Selected` | `Editor/Journal/JournalMenu.cs` |
-
-Como usar: [`HorrorFPS-Diario-Ruido.md`](HorrorFPS-Diario-Ruido.md).
-
-### Tutorials — dicas de tutorial
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Tutorials > Create Tutorial Catalog` | `Editor/Tutorials/TutorialsMenu.cs` |
-| `Tools > Horror FPS > Tutorials > Create Tutorial Trigger Volume` | `Editor/Tutorials/TutorialsMenu.cs` |
-| `Tools > Horror FPS > Tutorials > Reset Tips Seen` | `Editor/Tutorials/TutorialsMenu.cs` |
-
-Como usar os dois sistemas: [`HorrorFPS-Objetivos-Tutorial.md`](HorrorFPS-Objetivos-Tutorial.md).
-
-### Audio — música e ambiente por área, passos por piso e rádio
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Audio > Create Audio Zone` | `Editor/Audio/AudioMenu.cs` |
-| `Tools > Horror FPS > Audio > Create Level Audio (Global Zone)` | `Editor/Audio/AudioMenu.cs` |
-| `Tools > Horror FPS > Audio > Create Radio` | `Editor/Audio/AudioMenu.cs` |
-| `Tools > Horror FPS > Audio > Create Footstep Set` | `Editor/Audio/AudioMenu.cs` |
-| `Tools > Horror FPS > Audio > Create Audio Profile` | `Editor/Audio/AudioMenu.cs` |
-
-Como usar: [`HorrorFPS-Audio.md`](HorrorFPS-Audio.md).
-
-### Levels — luz que falha, atalhos, alavancas e níveis novos
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Levels > Create Failing Light` | `Editor/Levels/LevelsMenu.cs` |
-| `Tools > Horror FPS > Levels > Add Light Failure To Selected` | `Editor/Levels/LevelsMenu.cs` |
-| `Tools > Horror FPS > Levels > Create Shortcut` | `Editor/Levels/LevelsMenu.cs` |
-| `Tools > Horror FPS > Levels > Create Lever` | `Editor/Levels/LevelsMenu.cs` |
-| `Tools > Horror FPS > Levels > Create New Level Scene...` | `Editor/HorrorFPSSetup.NewLevel.cs` |
-
-Como usar: [`HorrorFPS-Iluminacao-Niveis.md`](HorrorFPS-Iluminacao-Niveis.md). A área tem `LevelsOrder = 100` e a `Demo` passou de 100 para 110.
-
-### Demo — jogo de demonstração e exemplos prontos
-
-| Menu | Arquivo |
-|---|---|
-| `Tools > Horror FPS > Demo > Create Full Game Demo (menu, níveis, save, cutscenes)` | `Editor/HorrorFPSSetup.FullDemo.cs` |
-| `Tools > Horror FPS > Demo > Create Sample Items` | `Editor/SampleItems.cs` |
-| `Tools > Horror FPS > Demo > Create Sample Dialogues` | `Editor/Dialogue/DialogueMenus.cs` |
-| `Tools > Horror FPS > Demo > Create Sample Objectives` | `Editor/Objectives/ObjectivesMenu.cs` |
-| `Tools > Horror FPS > Demo > Create Sample Journal Entries` | `Editor/Journal/JournalMenu.cs` |
-
-<<<<<<< HEAD
-Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`), `Assets > Create > HorrorFPS > Stalker Trait Script (Characteristic)` e `(Modifier)` (`Editor/Stalker/StalkerProfileGraphMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects (entre eles o **Stalker Profile Graph**). Clique direito num Stalker Profile Graph: `Assets > Open Stalker Profile Graph Canvas`; num Stalker Tree Asset: `Assets > Open Stalker Tree Canvas` (`Editor/Stalker/Graph/StalkerGraphMenu.cs`). Os dois canvas também abrem pelo botão **Abrir canvas** do Inspector do asset. A ordem `StalkerOrder + 16` (*Check All Stalker Trees*) é a última em uso da área Stalker.
-=======
-Também existem `Assets > Create > HorrorFPS > Stalker Node Script (Action)` e `(Condition)` (`Editor/Stalker/StalkerTreeMenu.cs`) e os `Assets > Create > HorrorFPS > ...` dos ScriptableObjects.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ## De onde veio cada menu (número antigo → caminho novo)
 

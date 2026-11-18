@@ -218,7 +218,6 @@ namespace HorrorFPS
         public const string TipsReplay = "Rever dicas";
         public const string TipsReplayDone = "As dicas vão aparecer de novo";
         public const string HowToPlayEmpty = "Nenhuma dica cadastrada.";
-<<<<<<< HEAD
         public const string JournalHeaderHowTo = "COMO JOGAR";
         public const string JournalKindTip = "Dica";
         public const string TipsLabel = "Dicas na tela";
@@ -229,8 +228,6 @@ namespace HorrorFPS
         public const string ObjectivesSummary = "{0} em andamento  •  {1} concluído(s)  •  {2} falharam";
         public const string ExitButton = "Sair";
         public const string ExitTitle = "SAIR";
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         public const string KeyMoveKeyboard = "W A S D";
         public const string KeyMovePad = "Analógico esq.";
         public const string KeyLookKeyboard = "Mouse";

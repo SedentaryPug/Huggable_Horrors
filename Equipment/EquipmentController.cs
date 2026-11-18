@@ -10,19 +10,11 @@ namespace HorrorFPS
     /// (escolhe-se a mão ao equipar, e o botão daquela mão liga e desliga a luz).
     ///
     /// Controles (só com o inventário fechado):
-<<<<<<< HEAD
     ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia, atira, joga ou liga a lanterna);
     ///    arremessável (garrafa, sinalizador, rádio): segurar o botão carrega a força, soltar joga UMA unidade (ver ThrownDistraction);
     ///  • G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da esquerda; com as duas mãos, qualquer botão usa o item
     ///    e o item da outra mão fica guardado até voltar para uma mão só (apertar G de novo);
     ///  • NÃO há tecla de mirar: a arma de fogo só mira (zoom, menos dispersão, arma no centro) enquanto está nas DUAS mãos (G);
-=======
-    ///  • botão ESQUERDO do mouse / LT usa o item da mão esquerda; botão DIREITO / RT usa o da mão direita (golpeia, atira ou joga);
-    ///    arremessável (garrafa, sinalizador, rádio): segurar o botão carrega a força, soltar joga UMA unidade (ver ThrownDistraction);
-    ///  • G (toque) segura o item da mão direita com as duas mãos; G (segurar) o da esquerda; com as duas mãos, qualquer botão usa o item
-    ///    e o item da outra mão fica guardado até voltar para uma mão só (apertar G de novo);
-    ///  • Q / Select mira (arma de fogo, segurando: zoom, menos dispersão, arma no centro);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
     ///    a dispersão abre andando/correndo e atirando em sequência (a mira na tela, EquipmentHUD, mostra a abertura); com as duas mãos fica menor;
     ///    arma PESADA com uma mão só: dispersão e coice bem maiores e a arma pode escapar da mão (vira item no chão);
     ///  • R / D-pad baixo recarrega (arma pesada, como espingarda, só recarrega com as duas mãos);
@@ -136,11 +128,7 @@ namespace HorrorFPS
             public float spreadDegrees;
             /// <summary>Para onde a arma realmente aponta em relação ao centro da câmera (tangentes: x direita, y cima). Zero sem tremor.</summary>
             public Vector2 driftTan;
-<<<<<<< HEAD
             /// <summary>0..1: quanto o jogador já está mirando (arma nas duas mãos).</summary>
-=======
-            /// <summary>0..1: quanto o jogador já está mirando (Q).</summary>
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             public float aim;
             public bool empty, reloading;
         }
@@ -153,17 +141,10 @@ namespace HorrorFPS
         {
             info = new CrosshairInfo();
             if (!ready) return false;
-<<<<<<< HEAD
             HandState h = FirearmHand();
             if (h == null) return false;
             ItemEquip eq = h.item.data.equip;
             info.aim = AimFor(h);
-=======
-            HandState h = AimHand();
-            if (h == null) return false;
-            ItemEquip eq = h.item.data.equip;
-            info.aim = aimT;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             info.spreadDegrees = CurrentSpread(h, eq);
             if (tremor != null)
             {
@@ -205,12 +186,8 @@ namespace HorrorFPS
             screen = PlayerRef.Find<InventoryScreen>(this);
             hud = PlayerRef.Find<HotbarHUD>(this);
             motion = PlayerRef.Find<PlayerMotionProbe>(this);
-<<<<<<< HEAD
             right.seed = Random.value * 50f;
             left.seed = Random.value * 50f;
-=======
-            lampSeed = Random.value * 50f;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             if (heartTremor)
             {
                 tremor = PlayerRef.Find<ItemTremor>(this);
@@ -257,10 +234,6 @@ namespace HorrorFPS
         void Sync()
         {
             if (motion == null) motion = PlayerRef.Find<PlayerMotionProbe>(this);
-<<<<<<< HEAD
-=======
-            if (lamp != null && (lamp.container == null || !owner.IsEquipped(lamp))) DetachLamp(false);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             SyncHands();
         }
 
@@ -275,11 +248,7 @@ namespace HorrorFPS
         {
             if (it == null || it.data == null || it.data.equip == null) return false;
             EquipKind k = it.data.equip.kind;
-<<<<<<< HEAD
             return k == EquipKind.Melee || k == EquipKind.Firearm || k == EquipKind.Throwable || k == EquipKind.Flashlight;
-=======
-            return k == EquipKind.Melee || k == EquipKind.Firearm || k == EquipKind.Throwable;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         void SyncHand(HandState h)
@@ -321,12 +290,8 @@ namespace HorrorFPS
                 if (dead) { CancelCharge(right); CancelCharge(left); }
             }
 
-<<<<<<< HEAD
             TickLamp(right, dt);
             TickLamp(left, dt);
-=======
-            TickLamp(dt);
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             TickAim(dt);
             TickPrecision(dt);
             TickViewModel(right, dt);
@@ -334,11 +299,7 @@ namespace HorrorFPS
             TickMuzzle(right);
             TickMuzzle(left);
 
-<<<<<<< HEAD
             if (dead || !Allowed()) { twoDown = -1f; dropDown = -1f; CancelCharge(right); CancelCharge(left); return; }
-=======
-            if (dead || !Allowed()) { twoDown = -1f; CancelCharge(right); CancelCharge(left); return; }
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
             TickTwoHandKey();
             TickDropKey();
@@ -359,10 +320,7 @@ namespace HorrorFPS
             ItemEquip eq = h.item.data.equip;
             if (eq.kind == EquipKind.Melee) UpdateMelee(h, eq);
             else if (eq.kind == EquipKind.Throwable) UpdateThrowable(h, eq);
-<<<<<<< HEAD
             else if (eq.kind == EquipKind.Flashlight) { if (UsePressed(h)) ToggleLamp(h); }
-=======
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
             else if (eq.kind == EquipKind.Firearm)
             {
                 bool fire = eq.automatic ? UseHeld(h) : UsePressed(h);
@@ -530,11 +488,7 @@ namespace HorrorFPS
 
         /// <summary>
         /// Meio ângulo (graus) do cone onde o tiro da mão 'h' cai agora. É a base da arma, mais o movimento, mais os tiros seguidos;
-<<<<<<< HEAD
         /// mirar (arma nas duas mãos) reduz tudo isso (aimSpreadMultiplier), a pegada multiplica, e a mão tremendo soma um pouco nas armas de um projétil.
-=======
-        /// mirar (Q) reduz tudo isso (aimSpreadMultiplier), a pegada multiplica, e a mão tremendo soma um pouco nas armas de um projétil.
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         /// Fire usa este valor e a mira na tela (GetCrosshair) mostra o mesmo.
         /// </summary>
         float CurrentSpread(HandState h, ItemEquip eq)
@@ -675,13 +629,8 @@ namespace HorrorFPS
             if (h.item != null && IsFlashlight(h) && h.item.HasFlag(EquipState.Lit) && h.item.container != null && (owner == null || owner.DroppingItem != h.item))
                 h.item.SetFlag(EquipState.Lit, false);
             if (h.root != null) Destroy(h.root.gameObject);
-<<<<<<< HEAD
             h.root = null; h.muzzle = null; h.beam = null; h.item = null;
             h.swingT = -1f; h.reloadT = -1f; h.kick = 0f; h.bloom = 0f; h.batteryAcc = 0f;
-=======
-            h.root = null; h.muzzle = null; h.item = null;
-            h.swingT = -1f; h.reloadT = -1f; h.kick = 0f; h.bloom = 0f;
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
         }
 
         void StopAction(HandState h)

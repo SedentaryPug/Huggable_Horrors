@@ -35,11 +35,7 @@ Também dá para dar Play direto em `Level_Hall` ou `Level_Cellar`: o jogo se mo
 | Aproximar / afastar objeto | Scroll | D-pad ↑ / ↓ |
 | Pausar | Esc | Start |
 
-<<<<<<< HEAD
 Tudo é remapeável em **Opções > Controles** (menu de pausa e menu principal).
-=======
-Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções).
->>>>>>> 6aae17dc446ca29dc38eed6b0a42f50d85e686ae
 
 ## Arquitetura
 
