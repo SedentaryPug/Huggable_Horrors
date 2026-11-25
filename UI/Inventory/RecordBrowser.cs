@@ -5,18 +5,19 @@ using UnityEngine.UI;
 namespace HorrorFPS
 {
     /// <summary>
-    /// A aba Registros do inventário: tudo o que o jogador pode LER num lugar só, em lista (sem grade). À esquerda a lista, agrupada por
-    /// tipo (Diários, Notas, Gravações, Documentos); à direita o leitor com o texto completo e rolagem.
+    /// A aba Registros do inventário: tudo o que o jogador pode LER num lugar só, em lista (sem grade). À esquerda a lista, que funciona em
+    /// dois níveis: primeiro as CATEGORIAS (Diários, Notas, Gravações, Documentos, Como jogar; só as que têm algo, com a contagem e os
+    /// "novos"); clicar numa categoria mostra TODOS os registros dela, com uma linha "Voltar" no topo (Voltar/Backspace/B também voltam).
+    /// À direita o leitor com o texto completo e rolagem.
     ///
     /// A lista junta duas fontes: as entradas do diário (Journal: notas, páginas de diário e gravações achadas no mundo, compartilhadas
     /// pelo grupo) e os documentos do jogador (itens da aba Registros que ainda não viraram entrada do diário). "● novo" marca o que ainda
-    /// não foi lido; ler marca como lido. Mouse: clique escolhe, roda rola. Teclado e controle: cima/baixo trocam de registro, direita/esquerda
-    /// passam da lista para o texto, e o texto rola com a roda ou o analógico direito (ou cima/baixo com o cursor no texto).
+    /// não foi lido; ler marca como lido. Mouse: clique escolhe/abre, roda rola. Teclado e controle: cima/baixo movem pela lista (o botão de
+    /// escolher abre a categoria), direita/esquerda passam da lista para o texto, e o texto rola com a roda ou o analógico direito.
     /// </summary>
     public class RecordBrowser
     {
         const float RowH = 42f;
-        const float HeaderH = 24f;
         const string DimHex = "#A8A39B";
         const string NewHex = "#E8C04A";
 
@@ -25,13 +26,18 @@ namespace HorrorFPS
             JournalKind.Diary, JournalKind.Note, JournalKind.Recording, JournalKind.Document
         };
 
+        /// <summary>Índice da categoria "Como jogar" (as dicas); as de KindOrder vêm antes, com o mesmo índice do vetor.</summary>
+        static readonly int TipsGroup = KindOrder.Length;
+
         class Item
         {
-            public bool header;
-            public string headerText;
+            public int category = -1;           // >= 0: linha de categoria (abre a categoria ao escolher)
+            public bool back;                   // linha "Voltar" no topo de uma categoria aberta
+            public int count, unread;           // só das linhas de categoria
             public JournalEntry entry;
             public ItemInstance item;
             public TutorialEntry tip;           // categoria "Como jogar": as dicas de comandos
+            public bool IsRecord { get { return category < 0 && !back; } }
         }
 
         class Row
@@ -53,11 +59,16 @@ namespace HorrorFPS
         readonly Row[] rows;
         readonly RecordReader reader;
         readonly List<Item> model = new List<Item>();
+        readonly List<Item>[] groupItems = NewGroups();
         readonly List<JournalEntry> scratch = new List<JournalEntry>();
         static readonly List<JournalEntry> sharedScratch = new List<JournalEntry>();
 
         string selectedKey;
+        int artGroup = -1;                  // categoria cuja imagem está no leitor (cursor sobre a categoria); -1 = nenhuma
+        readonly JournalCatalog catalog = JournalCatalog.Load();
         int scroll, hover = -1;
+        int openGroup = -1;                 // -1: lista de categorias; senão a categoria aberta
+        int totalAll, unreadAll;            // de todas as categorias (menos "Como jogar"), para o cabeçalho
         bool dirty = true, shownReset = true;
         int lastItemCount = -1;
 
@@ -105,6 +116,13 @@ namespace HorrorFPS
             reader = new RecordReader(parent, x + listW + 12f, y, w - listW - 12f, h);
             Journal.Changed += OnJournalChanged;
             Rebuild();
+        }
+
+        static List<Item>[] NewGroups()
+        {
+            List<Item>[] g = new List<Item>[KindOrder.Length + 1];
+            for (int i = 0; i < g.Length; i++) g[i] = new List<Item>();
+            return g;
         }
 
         void OnJournalChanged() { dirty = true; }
@@ -175,6 +193,7 @@ namespace HorrorFPS
             model.Clear();
             scratch.Clear();
             Journal.Collect(scratch);
+            for (int g = 0; g < groupItems.Length; g++) groupItems[g].Clear();
 
             List<ItemInstance> loose = new List<ItemInstance>();
             if (owner != null)
@@ -189,65 +208,119 @@ namespace HorrorFPS
                     }
                 }
 
-            for (int g = 0; g < KindOrder.Length; g++)
+            // cada categoria guarda as próprias linhas, na ordem em que foram achadas
+            for (int i = 0; i < scratch.Count; i++)
             {
-                JournalKind kind = KindOrder[g];
-                bool headed = false;
-                for (int i = 0; i < scratch.Count; i++)
-                {
-                    if (scratch[i].kind != kind) continue;
-                    if (!headed) { AddHeader(kind); headed = true; }
-                    Item row = new Item();
-                    row.entry = scratch[i];
-                    model.Add(row);
-                }
-                if (kind == JournalKind.Document)
-                    for (int i = 0; i < loose.Count; i++)
-                    {
-                        if (!headed) { AddHeader(kind); headed = true; }
-                        Item row = new Item();
-                        row.item = loose[i];
-                        model.Add(row);
-                    }
+                Item row = new Item();
+                row.entry = scratch[i];
+                groupItems[GroupOf(scratch[i].kind)].Add(row);
+            }
+            int docGroup = GroupOf(JournalKind.Document);
+            for (int i = 0; i < loose.Count; i++)
+            {
+                Item row = new Item();
+                row.item = loose[i];
+                groupItems[docGroup].Add(row);
             }
 
             // categoria "Como jogar": as dicas de comandos (as mesmas que aparecem na tela), sempre por último
-            System.Collections.Generic.IList<TutorialEntry> tips = Tutorials.All;
-            bool tipsHeaded = false;
+            IList<TutorialEntry> tips = Tutorials.All;
             for (int i = 0; i < tips.Count; i++)
             {
                 if (!tips[i].enabled || !tips[i].inMenu) continue;
-                if (!tipsHeaded)
-                {
-                    Item h = new Item();
-                    h.header = true;
-                    h.headerText = UIText.JournalHeaderHowTo;
-                    model.Add(h);
-                    tipsHeaded = true;
-                }
                 Item row = new Item();
                 row.tip = tips[i];
-                model.Add(row);
+                groupItems[TipsGroup].Add(row);
+            }
+
+            totalAll = 0; unreadAll = 0;
+            for (int g = 0; g < TipsGroup; g++)
+                for (int i = 0; i < groupItems[g].Count; i++)
+                {
+                    totalAll++;
+                    if (!IsRead(groupItems[g][i])) unreadAll++;
+                }
+
+            if (openGroup >= 0 && groupItems[openGroup].Count == 0) openGroup = -1;     // a categoria esvaziou (item largado...)
+
+            if (openGroup < 0)
+            {
+                for (int g = 0; g < groupItems.Length; g++)
+                {
+                    if (groupItems[g].Count == 0) continue;
+                    Item cat = new Item();
+                    cat.category = g;
+                    cat.count = groupItems[g].Count;
+                    for (int i = 0; i < groupItems[g].Count; i++) if (!IsRead(groupItems[g][i])) cat.unread++;
+                    model.Add(cat);
+                }
+            }
+            else
+            {
+                Item back = new Item();
+                back.back = true;
+                model.Add(back);
+                model.AddRange(groupItems[openGroup]);
             }
         }
 
-        void AddHeader(JournalKind kind)
+        static int GroupOf(JournalKind kind)
         {
-            Item h = new Item();
-            h.header = true;
-            switch (kind)
+            for (int i = 0; i < KindOrder.Length; i++) if (KindOrder[i] == kind) return i;
+            return GroupOf(JournalKind.Note);
+        }
+
+        static string GroupDescription(int g)
+        {
+            if (g == TipsGroup) return UIText.RecordsDescHowTo;
+            switch (KindOrder[g])
             {
-                case JournalKind.Diary: h.headerText = UIText.JournalHeaderDiary; break;
-                case JournalKind.Recording: h.headerText = UIText.JournalHeaderRecording; break;
-                case JournalKind.Document: h.headerText = UIText.JournalHeaderDocument; break;
-                default: h.headerText = UIText.JournalHeaderNote; break;
+                case JournalKind.Diary: return UIText.RecordsDescDiary;
+                case JournalKind.Recording: return UIText.RecordsDescRecording;
+                case JournalKind.Document: return UIText.RecordsDescDocument;
+                default: return UIText.RecordsDescNote;
             }
-            model.Add(h);
+        }
+
+        /// <summary>0 diário, 1 nota, 2 gravação, 3 documento, 4 como jogar (o desenho padrão da categoria).</summary>
+        static int ArtKind(int g)
+        {
+            if (g == TipsGroup) return 4;
+            switch (KindOrder[g])
+            {
+                case JournalKind.Diary: return 0;
+                case JournalKind.Recording: return 2;
+                case JournalKind.Document: return 3;
+                default: return 1;
+            }
+        }
+
+        /// <summary>Cursor sobre uma categoria: o painel da direita mostra a imagem dela (do catálogo ou o desenho simples) com a contagem.</summary>
+        void ShowCategoryArt(int g)
+        {
+            Sprite sprite = null;
+            if (catalog != null) sprite = g == TipsGroup ? catalog.HowToImage : catalog.ImageFor(KindOrder[g]);
+            Item cat = null;
+            for (int i = 0; i < model.Count; i++) if (model[i].category == g) { cat = model[i]; break; }
+            string caption = GroupDescription(g) + (cat != null ? "   " + CategoryCount(cat) : "");
+            reader.ShowArt(ArtKind(g), sprite, GroupName(g), caption);
+        }
+
+        static string GroupName(int g)
+        {
+            if (g == TipsGroup) return UIText.JournalHeaderHowTo;
+            switch (KindOrder[g])
+            {
+                case JournalKind.Diary: return UIText.JournalHeaderDiary;
+                case JournalKind.Recording: return UIText.JournalHeaderRecording;
+                case JournalKind.Document: return UIText.JournalHeaderDocument;
+                default: return UIText.JournalHeaderNote;
+            }
         }
 
         static string KeyOf(Item it)
         {
-            if (it == null || it.header) return null;
+            if (it == null || !it.IsRecord) return null;
             if (it.entry != null) return "e:" + it.entry.id;
             if (it.tip != null) return "t:" + it.tip.id;
             return it.item != null && it.item.data != null ? "i:" + it.item.data.Id : null;
@@ -257,12 +330,6 @@ namespace HorrorFPS
         {
             if (key == null) return -1;
             for (int i = 0; i < model.Count; i++) if (KeyOf(model[i]) == key) return i;
-            return -1;
-        }
-
-        int FirstReadable()
-        {
-            for (int i = 0; i < model.Count; i++) if (!model[i].header) return i;
             return -1;
         }
 
@@ -276,15 +343,16 @@ namespace HorrorFPS
         void Rebuild()
         {
             dirty = false;
+            artGroup = -1;                  // o leitor vai ser redesenhado: a imagem da categoria volta no próximo Tick se o cursor ainda está nela
             lastItemCount = RecordItemCount();
             BuildModel();
 
             int sel = IndexOfKey(selectedKey);
             if (sel < 0)
             {
-                sel = FirstReadable();
-                selectedKey = sel >= 0 ? KeyOf(model[sel]) : null;
-                shownReset = true;
+                // nada escolhido: o leitor fica com a dica até o jogador clicar num registro (nada é marcado como lido sozinho)
+                if (selectedKey != null) shownReset = true;
+                selectedKey = null;
             }
 
             RebuildHeader(sel);
@@ -292,16 +360,12 @@ namespace HorrorFPS
 
         void RebuildHeader(int sel)
         {
-            int unread = 0, total = 0;
-            for (int i = 0; i < model.Count; i++)
-            {
-                if (model[i].header || model[i].tip != null) continue;
-                total++;
-                if (!IsRead(model[i])) unread++;
-            }
-            headerLabel.text = UIText.RecordsHeader + "  <color=#8a8a80>" +
-                (unread > 0 ? string.Format(UIText.JournalCountUnread, total, unread) : string.Format(UIText.JournalCount, total)) +
+            string head = UIText.RecordsHeader;
+            if (openGroup >= 0) head += "  <color=" + NewHex + ">›  " + GroupName(openGroup) + "</color>";
+            head += "  <color=#8a8a80>" +
+                (unreadAll > 0 ? string.Format(UIText.JournalCountUnread, totalAll, unreadAll) : string.Format(UIText.JournalCount, totalAll)) +
                 "</color>";
+            headerLabel.text = head;
 
             scroll = Mathf.Clamp(scroll, 0, MaxScroll());
             if (sel >= 0) EnsureVisible(sel);
@@ -324,11 +388,20 @@ namespace HorrorFPS
                     continue;
                 }
                 Item it = model[idx];
-                if (it.header)
+                if (it.back)
                 {
-                    r.bg.color = new Color(0f, 0f, 0f, 0f);
-                    r.title.text = "<color=" + NewHex + ">" + it.headerText + "</color>";
-                    r.sub.text = "";
+                    r.bg.color = idx == hover ? new Color(0.26f, 0.27f, 0.26f, 0.95f) : InvUI.Cell;
+                    r.title.text = "<color=" + DimHex + ">" + UIText.RecordsBack + "</color>";
+                    r.sub.text = GroupName(openGroup);
+                    continue;
+                }
+                if (it.category >= 0)
+                {
+                    r.bg.color = idx == hover ? new Color(0.36f, 0.29f, 0.13f, 0.98f) : InvUI.Cell;
+                    string ct = GroupName(it.category);
+                    if (it.unread > 0) ct += "  <color=" + NewHex + ">" + UIText.JournalNewTag + "</color>";
+                    r.title.text = ct + "  <color=" + DimHex + ">›</color>";
+                    r.sub.text = CategoryCount(it);
                     continue;
                 }
 
@@ -349,6 +422,12 @@ namespace HorrorFPS
                 float top = (trackH - th) * (MaxScroll() == 0 ? 0f : (float)scroll / MaxScroll());
                 InvUI.TopLeft(thumb.rectTransform, listW - 6f, 24f + top, 3f, th);
             }
+        }
+
+        static string CategoryCount(Item c)
+        {
+            if (c.category == TipsGroup) return string.Format(UIText.RecordsCountTips, c.count);
+            return c.unread > 0 ? string.Format(UIText.JournalCountUnread, c.count, c.unread) : string.Format(UIText.JournalCount, c.count);
         }
 
         string TitleOf(Item it)
@@ -373,7 +452,7 @@ namespace HorrorFPS
             int idx = IndexOfKey(selectedKey);
             if (idx < 0)
             {
-                reader.ShowEmpty(UIText.JournalEmpty);
+                reader.ShowEmpty(model.Count == 0 ? UIText.JournalEmpty : (openGroup < 0 ? UIText.RecordsPickCategory : UIText.RecordsPickRecord));
                 return;
             }
 
@@ -397,9 +476,47 @@ namespace HorrorFPS
 
         // ------------------------------------------------------------------ escolher e rolar
 
+        /// <summary>Escolher a linha: abre a categoria, volta, ou mostra o registro no leitor.</summary>
+        void Activate(int idx)
+        {
+            if (idx < 0 || idx >= model.Count) return;
+            Item it = model[idx];
+            if (it.back) { GoBack(); return; }
+            if (it.category >= 0) { OpenGroup(it.category); return; }
+            Select(idx);
+        }
+
+        void OpenGroup(int g)
+        {
+            openGroup = g;
+            scroll = 0;
+            hover = -1;
+            selectedKey = null;
+            shownReset = true;
+            Rebuild();
+        }
+
+        void GoBack()
+        {
+            openGroup = -1;
+            scroll = 0;
+            hover = -1;
+            selectedKey = null;
+            shownReset = true;
+            Rebuild();
+        }
+
+        /// <summary>Voltar/Backspace/B: sai da categoria aberta para a lista de categorias. Devolve false se já está nela (o inventário fecha).</summary>
+        public bool Back()
+        {
+            if (openGroup < 0) return false;
+            GoBack();
+            return true;
+        }
+
         void Select(int idx)
         {
-            if (idx < 0 || idx >= model.Count || model[idx].header) return;
+            if (idx < 0 || idx >= model.Count || !model[idx].IsRecord) return;
             string key = KeyOf(model[idx]);
             if (key == selectedKey) return;
             selectedKey = key;
@@ -413,8 +530,6 @@ namespace HorrorFPS
         {
             if (idx < scroll) scroll = idx;
             else if (idx >= scroll + visibleRows) scroll = idx - visibleRows + 1;
-            // o título do grupo fica junto da primeira linha dele
-            if (scroll > 0 && scroll == idx && model[scroll - 1].header) scroll--;
             scroll = Mathf.Clamp(scroll, 0, MaxScroll());
         }
 
@@ -454,7 +569,7 @@ namespace HorrorFPS
             if (dir.x < 0)
             {
                 to = RowCenter(sel >= 0 ? sel : scroll);
-                return sel >= 0 || model.Count > 0;
+                return model.Count > 0;
             }
             if (dir.y == 0) return false;
 
@@ -465,16 +580,13 @@ namespace HorrorFPS
             }
 
             if (model.Count == 0) return false;
-            int n = sel < 0 ? FirstReadable() : sel;
-            if (sel >= 0)
-            {
-                int step = dir.y > 0 ? 1 : -1;
-                int j = sel + step;
-                while (j >= 0 && j < model.Count && model[j].header) j += step;
-                if (j >= 0 && j < model.Count) n = j;
-            }
-            if (n < 0) return false;
-            Select(n);
+            int cur = ContainsList(cursor) ? RowAt(cursor) : -1;
+            if (cur < 0) cur = sel;
+            int n = cur < 0 ? 0 : Mathf.Clamp(cur + (dir.y > 0 ? 1 : -1), 0, model.Count - 1);
+            EnsureVisible(n);
+            if (model[n].IsRecord) Select(n);               // registro: já aparece no leitor; categoria/Voltar só abrem ao escolher
+            hover = -1;
+            DrawRows();
             to = RowCenter(n);
             return true;
         }
@@ -493,10 +605,18 @@ namespace HorrorFPS
 
             bool inList = ContainsList(cursor);
             int hoverIdx = inList ? RowAt(cursor) : -1;
-            if (hoverIdx >= 0 && model[hoverIdx].header) hoverIdx = -1;
             if (hoverIdx != hover) { hover = hoverIdx; DrawRows(); }
 
-            if (selectPressed && hoverIdx >= 0) Select(hoverIdx);
+            // categorias: a imagem da categoria sob o cursor aparece no painel da direita
+            int wantArt = (openGroup < 0 && hoverIdx >= 0 && hoverIdx < model.Count) ? model[hoverIdx].category : -1;
+            if (wantArt != artGroup)
+            {
+                artGroup = wantArt;
+                if (wantArt >= 0) ShowCategoryArt(wantArt);
+                else ShowSelected();
+            }
+
+            if (selectPressed && hoverIdx >= 0) Activate(hoverIdx);
 
             if (Mathf.Abs(scrollStep) > 0.01f)
             {

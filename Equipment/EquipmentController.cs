@@ -97,8 +97,8 @@ namespace HorrorFPS
         float nextSync;
         float twoDown = -1f;        // instante em que G foi apertado (-1 = solto)
         bool twoHoldDone;
-        float dropDown = -1f;       // instante em que o botão de largar foi apertado (-1 = solto)
-        bool dropHoldDone;
+        float dropPickUntil = -1f;  // enquanto no futuro: com itens nas duas mãos, esperando o jogador escolher qual largar
+        int dropPickFrame = -1;     // quadro em que a escolha foi resolvida (esse clique não é ataque)
         readonly List<ItemInstance> buffer = new List<ItemInstance>();
 
         /// <summary>O item principal: o que está nas duas mãos, senão o da mão direita, senão o da esquerda.</summary>
@@ -299,13 +299,16 @@ namespace HorrorFPS
             TickMuzzle(right);
             TickMuzzle(left);
 
-            if (dead || !Allowed()) { twoDown = -1f; dropDown = -1f; CancelCharge(right); CancelCharge(left); return; }
+            if (dead || !Allowed()) { twoDown = -1f; dropPickUntil = -1f; CancelCharge(right); CancelCharge(left); return; }
 
             TickTwoHandKey();
-            TickDropKey();
+            bool dropBusy = TickDropKey();          // escolhendo qual item largar: o clique é a escolha, não um ataque
 
-            UpdateHand(right);
-            UpdateHand(left);
+            if (!dropBusy)
+            {
+                UpdateHand(right);
+                UpdateHand(left);
+            }
             if (ItemInput.Pressed(input.Reload)) TryReloadAny();
         }
 
@@ -362,30 +365,50 @@ namespace HorrorFPS
 
         /// <summary>
         /// Q / D-pad cima: larga o item equipado no chão, com o estado dele (lanterna acesa, munição, bateria, durabilidade).
-        /// Com um item nas duas mãos, larga esse. Senão, como o G: toque = item da mão direita (ou o da esquerda, se a direita está vazia);
-        /// segurar um tempinho = o da mão esquerda.
+        /// Com um item só (ou um item nas duas mãos), larga esse. Com um item em CADA mão, pergunta qual: clique esquerdo (LT) larga o da mão
+        /// esquerda, clique direito (RT) o da direita; Q de novo ou Voltar cancela. Devolve true enquanto a escolha está aberta (e no quadro
+        /// em que foi feita): quem chama não deve tratar o clique como ataque.
         /// </summary>
-        void TickDropKey()
+        bool TickDropKey()
         {
-            if (ItemInput.Pressed(input.DropEquipped))
+            if (Time.unscaledTime < dropPickUntil)
             {
-                HandSide two = TwoSide;
-                if (two != HandSide.None) { DropFromHand(two); return; }
-                dropDown = Time.unscaledTime; dropHoldDone = false;
+                HandSide side = HandSide.None;
+                if (ItemInput.Pressed(input.UseLeft)) side = HandSide.Left;
+                else if (ItemInput.Pressed(input.UseRight)) side = HandSide.Right;
+                if (side != HandSide.None)
+                {
+                    dropPickUntil = -1f;
+                    dropPickFrame = Time.frameCount;
+                    DropFromHand(side);
+                    return true;
+                }
+                if (ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.DropEquipped))
+                {
+                    dropPickUntil = -1f;
+                    dropPickFrame = Time.frameCount;
+                    Say("Escolha cancelada.");
+                }
+                return true;
             }
-            if (dropDown < 0f) return;
+            if (dropPickFrame == Time.frameCount) return true;
 
-            if (!ItemInput.Held(input.DropEquipped))
+            if (!ItemInput.Pressed(input.DropEquipped)) return false;
+
+            HandSide two = TwoSide;
+            if (two != HandSide.None) { DropFromHand(two); return false; }
+            if (right.item != null && left.item != null)
             {
-                if (!dropHoldDone) DropFromHand(right.item != null ? HandSide.Right : (left.item != null ? HandSide.Left : HandSide.Right));
-                dropDown = -1f;
-                return;
+                dropPickUntil = Time.unscaledTime + 5f;
+                string l = InvUI.Truncate(left.item.GetName(this), 18), r = InvUI.Truncate(right.item.GetName(this), 18);
+                string msg = input.UsesMouse
+                    ? "Largar qual?  clique ESQUERDO: " + l + "  •  DIREITO: " + r
+                    : "Largar qual?  LT: " + l + "  •  RT: " + r;
+                if (hud != null) hud.Notify(msg, 5f);
+                return true;
             }
-            if (!dropHoldDone && Time.unscaledTime - dropDown >= Mathf.Max(0.1f, twoHandHoldSeconds))
-            {
-                dropHoldDone = true;
-                DropFromHand(HandSide.Left);
-            }
+            DropFromHand(right.item != null ? HandSide.Right : (left.item != null ? HandSide.Left : HandSide.Right));
+            return false;
         }
 
         /// <summary>Larga o item da mão 'side' no chão à frente do jogador. O mesmo ItemInstance vira o item do chão: nada do estado dele se perde.</summary>

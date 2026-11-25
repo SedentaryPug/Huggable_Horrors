@@ -49,7 +49,7 @@ namespace HorrorFPS
                 TutorialWhen.ItemEquipped, "Throwable", 1f, 11f, ""));
 
             // ---- jogo
-            list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para ver seus objetivos na tela. A lista completa fica no menu de pausa.",
+            list.Add(Make("objectives", "Objetivos", "Aperte {Objectives} para abrir seus registros (notas, diários e gravações). Os objetivos ficam na aba Objetivos do inventário.",
                 TutorialWhen.ObjectiveStarted, "", 5f, 9f, ""));
             list.Add(Make("journal", "Diário", "Notas, diários e gravações que você acha ficam guardados. Abra a mochila com {Inventory} e vá na aba Registros para reler quando quiser.",
                 TutorialWhen.JournalUnlocked, "", 4f, 10f, ""));

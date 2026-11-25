@@ -49,6 +49,8 @@ namespace HorrorFPS
             Ensure<NoiseMeterHUD>(player);            // indicador de ruído (agachar = menos barulho)
             Ensure<VisibilityHUD>(player);            // indicador de visibilidade (agachar/sombra = mais difícil de ver)
             Ensure<JournalReader>(player);            // lê notas na tela e põe documentos pegos no diário
+            Ensure<ItemPickupInspector>(player);      // item novo no cenário: inspeção com Pegar / Deixar
+            Ensure<ObjectInspector>(player);          // examinar objetos do cenário (InspectableObject + SceneHotspot)
 
             // corpo (a sonda de movimento primeiro: os outros dependem dela)
             Ensure<PlayerMotionProbe>(player);

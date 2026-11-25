@@ -10,10 +10,10 @@ namespace HorrorFPS
     /// dispositivos dele). Cursor virtual (mouse ou analógico), sem depender do EventSystem. O mundo NÃO pausa enquanto aberta:
     /// em jogo local não dá para pausar os outros, e a tensão faz parte do jogo.
     ///
-    /// Teclado/mouse: Tab/I abre e fecha • clique (ou Enter) pega e solta • R gira • botão direito (ou E) = menu • F inspeciona • G joga fora • O organiza.
+    /// Teclado/mouse: Tab/I abre e fecha • toque rápido no botão de pegar (clique/Enter/A) abre o menu do item; segurar (ou mover com ele apertado) arrasta, e aí aparecem a lixeira e as mãos • R gira (Q anti-horário) • botão direito (ou E) = menu • F inspeciona • G joga fora • O organiza.
     /// Com o menu do item aberto: setas movem o foco e E / Enter / Espaço escolhem a opção em foco (o clique escolhe a linha sob o ponteiro).
     /// Sem mouse: setas/WASD movem o cursor célula a célula (como o D-pad do controle). Controle: Y abre • A pega/solta • D-pad move •
-    /// RB gira • X = menu • LB inspeciona • L3 organiza • B volta. Fora do inventário, o botão de "usar equipado" aciona o item equipado.
+    /// RB gira (LB anti-horário, com o item na mão) • X = menu • LB inspeciona • L3 organiza • B volta. Fora do inventário, o botão de "usar equipado" aciona o item equipado.
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Inventory Screen")]
     [DefaultExecutionOrder(500)]    // depois dos outros: o estado do cursor do mouse (liberado enquanto a mochila está aberta) é decidido por último a cada quadro
@@ -59,12 +59,13 @@ namespace HorrorFPS
         bool pointerOwned;                      // a tela liberou o cursor do mouse e precisa devolvê-lo ao fechar
         CursorLockMode prevLock;
         bool prevVisible;
-        bool pickedThisPress;
+        bool keyCursor;                         // o cursor virtual (teclado/analógico) está valendo; o ponteiro do mouse fica onde está (escondido)
         float scrollCooldown;
         ItemInstance pressItem;                 // mouse: item sob o botão apertado, ainda sem decidir se é clique ou arrasto
         ContainerView pressView;
         float pressTime;
-        bool mouseDragging;                     // mouse: o item está sendo arrastado com o botão apertado
+        bool mouseDragging;                     // o item está sendo arrastado com o botão apertado (ainda não soltou depois de pegar)
+        bool stickyDrag;                        // pegou segurando (sem arrastar com o mouse): ao soltar o botão o item continua na mão até o próximo clique
         float popT = 1f;                        // animação de "levantar" do item quando o arrasto começa
 
         /// <summary>True se o cursor é o ponteiro real do mouse (e não o cursor virtual do analógico/teclado).</summary>
@@ -82,16 +83,6 @@ namespace HorrorFPS
                 return input != null && input.UsesMouse
                     ? "Arraste ou setas: girar  •  Roda: aproximar  •  Clique nos destaques: interagir  •  Botão direito / Tab: fechar"
                     : "Analógico dir. ou D-pad: girar  •  RB/LB: zoom  •  A: interagir  •  B: fechar";
-            }
-        }
-
-        string HelpText
-        {
-            get
-            {
-                return input != null && input.UsesMouse
-                    ? "Clique: menu  •  Segure e arraste: mover (solte fora = bandeja)  •  Botão direito com pilha: soltar 1  •  R: girar  •  F: inspecionar  •  G: jogar fora  •  O: organizar  •  Enter: pegar/soltar  •  Setas: mover" + TabHint()
-                    : "A: pegar/soltar  •  X com pilha na mão: soltar 1  •  D-pad: mover  •  RB: girar  •  X: menu  •  LB: inspecionar  •  L3: organizar  •  B: voltar" + TabHint();
             }
         }
 
@@ -156,6 +147,7 @@ namespace HorrorFPS
             subscribed = true;
             BuildWindow();
             cursor = overlay.ViewportCenter;
+            keyCursor = true;                       // começa no centro; o ponteiro real volta quando o mouse se mexer
             lastMouse = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
             dirty = true;
             Play(InvSound.Open);
@@ -170,7 +162,7 @@ namespace HorrorFPS
             CancelPress();
             mouseDragging = false;
             ClearHold();
-            if (owner != null) { owner.FlushManualContainers(); owner.EnforceSizes(); }       // peças soltas na bandeja voltam para a mochila (ou caem no chão)
+            if (owner != null) { owner.FlushManualContainers(true); owner.EnforceSizes(); }    // peças soltas na bandeja são jogadas no chão ao fechar
             menu.CloseAll();
             if (inspect != null) inspect.Close();
             if (subscribed)
@@ -202,11 +194,10 @@ namespace HorrorFPS
             if (!open || input == null || input.Paused) return;
             if (RealPointer)
             {
+                // o ponteiro do mouse NUNCA é arrastado pelo teclado/analógico: com o cursor virtual valendo ele só fica escondido
                 pointerOwned = true;
                 Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                Vector2 now = Mouse.current.position.ReadValue();
-                if ((cursor - now).sqrMagnitude > 1f) Mouse.current.WarpCursorPosition(cursor);
+                Cursor.visible = !keyCursor;
             }
             else
             {
@@ -215,6 +206,14 @@ namespace HorrorFPS
         }
 
         public void Toggle() { if (open) Close(); else Open(); }
+
+        /// <summary>Abre o inventário já na aba pedida (se ela existir). Aberto, só troca de aba.</summary>
+        public bool OpenTab(InventoryTab tab)
+        {
+            if (!open && !Open()) return false;
+            if (tabList.Contains(tab)) SwitchTab(tab);
+            return true;
+        }
 
         /// <summary>Mensagem curta na tela do jogador.</summary>
         public void Notify(string text)
@@ -237,7 +236,14 @@ namespace HorrorFPS
         void HandleClosed()
         {
             if (FrameworkBridge.IsLockedByOthers(player)) return;
-            if (ItemInput.Pressed(input.Toggle)) { owner.CancelHandPick(); Open(); return; }
+            if (ItemInput.Pressed(input.Toggle)) { owner.CancelHandPick(); Open(); return; }                 // Tab / Y: na última aba usada
+            if (ItemInput.Pressed(input.ToggleBag)) { owner.CancelHandPick(); OpenTab(InventoryTab.Bag); return; }   // I: na mochila
+            if (ItemInput.Pressed(input.Objectives) && !HidingSpot.IsHidden(player))       // J: abre direto nos Registros (escondido, o botão segura o fôlego)
+            {
+                owner.CancelHandPick();
+                OpenTab(InventoryTab.Records);
+                return;
+            }
             HandleHandPick();
             if (ItemInput.Pressed(input.UseEquipped) && !owner.HandPickBlocksInput && owner.HasAnyEquipped
                 && (equipment == null || !equipment.OwnsPrimary))      // com equipamento, o EquipmentController cuida dos botões
@@ -307,12 +313,12 @@ namespace HorrorFPS
             {
                 // o ponteiro real manda: a velocidade é a do sistema, como em qualquer UI
                 Vector2 mp = Mouse.current.position.ReadValue();
-                if ((mp - lastMouse).sqrMagnitude > 0.25f) cursor = mp;
+                if ((mp - lastMouse).sqrMagnitude > 0.25f) { cursor = mp; keyCursor = false; }
                 lastMouse = mp;
             }
             else if (input.UsesMouse) cursor += ItemInput.Vec(input.CursorDelta) * mouseSensitivity;
             Vector2 st = ItemInput.Vec(input.Stick);
-            if (st.sqrMagnitude > 0.04f) cursor += st * stickSpeed * (Screen.height / 1080f) * dt;
+            if (st.sqrMagnitude > 0.04f) { cursor += st * stickSpeed * (Screen.height / 1080f) * dt; keyCursor = true; }
             cursor = overlay.ClampToViewport(cursor);
         }
 
@@ -331,7 +337,18 @@ namespace HorrorFPS
                 return;
             }
 
-            if (ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.Cancel))
+            // J: com a janela aberta vai para os Registros; já estando neles, fecha
+            if (ItemInput.Pressed(input.Objectives) && held == null && !HidingSpot.IsHidden(player))
+            {
+                if (activeTab == InventoryTab.Records) Close();
+                else if (tabList.Contains(InventoryTab.Records)) SwitchTab(InventoryTab.Records);
+                return;
+            }
+
+            // aba Registros com uma categoria aberta: Voltar/Backspace/B só volta para a lista de categorias (a tecla do inventário fecha)
+            if (held == null && records != null && ItemInput.Pressed(input.Cancel) && !ItemInput.Pressed(input.Toggle) && !ItemInput.Pressed(input.ToggleBag) && records.Back()) return;
+
+            if (ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.ToggleBag) || ItemInput.Pressed(input.Cancel))
             {
                 if (held != null) ReturnHeld(); else Close();
                 return;
@@ -354,6 +371,7 @@ namespace HorrorFPS
             if (ItemInput.Pressed(input.NavUp)) nav.y = -1; else if (ItemInput.Pressed(input.NavDown)) nav.y = 1;
             if (nav != Vector2Int.zero)
             {
+                keyCursor = true;
                 if (records != null)
                 {
                     Vector2 to;
@@ -362,6 +380,8 @@ namespace HorrorFPS
                 else Navigate(nav);
                 UpdateCursorVisual();
             }
+
+            UpdateDragZones(dt);        // lixeira, mãos e atalhos aparecem só com um item na mão
 
             // o que está sob o cursor
             ContainerView hv = null;
@@ -389,27 +409,11 @@ namespace HorrorFPS
             if (hv != null && Mathf.Abs(sy) > 0.01f) hv.Scroll(sy);
             TickTabs(hv == null ? sy : 0f);       // leitor de registros e mapa (roda/analógico direito e arrastar)
 
-            // girar
-            if (ItemInput.Pressed(input.Rotate))
+            // girar: só com o item na mão (R / RB = horário • Q / LB = anti-horário)
+            if (held != null && held.data.allowRotation)
             {
-                if (held != null)
-                {
-                    if (held.data.allowRotation)
-                    {
-                        // a peça gira em torno da célula que o jogador segura: 90° horário, igual ao ItemShape
-                        if (hasGrab)
-                        {
-                            Vector2Int sz = held.data.shape.GetSize(heldRot);
-                            grabCell = new Vector2Int(sz.y - 1 - grabCell.y, grabCell.x);
-                        }
-                        heldRot = (heldRot + 1) % 4;
-                        RebuildGhost();
-                        rotT = 0f;          // começa o giro suave (PositionGhost aplica)
-                        PositionGhost();
-                        Play(InvSound.Rotate);
-                    }
-                }
-                else if (hoverItem != null) RotateInPlace(hoverItem);
+                if (ItemInput.Pressed(input.RotateBack)) RotateHeld(-1);
+                else if (ItemInput.Pressed(input.Rotate)) RotateHeld(1);
             }
 
             // atalhos de teclado
@@ -435,28 +439,20 @@ namespace HorrorFPS
                 return;
             }
 
-            // mouse: clique rápido = menu do item • segurar (ou arrastar) = pegar o item e mostrar o arrasto
-            bool consumed = HandleMouseGesture(hv, slot, dt);
-
-            // pegar / soltar (teclado, controle, ou mouse com um item já na mão)
-            if (select && !consumed)
+            // botão de pegar (clique, Enter, A): toque rápido = menu do item • segurar (ou mover com ele apertado) = arrastar
+            bool consumed = false;
+            if ((select || ItemInput.Pressed(input.MenuPick)) && held == null && slot >= 0 && hotbar != null && hotbar.GetItem(slot) != null)
             {
-                if (held == null)
-                {
-                    if (hoverItem != null && hv != null)
-                    {
-                        if (IsBrowse(hv)) SelectBrowse(hoverItem);                 // Registros/Mapa: escolher, não arrastar
-                        else { BeginHold(hoverItem, hv); pickedThisPress = true; pressCursor = cursor; }
-                    }
-                }
-                else TryDrop(hv, slot);
+                // clicar num item da coluna de atalhos tira o atalho dele
+                ItemInstance cleared = hotbar.GetItem(slot);
+                hotbar.Clear(slot);
+                Play(InvSound.HotbarClear);
+                Notify("Atalho removido: " + cleared.GetName(this));
+                dirty = true;
+                consumed = true;
             }
-            if (!RealPointer && ItemInput.Released(input.Select))
-            {
-                // arrastar e soltar sem mouse (segurando o botão do controle): se o cursor andou, solta onde o botão foi solto
-                if (held != null && pickedThisPress && (cursor - pressCursor).magnitude > 14f) TryDrop(hv, slot);
-                pickedThisPress = false;
-            }
+            else consumed = HandleGesture(hv, slot, dt);
+            if ((select || ItemInput.Pressed(input.MenuPick)) && !consumed && held != null) TryDrop(hv, slot);
 
             // botão secundário
             if (ItemInput.Pressed(input.Secondary))
@@ -466,13 +462,7 @@ namespace HorrorFPS
                     if (held.stack > 1 && hv != null) DropOneHeld(hv);        // pilha na mão: deixa 1 unidade aqui e continua com o resto
                     else ReturnHeld();
                 }
-                else if (hoverItem != null && hv != null) OpenMenu(hoverItem);
-                else if (slot >= 0 && hotbar != null)
-                {
-                    if (hotbar.GetItem(slot) != null) Play(InvSound.HotbarClear);
-                    hotbar.Clear(slot);
-                    dirty = true;
-                }
+                else if (hoverItem != null && hv != null && RealPointer && Mouse.current.rightButton.wasPressedThisFrame) OpenMenu(hoverItem);   // E / X: toque abre o menu, mas pelo gesto acima (segurar arrasta)
             }
         }
 
@@ -510,8 +500,22 @@ namespace HorrorFPS
             return new Vector2((c[0].x + c[2].x) * 0.5f, (c[0].y + c[2].y) * 0.5f);
         }
 
+        Vector2 SlotCenter(int i)
+        {
+            RectTransform rt = slotRects[i];
+            return InvUI.TopLeftToScreen(rt, new Vector2(rt.rect.width * 0.5f, rt.rect.height * 0.5f));
+        }
+
         void Navigate(Vector2Int dir)
         {
+            // dentro da coluna de atalhos: cima/baixo trocam de slot, direita volta para a mochila
+            int inSlot = SlotIndexAt(cursor);
+            if (inSlot >= 0 && hotbar != null)
+            {
+                if (dir.y != 0) cursor = overlay.ClampToViewport(SlotCenter(Mathf.Clamp(inSlot + dir.y, 0, hotbar.Slots - 1)));
+                else if (dir.x > 0 && views.Count > 0) cursor = overlay.ClampToViewport(views[0].EntryPoint(cursor));
+                return;
+            }
             ContainerView cur = null;
             for (int i = 0; i < views.Count; i++) if (views[i].Contains(cursor)) cur = views[i];
             if (cur == null)
@@ -538,6 +542,18 @@ namespace HorrorFPS
                 if (score < bestScore) { bestScore = score; best = views[i]; }
             }
             if (best != null) cursor = overlay.ClampToViewport(best.EntryPoint(cursor));
+            else if (dir.x < 0 && hotbar != null && slotRects[0] != null)
+            {
+                // passou da borda esquerda: vai para a coluna de atalhos (o slot mais perto na altura)
+                int near = 0; float bestD = float.MaxValue;
+                for (int i = 0; i < hotbar.Slots && i < slotRects.Length; i++)
+                {
+                    if (slotRects[i] == null) continue;
+                    float d = Mathf.Abs(SlotCenter(i).y - cursor.y);
+                    if (d < bestD) { bestD = d; near = i; }
+                }
+                cursor = overlay.ClampToViewport(SlotCenter(near));
+            }
         }
 
         // ------------------------------------------------------------------ item na mão
@@ -552,17 +568,17 @@ namespace HorrorFPS
         }
 
         /// <summary>
-        /// Mouse. Botão apertado sobre um item: soltar rápido (clique) abre o menu; segurar 'dragHoldSeconds' ou andar alguns pixels
-        /// pega o item e ele passa a seguir o ponteiro; soltar o botão larga onde estiver (ou volta ao lugar se não der).
-        /// Devolve true no quadro em que o aperto foi tratado aqui (o código normal de "pegar/soltar" não deve tratá-lo de novo).
+        /// O gesto do botão de pegar (mouse, Enter ou A): apertar e soltar rápido abre o menu do item; segurar por um tempo ou mexer o cursor
+        /// com ele apertado pega o item (arrastar); soltar o botão larga onde o cursor está. Igual para mouse, teclado e controle.
+        /// Devolve true no quadro em que o aperto foi tratado aqui (o código de soltar não deve tratá-lo de novo).
         /// </summary>
-        bool HandleMouseGesture(ContainerView hv, int slot, float dt)
+        bool HandleGesture(ContainerView hv, int slot, float dt)
         {
-            if (!RealPointer) { CancelPress(); mouseDragging = false; return false; }
-            var left = Mouse.current.leftButton;
+            // o botão de pegar é o clique / Enter / A e também o E (X no controle): toque = menu, segurar = arrastar
+            bool down = ItemInput.Held(input.Select) || ItemInput.Held(input.MenuPick);
             if (mouseDragging && held == null) mouseDragging = false;     // cancelado (botão direito, Esc...)
 
-            if (left.wasPressedThisFrame && held == null && hoverItem != null && hv != null)
+            if ((ItemInput.Pressed(input.Select) || ItemInput.Pressed(input.MenuPick)) && held == null && hoverItem != null && hv != null)
             {
                 pressItem = hoverItem; pressView = hv; pressTime = 0f; pressCursor = cursor;
                 return true;
@@ -571,13 +587,13 @@ namespace HorrorFPS
             if (pressItem != null)
             {
                 if (pressItem.container == null) { CancelPress(); return false; }      // o item sumiu (usado, jogado...)
-                if (!left.isPressed)
+                if (!down)
                 {
                     ItemInstance it = pressItem;
                     bool browse = IsBrowse(pressView);
                     CancelPress();
                     if (browse) SelectBrowse(it);                                      // Registros/Mapa: o clique escolhe (menu: botão direito)
-                    else OpenMenu(it);                                                 // clique rápido
+                    else OpenMenu(it);                                                 // toque rápido
                     return false;
                 }
                 if (IsBrowse(pressView)) return false;                                 // nessas listas não se arrasta item
@@ -590,20 +606,25 @@ namespace HorrorFPS
                     ItemInstance it = pressItem;
                     ContainerView from = pressView;
                     Vector2 at = pressCursor;
+                    // arrastar com o botão esquerdo do mouse apertado e soltar = larga ali (como sempre); nos outros casos (segurou parado,
+                    // E, Enter, A, teclado, controle) um toque já basta: o item continua na mão até o próximo clique
+                    bool mouseDrag = moved && RealPointer && !keyCursor && Mouse.current.leftButton.isPressed;
                     CancelPress();
                     BeginHold(it, from, at);                                           // pega pela célula onde o botão foi apertado
+                    stickyDrag = !mouseDrag;
                     mouseDragging = true;
                     popT = 0f;
                 }
                 else if (pressTime >= chargeFrom) ShowCharge(Mathf.Clamp01((pressTime - chargeFrom) / (holdTime - chargeFrom)));
-                else ShowCharge(-1f);                                                  // clique rápido: nada de barrinha piscando
+                else ShowCharge(-1f);                                                  // toque rápido: nada de barrinha piscando
                 return false;
             }
 
             ShowCharge(-1f);
-            if (mouseDragging && !left.isPressed)
+            if (mouseDragging && !down)
             {
                 mouseDragging = false;
+                if (held != null && stickyDrag) return false;       // continua carregando: o próximo clique (ou E) solta
                 if (held != null)
                 {
                     TryDrop(hv, slot);
@@ -619,6 +640,24 @@ namespace HorrorFPS
                 }
             }
             return false;
+        }
+
+        /// <summary>Gira o item da mão em torno da célula que o jogador segura: dir = 1 horário, -1 anti-horário.</summary>
+        void RotateHeld(int dir)
+        {
+            if (held == null || !held.data.allowRotation) return;
+            if (hasGrab)
+            {
+                Vector2Int sz = held.data.shape.GetSize(heldRot);
+                grabCell = dir > 0 ? new Vector2Int(sz.y - 1 - grabCell.y, grabCell.x)
+                                   : new Vector2Int(grabCell.y, sz.x - 1 - grabCell.x);
+            }
+            heldRot = (heldRot + (dir > 0 ? 1 : 3)) % 4;
+            RebuildGhost();
+            rotDir = dir > 0 ? 1f : -1f;
+            rotT = 0f;              // começa o giro suave (PositionGhost aplica)
+            PositionGhost();
+            Play(InvSound.Rotate);
         }
 
         void CancelPress()
@@ -716,7 +755,9 @@ namespace HorrorFPS
                 }
                 return;
             }
-            if (InvUI.Hit(dropZone, cursor))
+            int handZone = HandZoneAt(cursor);
+            if (handZone >= 0) { DropOnHand(it, handZone); return; }
+            if (OverTrash(cursor))
             {
                 if (!it.data.canDrop)
                 {

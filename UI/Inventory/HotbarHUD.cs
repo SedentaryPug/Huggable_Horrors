@@ -5,7 +5,8 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Faixa de atalhos (1-9) e mensagens curtas na tela do jogador ("Pegou: Chave de ferro"). A faixa só aparece por alguns
-    /// segundos quando algo muda; some sozinha para não poluir uma tela de terror.
+    /// segundos quando o jogador EQUIPA ou guarda um item (ou usa/troca um atalho); pegar, largar ou reorganizar o inventário não a
+    /// mostra. Some sozinha para não poluir uma tela de terror.
     /// </summary>
     [AddComponentMenu("HorrorFPS/UI/Hotbar HUD")]
     [PlayerModule("Interface", 2)]
@@ -74,14 +75,27 @@ namespace HorrorFPS
             message.color = new Color(1f, 1f, 1f, 0f);
 
             hotbar.Changed += OnHotbarChanged;
-            if (owner != null) { owner.Picked += OnPicked; owner.Dropped += OnDropped; owner.Changed += OnOwnerChanged; }
+            if (owner != null)
+            {
+                owner.Picked += OnPicked; owner.Dropped += OnDropped; owner.Changed += OnOwnerChanged;
+                owner.Equipped += OnEquipChanged; owner.Unequipped += OnEquipChanged; owner.HandsChanged += OnHandsChanged;
+            }
+        }
+
+        void Unhook()
+        {
+            if (hotbar != null) hotbar.Changed -= OnHotbarChanged;
+            if (owner != null)
+            {
+                owner.Picked -= OnPicked; owner.Dropped -= OnDropped; owner.Changed -= OnOwnerChanged;
+                owner.Equipped -= OnEquipChanged; owner.Unequipped -= OnEquipChanged; owner.HandsChanged -= OnHandsChanged;
+            }
         }
 
         /// <summary>Descarta a faixa e monta de novo (a quantidade de atalhos mudou).</summary>
         void Rebuild()
         {
-            if (hotbar != null) hotbar.Changed -= OnHotbarChanged;
-            if (owner != null) { owner.Picked -= OnPicked; owner.Dropped -= OnDropped; owner.Changed -= OnOwnerChanged; }
+            Unhook();
             if (strip != null) Destroy(strip.gameObject);
             if (message != null) Destroy(message.gameObject);
             for (int i = 0; i < slots.Length; i++) slots[i] = null;
@@ -90,13 +104,19 @@ namespace HorrorFPS
             Build();
         }
 
-        void OnDestroy()
-        {
-            if (hotbar != null) hotbar.Changed -= OnHotbarChanged;
-            if (owner != null) { owner.Picked -= OnPicked; owner.Dropped -= OnDropped; owner.Changed -= OnOwnerChanged; }
-        }
+        void OnDestroy() { Unhook(); }
 
-        void OnHotbarChanged() { dirty = true; visibleUntil = Time.unscaledTime + showSeconds; }
+        // o conteúdo da faixa acompanha o inventário, mas ela NÃO aparece por isso: só ao equipar/guardar (OnEquipChanged) ou pelo Flash()
+        void OnHotbarChanged() { dirty = true; }
+
+        void OnEquipChanged(ItemInstance it) { dirty = true; ShowStrip(); }
+        void OnHandsChanged() { dirty = true; ShowStrip(); }
+
+        void ShowStrip()
+        {
+            if (screen != null && screen.IsOpen) return;        // com o inventário aberto a faixa fica escondida; não a deixa "esperando" para depois
+            visibleUntil = Time.unscaledTime + showSeconds;
+        }
         void OnOwnerChanged(InventoryOwner o) { dirty = true; }
         void OnPicked(ItemInstance it) { Notify("Pegou: " + it.GetName(this)); }
         void OnDropped(ItemInstance it) { Notify("Jogou fora: " + it.GetName(this)); }

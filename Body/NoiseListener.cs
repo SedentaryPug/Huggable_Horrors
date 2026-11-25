@@ -17,7 +17,7 @@ namespace HorrorFPS
         [SerializeField] Transform ear;
         [Tooltip("2 = ouve o dobro do raio do barulho; 0,5 = meio surdo.")]
         [SerializeField] float hearingMultiplier = 1f;
-        [Tooltip("Parede no caminho reduz o alcance para esta fração (1 = paredes não abafam).")]
+        [Tooltip("Parede no caminho reduz o alcance para esta fração (1 = nada abafa). Pisos e tetos usam NoiseSystem.FloorTransmission; um SoundDamper no collider troca o valor.")]
         [SerializeField, Range(0.05f, 1f)] float occlusionFactor = 0.6f;
         [SerializeField] LayerMask occlusionMask = ~0;
         [Tooltip("Ignora barulhos feitos por este mesmo objeto (ou filhos).")]
@@ -55,24 +55,9 @@ namespace HorrorFPS
             if (!isActiveAndEnabled) return;
             if (ignoreOwnNoise && e.source != null && e.source.transform.root == transform.root) return;
 
-            Vector3 earPos = EarPosition;
-            float d = Vector3.Distance(earPos, e.position);
-            float reach = e.radius * Mathf.Max(0.01f, hearingMultiplier);
-            if (d > reach) return;
-
-            if (occlusionFactor < 0.999f)
-            {
-                Vector3 end = Vector3.MoveTowards(e.position, earPos, 0.35f);
-                RaycastHit hit;
-                if (Physics.Linecast(earPos, end, out hit, occlusionMask, QueryTriggerInteraction.Ignore))
-                {
-                    reach *= occlusionFactor;
-                    if (d > reach) return;
-                }
-            }
-
-            float loud = 1f - Mathf.Clamp01(d / reach);
-            if (loud < minLoudness) return;
+            // distância (com a altura pesando mais), paredes e pisos no caminho: tudo no NoiseSystem, igual para o perseguidor
+            float loud = NoiseSystem.LoudnessAt(e, EarPosition, hearingMultiplier, occlusionFactor, occlusionMask);
+            if (loud <= 0f || loud < minLoudness) return;
 
             LastPosition = e.position;
             LastKind = e.kind;

@@ -241,6 +241,26 @@ namespace HorrorFPS
             FxFlyHeld(r.center, Mathf.Min(r.width, r.height) * 0.8f, 0.2f, 0f);
         }
 
+        /// <summary>Pulso verde (aceitou) ou vermelho que balança (recusou) sobre uma zona de soltar qualquer (mãos...).</summary>
+        void FxTarget(RectTransform rt, bool good)
+        {
+            if (!FxOn || rt == null) return;
+            Rect r = InvUI.RectInLayer(fxLayer, rt);
+            Color c = good ? InvUI.Accent : FxBad;
+            fx.Flash(r, WithAlpha(c, 0.6f), 0.34f, 0f);
+            fx.Frame(r, c, 2f, 0.34f, good ? 8f : 4f);
+            if (good) fx.Punch(rt, 1.15f, 0.3f);
+            else fx.Shake(rt, shakePixels, 0.32f);
+        }
+
+        /// <summary>A peça voa até o centro de uma zona (como no atalho). Antes de largar a peça: a cópia nasce da posição dela.</summary>
+        void FxFlyHeldToRect(RectTransform rt)
+        {
+            if (!FxOn || rt == null) return;
+            Rect r = InvUI.RectInLayer(fxLayer, rt);
+            FxFlyHeld(r.center, Mathf.Min(r.width, r.height) * 0.8f, 0.2f, 0f);
+        }
+
         void FxZone(bool accepted)
         {
             if (!FxOn || dropZone == null) return;

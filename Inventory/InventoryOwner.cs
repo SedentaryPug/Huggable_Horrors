@@ -309,8 +309,9 @@ namespace HorrorFPS
         /// <summary>
         /// Devolve ao inventário o que estiver em contêineres ManualOnly (bandeja): o item vai para a aba/contêiner onde couber;
         /// se não couber em lugar nenhum e puder ser jogado, cai no chão. O que não pode ser jogado continua na bandeja.
+        /// Com 'dropInstead' (ao FECHAR o inventário) o que está na bandeja é jogado no chão em vez de voltar para a mochila.
         /// </summary>
-        public void FlushManualContainers()
+        public void FlushManualContainers(bool dropInstead = false)
         {
             for (int i = 0; i < containers.Count; i++)
             {
@@ -321,6 +322,7 @@ namespace HorrorFPS
                 {
                     ItemInstance it = list[k];
                     if (it == null || it.data == null || it.container != c) continue;
+                    if (dropInstead && it.data.canDrop) { Drop(it, true); continue; }
                     ItemContainer dest = FindAutoDestination(it);
                     if (dest != null && ItemTransfer.Ok(ItemTransfer.Move(it, dest))) continue;
                     if (it.data.canDrop) Drop(it, true);

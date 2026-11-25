@@ -196,8 +196,11 @@ namespace HorrorFPS
             EventSystem es = EventSystem.current;
             if (es == null) return;
             GameObject current = es.currentSelectedGameObject;
-            if (current == null || !current.activeInHierarchy)
-                es.SetSelectedGameObject((loadButton.gameObject.activeSelf ? loadButton : menuButton).gameObject);
+            if (current == null || !UISelectionKeeper.IsUsable(current))
+            {
+                if (!UISelectionKeeper.RestoreLast())
+                    es.SetSelectedGameObject((loadButton.gameObject.activeSelf ? loadButton : menuButton).gameObject);
+            }
         }
 
         static void LoadLast()

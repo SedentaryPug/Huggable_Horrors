@@ -92,7 +92,7 @@ namespace HorrorFPS
         public bool Tick(ItemInput input, Vector2 cursor, float dt)
         {
             if (!IsOpen) return false;
-            if (ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.Secondary)) { Close(); return false; }
+            if (ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.ToggleBag) || ItemInput.Pressed(input.Secondary)) { Close(); return false; }
 
             // o item pode ter sumido do inventário (usado, jogado fora por outro sistema)
             if (item.container == null) { Close(); return false; }

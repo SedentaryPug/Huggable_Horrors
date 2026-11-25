@@ -58,6 +58,24 @@ namespace HorrorFPS
         public const string PickedUp = "Pegou: {0}";
         public const string LockedNeedsKey = "Trancado. Procure a chave";
 
+        // Inspeção (item novo, objeto do cenário) e teclado numérico
+        public const string InspectNewItem = "ITEM NOVO";
+        public const string InspectLeave = "Deixar";
+        public const string InspectClose = "Fechar";
+        public const string InspectHintItem = "{0}  Pegar     {1}  Deixar     Arrastar / analógico direito: girar     Roda: aproximar";
+        public const string InspectHintObject = "Arrastar / analógico direito / setas: girar     Roda: aproximar     {0}  Fechar";
+        public const string InspectPromptPad = "{0}  {1}";
+        public const string Examine = "Examinar";
+        public const string KeypadUse = "Usar teclado";
+        public const string KeypadExit = "Sair do teclado";
+        public const string KeypadPress = "Apertar";
+        public const string KeypadClear = "Apagar";
+        public const string KeypadConfirm = "Confirmar";
+        public const string KeypadLocked = "Bloqueado ({0} s)";
+        public const string KeypadWrong = "Código incorreto";
+        public const string KeypadOpened = "Destrancado";
+        public const string KeypadAlreadyOpen = "Já destrancado";
+
         // Cutscenes
         public const string HoldToSkip = "Segure {0} para pular";
         public const string Skipping = "Pulando...";
@@ -182,6 +200,15 @@ namespace HorrorFPS
         public const string JournalCount = "{0} registro(s)";
         public const string JournalCountUnread = "{0} registro(s)  •  {1} novo(s)";
         public const string JournalNewTag = "● novo";
+        public const string RecordsBack = "‹  Voltar às categorias";
+        public const string RecordsCountTips = "{0} dica(s)";
+        public const string RecordsPickCategory = "Escolha uma categoria à esquerda\npara ver tudo o que há nela.";
+        public const string RecordsPickRecord = "Escolha um registro da lista para ler.";
+        public const string RecordsDescDiary = "Páginas de diário que você encontrou.";
+        public const string RecordsDescNote = "Bilhetes e anotações soltas.";
+        public const string RecordsDescRecording = "Gravações para ouvir de novo.";
+        public const string RecordsDescDocument = "Documentos e papéis que você guardou.";
+        public const string RecordsDescHowTo = "As dicas de comandos do jogo.";
         public const string JournalReaderHint = "{0} fecha  •  Setas ou roda do mouse rolam o texto";
         public const string JournalReaderHintPad = "{0} fecha  •  Analógico direito rola o texto";
 

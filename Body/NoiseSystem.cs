@@ -72,6 +72,21 @@ namespace HorrorFPS
         /// <summary>Desenha (no Scene/Game com Gizmos ligados) uma esfera no barulho e linhas até quem foi avisado. Só para depurar.</summary>
         public static bool DebugDraw;
 
+        /// <summary>
+        /// Quanto da distância VERTICAL conta na hora de ouvir (1 = só a distância em linha reta; 1,5 = cada metro de altura vale 1,5 m).
+        /// O som entre andares tem que contornar escadas e vãos: quem está no andar de cima escuta pior o que acontece embaixo, e vice-versa.
+        /// </summary>
+        public static float VerticalWeight = 1.5f;
+
+        /// <summary>
+        /// Fração do alcance que atravessa uma superfície HORIZONTAL (piso, laje, teto) no caminho do som. Paredes usam o fator de quem ouve
+        /// (NoiseListener.occlusionFactor / perfil do perseguidor). Um SoundDamper no collider troca esse valor por um próprio.
+        /// </summary>
+        public static float FloorTransmission = 0.35f;
+
+        /// <summary>Quantas superfícies no caminho do som contam (as paredes e pisos além disso são ignorados: o som já morreu).</summary>
+        public static int MaxOccluders = 4;
+
         const int BufferSize = 256;
         static readonly Collider[] buffer = new Collider[BufferSize];
         static readonly HashSet<object> notified = new HashSet<object>();
@@ -88,6 +103,9 @@ namespace HorrorFPS
             HearingMask = ~0;
             SearchMultiplier = 2f;
             DebugDraw = false;
+            VerticalWeight = 1.5f;
+            FloorTransmission = 0.35f;
+            MaxOccluders = 4;
             emitting = false;
             listeners.Clear();
             snapshot.Clear();
@@ -156,26 +174,74 @@ namespace HorrorFPS
         }
 
         /// <summary>
-        /// Quão forte o barulho chega num ponto (os "ouvidos"): 0 = não ouve, 1 = colado na fonte. Considera o alcance, o quanto o ouvinte
-        /// ouve bem (hearingMultiplier) e paredes no caminho (reduzem o alcance para a fração occlusionFactor; 1 = paredes não abafam).
-        /// Use dentro de OnNoiseHeard para decidir se a IA realmente escutou.
+        /// Quão forte o barulho chega num ponto (os "ouvidos"): 0 = não ouve, 1 = colado na fonte. Considera:
+        ///  - o alcance e o quanto o ouvinte ouve bem (hearingMultiplier);
+        ///  - a ALTURA: cada metro de diferença de andar vale VerticalWeight metros de distância;
+        ///  - tudo que está no caminho (PathTransmission): cada parede reduz o alcance para a fração occlusionFactor, cada piso/teto para
+        ///    FloorTransmission, e vários obstáculos se multiplicam (duas paredes e uma laje abafam muito mais que uma parede).
+        /// occlusionFactor 1 = nada abafa (nem paredes nem pisos). Use dentro de OnNoiseHeard para decidir se a IA realmente escutou.
         /// </summary>
         public static float LoudnessAt(NoiseEvent e, Vector3 earPosition, float hearingMultiplier = 1f, float occlusionFactor = 0.6f, int occlusionMask = ~0)
         {
-            float d = Vector3.Distance(earPosition, e.position);
+            Vector3 delta = earPosition - e.position;
+            float flat = new Vector2(delta.x, delta.z).magnitude;
+            float d = flat + Mathf.Abs(delta.y) * Mathf.Max(1f, VerticalWeight);
             float reach = e.radius * Mathf.Max(0.01f, hearingMultiplier);
             if (d > reach) return 0f;
 
             if (occlusionFactor < 0.999f)
             {
-                Vector3 end = Vector3.MoveTowards(e.position, earPosition, 0.35f);
-                if (Physics.Linecast(earPosition, end, occlusionMask, QueryTriggerInteraction.Ignore))
-                {
-                    reach *= Mathf.Max(0.05f, occlusionFactor);
-                    if (d > reach) return 0f;
-                }
+                reach *= PathTransmission(e.position, earPosition, occlusionFactor, occlusionMask);
+                if (d > reach) return 0f;
             }
             return 1f - Mathf.Clamp01(d / reach);
+        }
+
+        static readonly RaycastHit[] pathHits = new RaycastHit[24];
+        static readonly float[] pathBest = new float[8];
+
+        /// <summary>
+        /// Fração (0,05..1) do alcance do som que atravessa o que existe entre a fonte e o ouvido. 1 = caminho livre.
+        /// Cada Collider no caminho vale: SoundDamper dele (se tiver), senão FloorTransmission (superfície mais horizontal que vertical)
+        /// ou wallFactor (paredes). Os valores se multiplicam, até MaxOccluders obstáculos (os mais abafadores primeiro).
+        /// </summary>
+        public static float PathTransmission(Vector3 source, Vector3 ear, float wallFactor, int mask = ~0)
+        {
+            Vector3 end = Vector3.MoveTowards(source, ear, 0.35f);     // não conta o objeto que faz o barulho (garrafa, rádio...)
+            Vector3 dir = end - ear;
+            float dist = dir.magnitude;
+            if (dist < 0.01f) return 1f;
+            int n = Physics.RaycastNonAlloc(ear, dir / dist, pathHits, dist, mask, QueryTriggerInteraction.Ignore);
+            if (n <= 0) return 1f;
+
+            // a fração de cada obstáculo; guarda as menores (as que mais abafam) quando passa do limite
+            int max = Mathf.Clamp(MaxOccluders, 1, 8);
+            float[] best = pathBest;
+            int count = 0;
+            for (int i = 0; i < n; i++)
+            {
+                RaycastHit h = pathHits[i];
+                Collider c = h.collider;
+                if (c == null) continue;
+                SoundDamper damper = c.GetComponentInParent<SoundDamper>();
+                float t;
+                if (damper != null) t = damper.transmission;
+                else t = Mathf.Abs(h.normal.y) > 0.7f ? FloorTransmission : wallFactor;
+                t = Mathf.Clamp(t, 0.02f, 1f);
+                if (t >= 0.999f) continue;
+
+                if (count < max) best[count++] = t;
+                else
+                {
+                    int worst = 0;                                  // troca o que menos abafa, se este abafa mais
+                    for (int k = 1; k < count; k++) if (best[k] > best[worst]) worst = k;
+                    if (t < best[worst]) best[worst] = t;
+                }
+            }
+
+            float total = 1f;
+            for (int i = 0; i < count; i++) total *= best[i];
+            return Mathf.Max(0.05f, total);
         }
 
         static void DrawSphere(Vector3 center, float radius, Color color)

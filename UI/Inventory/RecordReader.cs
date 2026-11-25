@@ -9,6 +9,8 @@ namespace HorrorFPS
         readonly RectTransform viewport;
         readonly RectTransform bodyRt;
         readonly Text title, meta, body, empty;
+        readonly RectTransform art;
+        readonly float artSize;
         readonly float viewH;
         float scrollY;
 
@@ -41,12 +43,47 @@ namespace HorrorFPS
 
             empty = InvUI.Label(Root, "empty", "", 13, TextAnchor.MiddleCenter, InvUI.TextDim);
             InvUI.Stretch(empty.rectTransform, 30f, 30f, 30f, 30f);
+
+            // imagem da categoria (aparece ao passar o cursor numa categoria)
+            artSize = Mathf.Clamp(Mathf.Min(w - 80f, h - 150f), 80f, 260f);
+            art = InvUI.Rect(Root, "art");
+            InvUI.TopLeft(art, (w - artSize) * 0.5f, 86f + Mathf.Max(0f, (h - 86f - artSize - 40f) * 0.35f), artSize, artSize);
+            art.gameObject.SetActive(false);
         }
 
         public bool Contains(Vector2 screenPoint) { return InvUI.Hit(Root, screenPoint); }
 
+        void HideArt()
+        {
+            if (!art.gameObject.activeSelf) return;
+            art.gameObject.SetActive(false);
+            for (int i = art.childCount - 1; i >= 0; i--) Object.Destroy(art.GetChild(i).gameObject);
+        }
+
+        /// <summary>
+        /// Mostra a imagem de uma categoria (título, legenda e a figura). 'sprite' null = desenha o ícone simples do tipo:
+        /// 0 diário, 1 nota, 2 gravação, 3 documento, 4 como jogar.
+        /// </summary>
+        public void ShowArt(int kind, Sprite sprite, string titleText, string caption)
+        {
+            HideArt();
+            empty.gameObject.SetActive(false);
+            title.text = titleText;
+            meta.text = caption;
+            body.text = "";
+            art.gameObject.SetActive(true);
+            if (sprite != null)
+            {
+                Image im = InvUI.Img(art, "img", Color.white, sprite);
+                im.preserveAspect = true;
+                InvUI.Stretch(im.rectTransform);
+            }
+            else RecordArt.Draw(art, artSize, kind);
+        }
+
         public void ShowEmpty(string message)
         {
+            HideArt();
             title.text = ""; meta.text = ""; body.text = "";
             empty.text = message;
             empty.gameObject.SetActive(true);
@@ -55,6 +92,7 @@ namespace HorrorFPS
         /// <summary>Mostra um registro. 'resetScroll' volta ao topo (use ao trocar de registro, não a cada redesenho).</summary>
         public void Show(string titleText, string metaText, string text, bool resetScroll)
         {
+            HideArt();
             empty.gameObject.SetActive(false);
             title.text = titleText;
             meta.text = metaText;

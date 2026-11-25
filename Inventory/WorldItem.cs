@@ -56,12 +56,27 @@ namespace HorrorFPS
         public override void Interact(PlayerContext p)
         {
             ItemInstance it = Instance;
+            if (it == null || PlayerRef.Find<InventoryOwner>(p) == null) return;
+
+            // item NOVO (o grupo nunca pegou um destes): antes, a tela de inspeção com Pegar / Deixar
+            if (ItemPickupInspector.NeedsInspection(it.data) && ItemPickupInspector.Ask(p, it, take => { if (take && this != null) Take(p); }))
+                return;
+            Take(p);
+        }
+
+        /// <summary>Põe o item na mochila de quem pegou (depois da inspeção, se houve).</summary>
+        void Take(PlayerContext p)
+        {
+            ItemInstance it = Instance;
             InventoryOwner inv = PlayerRef.Find<InventoryOwner>(p);
             if (it == null || inv == null) return;
+            if (it.container != null) return;                           // já foi pego (outro jogador, durante a inspeção)
+            if (!inv.CanFitAny(it.data)) { Toast.Show("Inventário cheio"); return; }   // a mochila encheu enquanto o item era inspecionado
 
             // pegar uma lanterna acesa do chão: ela vai para a mochila apagada (acesa só na mão)
             if (it.data.equip != null && it.data.equip.kind == EquipKind.Flashlight) it.SetFlag(EquipState.Lit, false);
             inv.AddInstance(it);
+            ItemPickupInspector.MarkSeen(it.data);
             if (it.container == null && it.stack > 0) return;           // coube só uma parte: o resto continua no chão (se a instância inteira entrou, ela já está num contêiner)
 
             if (!string.IsNullOrEmpty(setVariableOnPickup)) FrameworkBridge.SetBool(setVariableOnPickup, true);

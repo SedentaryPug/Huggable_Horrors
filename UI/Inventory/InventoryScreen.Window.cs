@@ -19,12 +19,12 @@ namespace HorrorFPS
         RectTransform window, popupLayer, dropZone, ghost, cursorRoot, chargeRoot;
         Image chargeFill;
         GameObject dimObject;
-        Text titleText, infoName, infoMeta, infoDesc, infoHelp;
-        Image dropBack;
+        Text titleText, infoName, infoMeta, infoDesc;
         ItemInstance ghostItem;
         int ghostRot = -1;
         float ghostCell = 40f;
         float rotT = 1f;            // 0..1: animação do giro da peça na mão (1 = parada)
+        float rotDir = 1f;          // sentido do giro em andamento: 1 horário, -1 anti-horário
         [Tooltip("Inércia da peça arrastada: quanto maior, mais ela cola no cursor (0 = sem suavização).")]
         [SerializeField] float ghostFollow = 24f;
         [Tooltip("Inclinação da peça arrastada pela velocidade horizontal, em graus por 1000 px/s (0 = não inclina).")]
@@ -73,17 +73,20 @@ namespace HorrorFPS
             Image bg = InvUI.Img(window, "bg", InvUI.Panel);
             InvUI.Stretch(bg.rectTransform);
 
-            titleText = InvUI.Label(window, "title", "INVENTÁRIO" + (other != null ? "     |     " + other.DisplayName.ToUpperInvariant() : ""),
-                16, TextAnchor.MiddleLeft, InvUI.Accent);
-            InvUI.TopLeft(titleText.rectTransform, 16f, 6f, winW - 32f, 32f);
+            // sem o texto "INVENTÁRIO": só o nome do outro inventário (baú, NPC...) quando há um aberto
+            titleText = null;
+            if (other != null)
+            {
+                titleText = InvUI.Label(window, "title", other.DisplayName.ToUpperInvariant(), 16, TextAnchor.MiddleLeft, InvUI.Accent);
+                InvUI.TopLeft(titleText.rectTransform, 16f, 6f, winW - 32f, 32f);
+            }
 
             BuildTabBar();
             content = InvUI.Rect(window, "content");
             InvUI.Stretch(content);
             BuildContent();
 
-            BuildHotbarStrip(16f, winH - 56f, winW - 16f - 190f - 8f);
-            BuildDropZone(winW - 16f - 190f, winH - 56f, 190f, 44f);
+            BuildDragZones();           // lixeira, mãos e atalhos: só aparecem enquanto um item é arrastado
 
             BuildFx();          // camada dos efeitos: acima da janela, abaixo do menu e do cursor
 
@@ -145,49 +148,7 @@ namespace HorrorFPS
             infoMeta = InvUI.Label(Host, "imeta", "", 11, TextAnchor.UpperLeft, InvUI.TextDim);
             InvUI.TopLeft(infoMeta.rectTransform, x + 10f, y + 34f, w - 20f, 18f);
             infoDesc = InvUI.Label(Host, "idesc", "", 13, TextAnchor.UpperLeft, InvUI.TextColor);
-            InvUI.TopLeft(infoDesc.rectTransform, x + 10f, y + 56f, w - 20f, Mathf.Max(20f, h - 56f - 38f));
-            infoHelp = InvUI.Label(Host, "ihelp", HelpText, 11, TextAnchor.LowerLeft, InvUI.TextDim);
-            InvUI.TopLeft(infoHelp.rectTransform, x + 10f, y + h - 36f, w - 20f, 32f);
-        }
-
-        void BuildHotbarStrip(float x, float y, float rightLimit)
-        {
-            int n = hotbar != null ? hotbar.Slots : Hotbar.MaxSlots;
-            // com muitos atalhos os quadrados encolhem para a faixa caber (44 px até 9 atalhos; mínimo 28 px)
-            const float gap = 8f;
-            float sz = Mathf.Clamp((Mathf.Max(60f, rightLimit - x) + gap) / n - gap, 28f, 44f);
-            float step = sz + gap;
-            float top = y + (44f - sz) * 0.5f;
-            float inset = Mathf.Round(sz * 0.16f);
-            for (int i = 0; i < n; i++)
-            {
-                RectTransform rt = InvUI.Rect(window, "slot" + i);
-                InvUI.TopLeft(rt, x + i * step, top, sz, sz);
-                slotRects[i] = rt;
-                slotBacks[i] = InvUI.Img(rt, "back", InvUI.Cell); InvUI.Stretch(slotBacks[i].rectTransform);
-                slotSwatches[i] = InvUI.Img(rt, "sw", Color.white); InvUI.Stretch(slotSwatches[i].rectTransform, inset, inset, inset, inset);
-                slotIcons[i] = InvUI.Img(rt, "ic", Color.white); slotIcons[i].preserveAspect = true; InvUI.Stretch(slotIcons[i].rectTransform, 4f, 4f, 4f, 4f);
-                Text num = InvUI.Label(rt, "n", Hotbar.KeyLabel(i), 11, TextAnchor.UpperLeft, InvUI.Accent);
-                InvUI.TopLeft(num.rectTransform, 3f, 1f, 20f, 16f);
-                slotCounts[i] = InvUI.Label(rt, "c", "", 11, TextAnchor.LowerRight, Color.white);
-                InvUI.TopLeft(slotCounts[i].rectTransform, 0f, 0f, sz - 3f, sz - 1f);
-            }
-            float capX = x + n * step + 8f, capW = Mathf.Min(330f, rightLimit - capX);
-            if (capW >= 120f)
-            {
-                Text cap = InvUI.Label(window, "slotcap", "Atalhos (teclas " + Hotbar.KeyRange(n) + "): arraste um item para um número", 11, TextAnchor.MiddleLeft, InvUI.TextDim);
-                InvUI.TopLeft(cap.rectTransform, capX, y, capW, 44f);
-            }
-        }
-
-        void BuildDropZone(float x, float y, float w, float h)
-        {
-            dropZone = InvUI.Rect(window, "dropzone");
-            InvUI.TopLeft(dropZone, x, y, w, h);
-            dropBack = InvUI.Img(dropZone, "back", new Color(0.3f, 0.08f, 0.07f, 0.8f));
-            InvUI.Stretch(dropBack.rectTransform);
-            Text t = InvUI.Label(dropZone, "t", "JOGAR FORA", 13, TextAnchor.MiddleCenter, new Color(0.95f, 0.6f, 0.55f, 1f));
-            InvUI.Stretch(t.rectTransform);
+            InvUI.TopLeft(infoDesc.rectTransform, x + 10f, y + 56f, w - 20f, Mathf.Max(20f, h - 56f - 8f));
         }
 
         void BuildCursor()
@@ -214,6 +175,7 @@ namespace HorrorFPS
             if (chargeRoot != null) Destroy(chargeRoot.gameObject);
             chargeRoot = null; chargeFill = null;
             window = null; popupLayer = null; dimObject = null; cursorRoot = null; dropZone = null;
+            DestroyDragZones();
             for (int i = 0; i < slotRects.Length; i++) slotRects[i] = null;
         }
 
@@ -252,21 +214,11 @@ namespace HorrorFPS
             return -1;
         }
 
-        void UpdateSlotHover(int slot)
-        {
-            for (int i = 0; i < slotBacks.Length; i++)
-            {
-                if (slotBacks[i] == null) continue;
-                slotBacks[i].color = (i == slot && held != null) ? InvUI.Good : (i == slot ? new Color(0.24f, 0.25f, 0.24f, 0.95f) : InvUI.Cell);
-            }
-            if (dropBack != null)
-                dropBack.color = (held != null && InvUI.Hit(dropZone, cursor)) ? new Color(0.55f, 0.12f, 0.1f, 0.95f) : new Color(0.3f, 0.08f, 0.07f, 0.8f);
-        }
+        void UpdateSlotHover(int slot) { UpdateZoneHover(slot); }
 
         void UpdateInfo(ItemInstance it)
         {
             if (infoName == null) return;
-            infoHelp.text = HelpText;
             if (it == null) { infoName.text = ""; infoMeta.text = ""; infoDesc.text = ""; return; }
             infoName.text = it.GetName(this);
             string meta = CategoryName(it.data.category);
@@ -383,7 +335,7 @@ namespace HorrorFPS
             {
                 rotT = Mathf.Min(1f, rotT + Time.unscaledDeltaTime / 0.13f);
                 float e = rotT * rotT * (3f - 2f * rotT);
-                spin = 90f * (1f - e);
+                spin = 90f * rotDir * (1f - e);
             }
             float a = spin + ghostTilt;
             if (Mathf.Abs(a) > 0.01f)
@@ -465,30 +417,22 @@ namespace HorrorFPS
                         string label = ok || string.IsNullOrEmpty(a.blockedReason) ? a.label : a.label + "  (" + a.blockedReason + ")";
                         e.Add(new ItemMenu.Entry(label, () => UseAction(item, a), ok));
                     }
+                // equipar: UMA linha só. Para escolher a mão (esquerda, direita ou as duas) arraste o item para as mãos que aparecem embaixo
                 if (item.data.IsEquippable)
-                {
-                    if (owner.IsHandItem(item))
-                    {
-                        // item de mão: escolhe a mão (a mesma escolha do clique esquerdo / direito ao equipar pelo atalho)
-                        HandSide cur = owner.HandOf(item);
-                        if (cur != HandSide.Left) e.Add(new ItemMenu.Entry(cur == HandSide.None ? "Equipar na mão esquerda" : "Passar para a mão esquerda", () => { owner.EquipToHand(item, HandSide.Left); dirty = true; }));
-                        if (cur != HandSide.Right) e.Add(new ItemMenu.Entry(cur == HandSide.None ? "Equipar na mão direita" : "Passar para a mão direita", () => { owner.EquipToHand(item, HandSide.Right); dirty = true; }));
-                        if (cur != HandSide.None) e.Add(new ItemMenu.Entry("Desequipar", () => { owner.ToggleEquip(item); dirty = true; }));
-                    }
-                    else
-                        e.Add(new ItemMenu.Entry(owner.IsEquipped(item) ? "Desequipar" : "Equipar", () => { owner.ToggleEquip(item); dirty = true; }));
-                }
+                    e.Add(new ItemMenu.Entry(owner.IsEquipped(item) ? "Desequipar" : "Equipar", () => { owner.ToggleEquip(item); dirty = true; }));
             }
             if (item.data.canInspect) e.Add(new ItemMenu.Entry("Inspecionar", () => OpenInspect(item)));
             if (mine)
             {
-                e.Add(new ItemMenu.Entry("Atalho…", () => OpenHotkeyMenu(item)));
                 if (item.stack > 1) e.Add(new ItemMenu.Entry("Dividir pilha", () => SplitStack(item)));
-                if (item.container is GridContainer && item.data.allowRotation && item.data.shape.CanRotateUsefully())
-                    e.Add(new ItemMenu.Entry("Girar", () => RotateInPlace(item)));
+                if (item.hotkey >= 0) e.Add(new ItemMenu.Entry("Remover atalho", () => { hotbar.Assign(-1, item); dirty = true; Play(InvSound.HotbarClear); }, hotbar != null));
             }
-            AddMoveEntries(e, item, owner);
-            if (other != null) AddMoveEntries(e, item, other);
+            // com um baú aberto, as abas (Chaves, Registros...) ficam fora da tela: aqui dá para mandar o item de um lado para o outro
+            if (other != null)
+            {
+                AddMoveEntries(e, item, owner);
+                AddMoveEntries(e, item, other);
+            }
             if (item.data.canDrop) e.Add(new ItemMenu.Entry("Jogar fora", () => DropToWorld(item)));
             ShowMenu(item.GetName(this), e);
         }
@@ -501,18 +445,8 @@ namespace HorrorFPS
         {
             menu.Animated = animations;
             menu.Speed = animationSpeed;
-            menu.Show(popupLayer, cursor, title, entries, MenuHint);
+            menu.Show(popupLayer, cursor, title, entries);
             if (!RealPointer && menu.IsOpen) cursor = overlay.ClampToViewport(menu.FocusPoint());
-        }
-
-        string MenuHint
-        {
-            get
-            {
-                return input != null && input.UsesMouse
-                    ? "E escolhe • Setas movem • Botão dir. fecha"
-                    : "A/X escolhe • D-pad move • B volta";
-            }
         }
 
         void AddMoveEntries(List<ItemMenu.Entry> e, ItemInstance item, InventoryOwner who)
@@ -547,21 +481,6 @@ namespace HorrorFPS
             ItemInstance part = ItemTransfer.SplitStack(item, item.stack / 2);
             if (part == null) Notify("Sem espaço para dividir.");
             dirty = true;
-        }
-
-        void OpenHotkeyMenu(ItemInstance item)
-        {
-            if (hotbar == null) return;
-            List<ItemMenu.Entry> e = new List<ItemMenu.Entry>();
-            for (int i = 0; i < hotbar.Slots; i++)
-            {
-                int slot = i;
-                ItemInstance cur = hotbar.GetItem(i);
-                string label = "Tecla " + Hotbar.KeyLabel(i) + (cur != null && cur != item ? "   (troca com " + InvUI.Truncate(cur.GetName(this), 16) + ")" : (cur == item ? "   (atual)" : ""));
-                e.Add(new ItemMenu.Entry(label, () => { hotbar.Assign(slot, item); dirty = true; }));
-            }
-            e.Add(new ItemMenu.Entry("Remover atalho", () => { hotbar.Assign(-1, item); dirty = true; }, item.hotkey >= 0));
-            ShowMenu("Atalho de " + item.GetName(this), e);
         }
     }
 }

@@ -285,6 +285,8 @@ namespace HorrorFPS
                 es = go.AddComponent<EventSystem>();
             }
 
+            if (es.GetComponent<UISelectionKeeper>() == null) es.gameObject.AddComponent<UISelectionKeeper>();     // nunca deixa o menu sem elemento selecionado
+
             bool hasNewModule = false;
             BaseInputModule[] modules = es.GetComponents<BaseInputModule>();
             for (int i = 0; i < modules.Length; i++)

@@ -21,14 +21,16 @@ namespace HorrorFPS
         PlayerInput playerInput;
         float nextSync;
 
-        public InputAction Toggle { get; private set; }       // abrir/fechar inventário
+        public InputAction Toggle { get; private set; }       // abrir/fechar inventário na ÚLTIMA aba usada (Tab / Y)
+        public InputAction ToggleBag { get; private set; }    // abrir/fechar inventário na MOCHILA (I)
         public InputAction CursorDelta { get; private set; }  // mouse: movimento do cursor virtual
         public InputAction Stick { get; private set; }        // analógico esquerdo: cursor virtual
         public InputAction RightStick { get; private set; }   // analógico direito: girar/zoom na inspeção, rolar listas
         public InputAction Select { get; private set; }       // pegar / soltar
         public InputAction Secondary { get; private set; }    // menu do item
         public InputAction MenuPick { get; private set; }     // com o menu do item aberto: escolhe a opção em foco (E / X)
-        public InputAction Rotate { get; private set; }       // girar o item na mão
+        public InputAction Rotate { get; private set; }       // girar o item na mão no sentido horário (R / RB)
+        public InputAction RotateBack { get; private set; }   // girar o item na mão no sentido anti-horário (Q / LB)
         public InputAction Cancel { get; private set; }       // voltar / soltar na origem
         public InputAction Drop { get; private set; }         // jogar fora o item sob o cursor
         public InputAction Inspect { get; private set; }      // inspecionar o item sob o cursor
@@ -41,7 +43,7 @@ namespace HorrorFPS
         public InputAction UseLeft { get; private set; }      // mão esquerda: botão esquerdo do mouse / LT (atirar, golpear com o item da mão esquerda)
         public InputAction UseRight { get; private set; }     // mão direita: botão direito do mouse / RT
         public InputAction TwoHand { get; private set; }      // G: toque = item da mão direita nas duas mãos; segurar = item da mão esquerda
-        public InputAction DropEquipped { get; private set; } // Q / D-pad cima: larga o item equipado no chão (toque = mão direita, segurar = mão esquerda)
+        public InputAction DropEquipped { get; private set; } // Q / D-pad cima: larga o item equipado no chão (com itens nas duas mãos, pergunta qual: clique esquerdo/direito)
         public InputAction Scroll { get; private set; }       // roda do mouse
         public InputAction HotbarPrev { get; private set; }
         public InputAction HotbarNext { get; private set; }
@@ -57,7 +59,7 @@ namespace HorrorFPS
         public InputAction GodInvisible { get; private set; } // F3
         public InputAction GodStamina { get; private set; }   // F4
         public InputAction GodAmmo { get; private set; }      // F5
-        public InputAction Objectives { get; private set; }   // mostrar a lista de objetivos na tela: J / clique do analógico direito (ignorado escondido, onde esse botão segura o fôlego)
+        public InputAction Objectives { get; private set; }   // abre o inventário na aba Registros (e fecha, se já está nela): J / clique do analógico direito (ignorado escondido, onde esse botão segura o fôlego)
 
         /// <summary>True se o jogador usa mouse (cursor vem do delta do mouse); senão o cursor vem do analógico.</summary>
         public bool UsesMouse { get; private set; }
@@ -102,12 +104,14 @@ namespace HorrorFPS
             asset.name = "HorrorFPS.ItemInput";
             map = asset.AddActionMap("Items");
 
-            Toggle = Button("Toggle", "<Keyboard>/tab", "<Keyboard>/i", "<Gamepad>/buttonNorth");
+            Toggle = Button("Toggle", "<Keyboard>/tab", "<Gamepad>/buttonNorth");
+            ToggleBag = Button("ToggleBag", "<Keyboard>/i");
             Select = Button("Select", "<Mouse>/leftButton", "<Gamepad>/buttonSouth", "<Keyboard>/enter", "<Keyboard>/space");
             Secondary = Button("Secondary", "<Mouse>/rightButton", "<Gamepad>/buttonWest", "<Keyboard>/e");
             // com o menu do item aberto: E (ou X no controle) ATIVA a opção em foco, em vez de reabrir o menu no item. Enter, Espaço e A também ativam (via Select).
             MenuPick = Button("MenuPick", "<Keyboard>/e", "<Gamepad>/buttonWest");
             Rotate = Button("Rotate", "<Keyboard>/r", "<Gamepad>/rightShoulder");
+            RotateBack = Button("RotateBack", "<Keyboard>/q", "<Gamepad>/leftShoulder");
             Cancel = Button("Cancel", "<Keyboard>/backspace", "<Gamepad>/buttonEast");
             Drop = Button("Drop", "<Keyboard>/g");
             Inspect = Button("Inspect", "<Keyboard>/f", "<Gamepad>/leftShoulder");

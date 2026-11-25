@@ -90,6 +90,8 @@ namespace HorrorFPS
         public GameObject inspectPrefab;
         public bool canDrop = true;
         public bool canInspect = true;
+        [Tooltip("Na PRIMEIRA vez que o grupo pega este item no cenário, abre uma tela de inspeção (girar o modelo) com as opções Pegar ou Deixar. Só vale se 'Can Inspect' estiver ligado.")]
+        public bool inspectOnFirstPickup = true;
 
         [Header("Equipamento (ao equipar)")]
         [Tooltip("Comportamento do item equipado: lanterna, arma branca ou arma de fogo. Use os botões de modelo para preencher os valores.")]

@@ -156,7 +156,11 @@ namespace HorrorFPS
             EventSystem es = EventSystem.current;
             if (es == null) return;
             GameObject current = es.currentSelectedGameObject;
-            if (current == null || !current.activeInHierarchy) Select(FirstOfCurrentPage());
+            if (current == null || !UISelectionKeeper.IsUsable(current))
+            {
+                // perdeu a seleção (clique no vazio, botão desabilitado...): volta para onde estava; só então para o primeiro da página
+                if (!UISelectionKeeper.RestoreLast()) Select(FirstOfCurrentPage());
+            }
         }
 
         static void Select(Selectable target)

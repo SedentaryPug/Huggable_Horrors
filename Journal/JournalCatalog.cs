@@ -17,8 +17,31 @@ namespace HorrorFPS
         [SerializeField] bool autoCollectRecords = true;
         [SerializeField] List<JournalEntry> entries = new List<JournalEntry>();
 
+        [Header("Imagens das categorias (aba Registros)")]
+        [Tooltip("Aparece no painel da direita quando o jogador passa o cursor sobre a categoria. Vazio = um desenho simples feito por código.")]
+        [SerializeField] Sprite diaryImage;
+        [SerializeField] Sprite noteImage;
+        [SerializeField] Sprite recordingImage;
+        [SerializeField] Sprite documentImage;
+        [Tooltip("Categoria \"Como jogar\" (as dicas de comandos).")]
+        [SerializeField] Sprite howToImage;
+
         public bool AutoCollectRecords { get { return autoCollectRecords; } }
         public IList<JournalEntry> Entries { get { return entries; } }
+
+        /// <summary>Imagem da categoria (null = sem imagem; a aba Registros desenha um ícone simples no lugar).</summary>
+        public Sprite ImageFor(JournalKind kind)
+        {
+            switch (kind)
+            {
+                case JournalKind.Diary: return diaryImage;
+                case JournalKind.Recording: return recordingImage;
+                case JournalKind.Document: return documentImage;
+                default: return noteImage;
+            }
+        }
+
+        public Sprite HowToImage { get { return howToImage; } }
 
         public static JournalCatalog Load()
         {

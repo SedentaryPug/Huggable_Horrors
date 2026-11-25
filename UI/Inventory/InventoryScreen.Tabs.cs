@@ -7,10 +7,11 @@ namespace HorrorFPS
     // Parte "abas" da tela de inventário: Mochila, Chaves, Registros e Mapa (só com a mochila aberta sozinha; com baú aberto fica a mochila).
     public partial class InventoryScreen
     {
-        const float TabW = 112f, TabH = 28f;
+        const float TabW = 112f, TabH = 28f, TabKeyW = 46f;
         const float SideListW = 270f;
 
         InventoryTab activeTab = InventoryTab.Bag;
+        InventoryTab soloTab = InventoryTab.Bag;        // última aba usada com só a mochila aberta: o Tab abre nela de novo
         readonly List<InventoryTab> tabList = new List<InventoryTab>();
         readonly List<RectTransform> tabRects = new List<RectTransform>();
         readonly List<Image> tabBacks = new List<Image>();
@@ -44,7 +45,8 @@ namespace HorrorFPS
         void BuildTabList()
         {
             tabList.Clear();
-            if (other != null) { activeTab = InventoryTab.Bag; return; }        // com baú aberto: só a mochila
+            if (other != null) { activeTab = InventoryTab.Bag; return; }        // com baú aberto: só a mochila (a última aba usada sozinho fica guardada em soloTab)
+            activeTab = soloTab;
             tabList.Add(InventoryTab.Bag);
             InventoryTab[] extra = { InventoryTab.Keys, InventoryTab.Records, InventoryTab.Maps, InventoryTab.Objectives };
             for (int i = 0; i < extra.Length; i++)
@@ -56,12 +58,7 @@ namespace HorrorFPS
                 if (has) tabList.Add(extra[i]);
             }
             if (!tabList.Contains(activeTab)) activeTab = InventoryTab.Bag;
-        }
-
-        string TabHint()
-        {
-            if (tabList.Count < 2) return "";
-            return input != null && input.UsesMouse ? "  •  Z/X: trocar de aba" : "  •  LT/RT: trocar de aba";
+            if (!tabList.Contains(soloTab)) soloTab = InventoryTab.Bag;
         }
 
         // ------------------------------------------------------------------ barra de abas
@@ -69,7 +66,7 @@ namespace HorrorFPS
         {
             tabRects.Clear(); tabBacks.Clear(); tabTexts.Clear();
             if (tabList.Count < 2) return;
-            float x = winW - 16f - tabList.Count * (TabW + 4f) + 4f;
+            float x = winW - 16f - TabKeyW - tabList.Count * (TabW + 4f) + 4f;
             for (int i = 0; i < tabList.Count; i++)
             {
                 RectTransform rt = InvUI.Rect(window, "tab" + i);
@@ -80,7 +77,33 @@ namespace HorrorFPS
                 InvUI.Stretch(t.rectTransform);
                 tabRects.Add(rt); tabBacks.Add(back); tabTexts.Add(t);
             }
+            BuildTabKeyHints(x - TabKeyW, x + tabList.Count * (TabW + 4f) - 4f);
             UpdateTabBar();
+        }
+
+        /// <summary>A única dica de controle da janela: a tecla que troca de aba, nas pontas da barra, com uma seta para o lado de cada uma.</summary>
+        void BuildTabKeyHints(float leftX, float rightX)
+        {
+            bool kb = input != null && input.UsesMouse;
+            TabKeyChip(leftX, kb ? "Z" : "LT", true);
+            TabKeyChip(rightX + 4f, kb ? "X" : "RT", false);
+        }
+
+        void TabKeyChip(float x, string label, bool left)
+        {
+            RectTransform rt = InvUI.Rect(window, left ? "tabkeyL" : "tabkeyR");
+            InvUI.TopLeft(rt, x, 8f, TabKeyW - 4f, TabH);
+            Color dim = InvUI.TextDim;
+            Image arrow = InvUI.Img(rt, "arrow", dim, InvUI.Arrow);
+            RectTransform ar = arrow.rectTransform;
+            InvUI.TopLeft(ar, left ? 0f : TabKeyW - 4f - 14f, (TabH - 14f) * 0.5f, 14f, 14f);
+            ar.pivot = new Vector2(0.5f, 0.5f);
+            ar.anchoredPosition += new Vector2(7f, -7f);
+            ar.localEulerAngles = new Vector3(0f, 0f, left ? 90f : -90f);     // a seta do sprite aponta para cima
+            Image chip = InvUI.Img(rt, "chip", InvUI.Cell);
+            InvUI.TopLeft(chip.rectTransform, left ? 16f : 0f, 2f, TabKeyW - 4f - 16f, TabH - 4f);
+            Text t = InvUI.Label(chip.transform, "t", label, 11, TextAnchor.MiddleCenter, InvUI.Accent);
+            InvUI.Stretch(t.rectTransform);
         }
 
         int TabAt(Vector2 screenPoint)
@@ -148,6 +171,7 @@ namespace HorrorFPS
             mouseDragging = false;
             if (tray != null && owner != null) owner.FlushManualContainers();      // saiu da mochila: a bandeja se esvazia
             activeTab = t;
+            if (other == null) soloTab = t;                 // Tab abre de novo nesta aba
             RebuildContent();
         }
 
@@ -173,7 +197,7 @@ namespace HorrorFPS
             if (mapViewer != null) { mapViewer.Destroy(); mapViewer = null; }
             if (content != null) Destroy(content.gameObject);
             content = null;
-            infoName = null; infoMeta = null; infoDesc = null; infoHelp = null;
+            infoName = null; infoMeta = null; infoDesc = null;
         }
 
         void BuildContent()

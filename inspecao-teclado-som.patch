@@ -1,0 +1,2076 @@
+diff --git a/Animation/IK/PokeHandIK.cs b/Animation/IK/PokeHandIK.cs
+new file mode 100644
+index 0000000..14c7cfd
+--- /dev/null
++++ b/Animation/IK/PokeHandIK.cs
+@@ -0,0 +1,203 @@
++using UnityEngine;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// IK de "tocar com o dedo": leva a mão do corpo até um ponto do mundo (a tecla do teclado numérico, um botão) com o dedo indicador à
++    /// frente e os outros dedos fechados. Roda dentro do OnAnimatorIK do PlayerBodyRig (IBodyIK) e SOMA ao que já existe: se a mão estava
++    /// ocupada com um item, o IK dela é misturado pelo peso e volta sozinho quando o toque termina.
++    ///
++    /// Uso (o teclado numérico faz isso sozinho): PokeHandIK hand = PokeHandIK.For(player);
++    ///   hand.Aim(pontoDaPontaDoDedo, direcaoParaDentroDaSuperficie, mãoDireita);   // todo quadro enquanto durar o toque
++    ///   hand.Release();                                                            // acabou: a mão volta
++    ///
++    /// Ajuste no Play se a mão ficar torcida ou os dedos dobrarem para o lado errado: 'Hand Euler' (giro extra da mão), 'Curl Axis'
++    /// e 'Curl Angle' (eixo local em que os ossos dos dedos dobram: o padrão (0,0,1) vale para a maioria dos rigs Humanoid / Mixamo;
++    /// se dobrarem para trás, use um ângulo negativo). Em primeira pessoa o dono só vê a mão se o braço do corpo aparece na câmera.
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/Animation/Poke Hand IK")]
++    public class PokeHandIK : MonoBehaviour, IBodyIK
++    {
++        [Header("Movimento")]
++        [Tooltip("Quão rápido a mão chega ao ponto (maior = mais seco).")]
++        [SerializeField] float reachSharpness = 14f;
++        [Tooltip("Segundos para a mão entrar / sair do IK (peso 0 a 1).")]
++        [SerializeField] float blendTime = 0.18f;
++        [Tooltip("Quanto a ponta do dedo fica inclinada para baixo em relação à direção do toque (0 = reto).")]
++        [SerializeField, Range(0f, 0.6f)] float tilt = 0.2f;
++        [Tooltip("Folga (m) do osso da ponta do dedo até a polpa do dedo.")]
++        [SerializeField] float fingertipPadding = 0.012f;
++
++        [Header("Mão e dedos (ajuste ao olho)")]
++        [Tooltip("Giro extra da mão (graus). O IK Humanoid usa a T-pose como rotação zero.")]
++        [SerializeField] Vector3 handEuler = Vector3.zero;
++        [Tooltip("Eixo LOCAL em que os ossos dos dedos dobram.")]
++        [SerializeField] Vector3 curlAxis = new Vector3(0f, 0f, 1f);
++        [Tooltip("Quanto cada falange dobra (graus) nos dedos fechados. Negativo inverte o sentido.")]
++        [SerializeField] float curlAngle = 70f;
++        [Tooltip("Quanto o polegar dobra (graus).")]
++        [SerializeField] float thumbCurlAngle = 35f;
++        [Tooltip("Mostra (Gizmos) o ponto da ponta do dedo.")]
++        [SerializeField] bool debug;
++
++        class Side
++        {
++            public bool right;
++            public float weight, targetWeight;
++            public Vector3 tip, targetTip, into = Vector3.forward;
++            public bool hasTip;
++            public float wristToTip = -1f;
++        }
++
++        readonly Side rightSide = new Side { right = true };
++        readonly Side leftSide = new Side { right = false };
++
++        /// <summary>Alguma mão está (ou ainda está saindo) do IK.</summary>
++        public bool IsActive { get { return rightSide.weight > 0.001f || leftSide.weight > 0.001f || rightSide.targetWeight > 0f || leftSide.targetWeight > 0f; } }
++
++        /// <summary>Acha (ou cria) o IK de toque do corpo deste jogador. Nulo se o jogador não tem corpo animado (PlayerBodyRig).</summary>
++        public static PokeHandIK For(PlayerContext player)
++        {
++            if (player == null) return null;
++            PlayerBodyRig rig = player.GetComponentInChildren<PlayerBodyRig>(true);
++            if (rig == null) return null;
++            PokeHandIK ik = rig.GetComponent<PokeHandIK>();
++            if (ik == null) ik = rig.gameObject.AddComponent<PokeHandIK>();
++            rig.AddIK(ik);          // sem efeito se já estiver registrado
++            return ik;
++        }
++
++        /// <summary>Mira a ponta do dedo em 'tipWorld'; 'into' = direção do toque (para dentro da superfície). Chame todo quadro enquanto durar.</summary>
++        public void Aim(Vector3 tipWorld, Vector3 into, bool rightHand)
++        {
++            Side s = rightHand ? rightSide : leftSide;
++            Side other = rightHand ? leftSide : rightSide;
++            other.targetWeight = 0f;
++            s.targetWeight = 1f;
++            s.targetTip = tipWorld;
++            s.into = into.sqrMagnitude > 0.0001f ? into.normalized : Vector3.forward;
++            if (!s.hasTip || s.weight < 0.01f) { s.tip = tipWorld; s.hasTip = true; }
++        }
++
++        /// <summary>A mão larga o toque e volta ao que estava fazendo.</summary>
++        public void Release()
++        {
++            rightSide.targetWeight = 0f;
++            leftSide.targetWeight = 0f;
++        }
++
++        /// <summary>A ponta do dedo chegou perto do alvo (em metros)?</summary>
++        public bool IsAt(Vector3 tipWorld, float tolerance = 0.015f)
++        {
++            Side s = rightSide.targetWeight > 0f ? rightSide : leftSide;
++            return s.targetWeight > 0f && s.weight > 0.6f && (s.tip - tipWorld).sqrMagnitude <= tolerance * tolerance;
++        }
++
++        void Update()
++        {
++            float dt = Time.deltaTime;
++            Step(rightSide, dt);
++            Step(leftSide, dt);
++        }
++
++        void Step(Side s, float dt)
++        {
++            s.weight = Mathf.MoveTowards(s.weight, s.targetWeight, dt / Mathf.Max(0.02f, blendTime));
++            if (s.hasTip) s.tip = Vector3.Lerp(s.tip, s.targetTip, 1f - Mathf.Exp(-reachSharpness * dt));
++            if (s.weight <= 0f && s.targetWeight <= 0f) s.hasTip = false;
++        }
++
++        // ------------------------------------------------------------------ IBodyIK
++        public void OnBodyIK(PlayerBodyRig rig, Animator animator, PlayerAnimState state, int layerIndex)
++        {
++            if (animator == null || !animator.isHuman || layerIndex != 0) return;
++            if (state.dead) { Release(); return; }
++            Apply(animator, rightSide);
++            Apply(animator, leftSide);
++        }
++
++        void Apply(Animator a, Side s)
++        {
++            if (s.weight <= 0.001f || !s.hasTip) return;
++
++            AvatarIKGoal goal = s.right ? AvatarIKGoal.RightHand : AvatarIKGoal.LeftHand;
++            Transform hand = a.GetBoneTransform(s.right ? HumanBodyBones.RightHand : HumanBodyBones.LeftHand);
++            Transform distal = a.GetBoneTransform(s.right ? HumanBodyBones.RightIndexDistal : HumanBodyBones.LeftIndexDistal);
++            if (hand == null) return;
++
++            // do osso da mão até a ponta do indicador (medido uma vez: não muda com a animação)
++            if (s.wristToTip < 0f)
++                s.wristToTip = (distal != null ? Vector3.Distance(hand.position, distal.position) : 0.16f) + fingertipPadding;
++
++            // direção dos dedos: a do toque, um pouco inclinada para baixo
++            Vector3 fingers = (s.into + Vector3.down * tilt).normalized;
++            Vector3 back = Vector3.ProjectOnPlane(Vector3.up, fingers);
++            if (back.sqrMagnitude < 0.0001f) back = Vector3.ProjectOnPlane(transform.right, fingers);
++            back.Normalize();
++
++            // T-pose: dedos da mão direita para +X (esquerda: -X) e costas da mão para +Y
++            Quaternion rest = Quaternion.LookRotation(s.right ? Vector3.right : Vector3.left, Vector3.up);
++            Quaternion rot = Quaternion.LookRotation(fingers, back) * Quaternion.Inverse(rest) * Quaternion.Euler(handEuler);
++            Vector3 wrist = s.tip - fingers * s.wristToTip;
++
++            // mistura com o IK que já existe (item na mão, escada...): o toque entra pelo peso
++            float prevW = a.GetIKPositionWeight(goal);
++            Vector3 pos = prevW > 0.001f ? Vector3.Lerp(a.GetIKPosition(goal), wrist, s.weight) : wrist;
++            Quaternion prevRot = a.GetIKRotation(goal);
++            Quaternion fin = prevW > 0.001f ? Quaternion.Slerp(prevRot, rot, s.weight) : rot;
++            float w = Mathf.Max(prevW, s.weight);
++            a.SetIKPositionWeight(goal, w);
++            a.SetIKRotationWeight(goal, w);
++            a.SetIKPosition(goal, pos);
++            a.SetIKRotation(goal, fin);
++
++            // cotovelo para fora e para baixo (sem isso o solver às vezes o levanta)
++            Transform upper = a.GetBoneTransform(s.right ? HumanBodyBones.RightUpperArm : HumanBodyBones.LeftUpperArm);
++            if (upper != null)
++            {
++                AvatarIKHint hint = s.right ? AvatarIKHint.RightElbow : AvatarIKHint.LeftElbow;
++                Vector3 side = (s.right ? 1f : -1f) * Vector3.Cross(Vector3.up, fingers).normalized;
++                Vector3 elbow = (upper.position + wrist) * 0.5f + side * 0.22f + Vector3.down * 0.18f;
++                a.SetIKHintPosition(hint, elbow);
++                a.SetIKHintPositionWeight(hint, Mathf.Max(a.GetIKHintPositionWeight(hint), s.weight * 0.7f));
++            }
++
++            Curl(a, s, s.weight);
++        }
++
++        /// <summary>Dedos: o indicador fica esticado (aponta); médio, anelar e mindinho fecham; o polegar dobra um pouco.</summary>
++        void Curl(Animator a, Side s, float weight)
++        {
++            string side = s.right ? "Right" : "Left";
++            CurlFinger(a, side + "Middle", curlAngle * weight);
++            CurlFinger(a, side + "Ring", curlAngle * weight);
++            CurlFinger(a, side + "Little", curlAngle * weight);
++            CurlFinger(a, side + "Thumb", thumbCurlAngle * weight);
++        }
++
++        static readonly string[] Phalanges = { "Proximal", "Intermediate", "Distal" };
++
++        void CurlFinger(Animator a, string prefix, float angle)
++        {
++            Vector3 axis = curlAxis.sqrMagnitude > 0.0001f ? curlAxis.normalized : Vector3.forward;
++            for (int i = 0; i < Phalanges.Length; i++)
++            {
++                HumanBodyBones bone;
++                if (!System.Enum.TryParse(prefix + Phalanges[i], out bone)) continue;
++                Transform t = a.GetBoneTransform(bone);
++                if (t == null) continue;
++                // as falanges de baixo dobram mais que a ponta
++                float k = i == 0 ? 1f : i == 1 ? 1.1f : 0.7f;
++                a.SetBoneLocalRotation(bone, t.localRotation * Quaternion.AngleAxis(angle * k, axis));
++            }
++        }
++
++        void OnDrawGizmosSelected()
++        {
++            if (!debug) return;
++            Gizmos.color = Color.cyan;
++            if (rightSide.hasTip) Gizmos.DrawSphere(rightSide.tip, 0.01f);
++            if (leftSide.hasTip) Gizmos.DrawSphere(leftSide.tip, 0.01f);
++        }
++    }
++}
+diff --git a/Body/NoiseListener.cs b/Body/NoiseListener.cs
+index 66b3791..b16a0f9 100644
+--- a/Body/NoiseListener.cs
++++ b/Body/NoiseListener.cs
+@@ -17,7 +17,7 @@ namespace HorrorFPS
+         [SerializeField] Transform ear;
+         [Tooltip("2 = ouve o dobro do raio do barulho; 0,5 = meio surdo.")]
+         [SerializeField] float hearingMultiplier = 1f;
+-        [Tooltip("Parede no caminho reduz o alcance para esta fração (1 = paredes não abafam).")]
++        [Tooltip("Parede no caminho reduz o alcance para esta fração (1 = nada abafa). Pisos e tetos usam NoiseSystem.FloorTransmission; um SoundDamper no collider troca o valor.")]
+         [SerializeField, Range(0.05f, 1f)] float occlusionFactor = 0.6f;
+         [SerializeField] LayerMask occlusionMask = ~0;
+         [Tooltip("Ignora barulhos feitos por este mesmo objeto (ou filhos).")]
+@@ -55,24 +55,9 @@ namespace HorrorFPS
+             if (!isActiveAndEnabled) return;
+             if (ignoreOwnNoise && e.source != null && e.source.transform.root == transform.root) return;
+ 
+-            Vector3 earPos = EarPosition;
+-            float d = Vector3.Distance(earPos, e.position);
+-            float reach = e.radius * Mathf.Max(0.01f, hearingMultiplier);
+-            if (d > reach) return;
+-
+-            if (occlusionFactor < 0.999f)
+-            {
+-                Vector3 end = Vector3.MoveTowards(e.position, earPos, 0.35f);
+-                RaycastHit hit;
+-                if (Physics.Linecast(earPos, end, out hit, occlusionMask, QueryTriggerInteraction.Ignore))
+-                {
+-                    reach *= occlusionFactor;
+-                    if (d > reach) return;
+-                }
+-            }
+-
+-            float loud = 1f - Mathf.Clamp01(d / reach);
+-            if (loud < minLoudness) return;
++            // distância (com a altura pesando mais), paredes e pisos no caminho: tudo no NoiseSystem, igual para o perseguidor
++            float loud = NoiseSystem.LoudnessAt(e, EarPosition, hearingMultiplier, occlusionFactor, occlusionMask);
++            if (loud <= 0f || loud < minLoudness) return;
+ 
+             LastPosition = e.position;
+             LastKind = e.kind;
+diff --git a/Body/NoiseSystem.cs b/Body/NoiseSystem.cs
+index 64093ed..2e7350a 100644
+--- a/Body/NoiseSystem.cs
++++ b/Body/NoiseSystem.cs
+@@ -72,6 +72,21 @@ namespace HorrorFPS
+         /// <summary>Desenha (no Scene/Game com Gizmos ligados) uma esfera no barulho e linhas até quem foi avisado. Só para depurar.</summary>
+         public static bool DebugDraw;
+ 
++        /// <summary>
++        /// Quanto da distância VERTICAL conta na hora de ouvir (1 = só a distância em linha reta; 1,5 = cada metro de altura vale 1,5 m).
++        /// O som entre andares tem que contornar escadas e vãos: quem está no andar de cima escuta pior o que acontece embaixo, e vice-versa.
++        /// </summary>
++        public static float VerticalWeight = 1.5f;
++
++        /// <summary>
++        /// Fração do alcance que atravessa uma superfície HORIZONTAL (piso, laje, teto) no caminho do som. Paredes usam o fator de quem ouve
++        /// (NoiseListener.occlusionFactor / perfil do perseguidor). Um SoundDamper no collider troca esse valor por um próprio.
++        /// </summary>
++        public static float FloorTransmission = 0.35f;
++
++        /// <summary>Quantas superfícies no caminho do som contam (as paredes e pisos além disso são ignorados: o som já morreu).</summary>
++        public static int MaxOccluders = 4;
++
+         const int BufferSize = 256;
+         static readonly Collider[] buffer = new Collider[BufferSize];
+         static readonly HashSet<object> notified = new HashSet<object>();
+@@ -88,6 +103,9 @@ namespace HorrorFPS
+             HearingMask = ~0;
+             SearchMultiplier = 2f;
+             DebugDraw = false;
++            VerticalWeight = 1.5f;
++            FloorTransmission = 0.35f;
++            MaxOccluders = 4;
+             emitting = false;
+             listeners.Clear();
+             snapshot.Clear();
+@@ -156,26 +174,74 @@ namespace HorrorFPS
+         }
+ 
+         /// <summary>
+-        /// Quão forte o barulho chega num ponto (os "ouvidos"): 0 = não ouve, 1 = colado na fonte. Considera o alcance, o quanto o ouvinte
+-        /// ouve bem (hearingMultiplier) e paredes no caminho (reduzem o alcance para a fração occlusionFactor; 1 = paredes não abafam).
+-        /// Use dentro de OnNoiseHeard para decidir se a IA realmente escutou.
++        /// Quão forte o barulho chega num ponto (os "ouvidos"): 0 = não ouve, 1 = colado na fonte. Considera:
++        ///  - o alcance e o quanto o ouvinte ouve bem (hearingMultiplier);
++        ///  - a ALTURA: cada metro de diferença de andar vale VerticalWeight metros de distância;
++        ///  - tudo que está no caminho (PathTransmission): cada parede reduz o alcance para a fração occlusionFactor, cada piso/teto para
++        ///    FloorTransmission, e vários obstáculos se multiplicam (duas paredes e uma laje abafam muito mais que uma parede).
++        /// occlusionFactor 1 = nada abafa (nem paredes nem pisos). Use dentro de OnNoiseHeard para decidir se a IA realmente escutou.
+         /// </summary>
+         public static float LoudnessAt(NoiseEvent e, Vector3 earPosition, float hearingMultiplier = 1f, float occlusionFactor = 0.6f, int occlusionMask = ~0)
+         {
+-            float d = Vector3.Distance(earPosition, e.position);
++            Vector3 delta = earPosition - e.position;
++            float flat = new Vector2(delta.x, delta.z).magnitude;
++            float d = flat + Mathf.Abs(delta.y) * Mathf.Max(1f, VerticalWeight);
+             float reach = e.radius * Mathf.Max(0.01f, hearingMultiplier);
+             if (d > reach) return 0f;
+ 
+             if (occlusionFactor < 0.999f)
+             {
+-                Vector3 end = Vector3.MoveTowards(e.position, earPosition, 0.35f);
+-                if (Physics.Linecast(earPosition, end, occlusionMask, QueryTriggerInteraction.Ignore))
++                reach *= PathTransmission(e.position, earPosition, occlusionFactor, occlusionMask);
++                if (d > reach) return 0f;
++            }
++            return 1f - Mathf.Clamp01(d / reach);
++        }
++
++        static readonly RaycastHit[] pathHits = new RaycastHit[24];
++        static readonly float[] pathBest = new float[8];
++
++        /// <summary>
++        /// Fração (0,05..1) do alcance do som que atravessa o que existe entre a fonte e o ouvido. 1 = caminho livre.
++        /// Cada Collider no caminho vale: SoundDamper dele (se tiver), senão FloorTransmission (superfície mais horizontal que vertical)
++        /// ou wallFactor (paredes). Os valores se multiplicam, até MaxOccluders obstáculos (os mais abafadores primeiro).
++        /// </summary>
++        public static float PathTransmission(Vector3 source, Vector3 ear, float wallFactor, int mask = ~0)
++        {
++            Vector3 end = Vector3.MoveTowards(source, ear, 0.35f);     // não conta o objeto que faz o barulho (garrafa, rádio...)
++            Vector3 dir = end - ear;
++            float dist = dir.magnitude;
++            if (dist < 0.01f) return 1f;
++            int n = Physics.RaycastNonAlloc(ear, dir / dist, pathHits, dist, mask, QueryTriggerInteraction.Ignore);
++            if (n <= 0) return 1f;
++
++            // a fração de cada obstáculo; guarda as menores (as que mais abafam) quando passa do limite
++            int max = Mathf.Clamp(MaxOccluders, 1, 8);
++            float[] best = pathBest;
++            int count = 0;
++            for (int i = 0; i < n; i++)
++            {
++                RaycastHit h = pathHits[i];
++                Collider c = h.collider;
++                if (c == null) continue;
++                SoundDamper damper = c.GetComponentInParent<SoundDamper>();
++                float t;
++                if (damper != null) t = damper.transmission;
++                else t = Mathf.Abs(h.normal.y) > 0.7f ? FloorTransmission : wallFactor;
++                t = Mathf.Clamp(t, 0.02f, 1f);
++                if (t >= 0.999f) continue;
++
++                if (count < max) best[count++] = t;
++                else
+                 {
+-                    reach *= Mathf.Max(0.05f, occlusionFactor);
+-                    if (d > reach) return 0f;
++                    int worst = 0;                                  // troca o que menos abafa, se este abafa mais
++                    for (int k = 1; k < count; k++) if (best[k] > best[worst]) worst = k;
++                    if (t < best[worst]) best[worst] = t;
+                 }
+             }
+-            return 1f - Mathf.Clamp01(d / reach);
++
++            float total = 1f;
++            for (int i = 0; i < count; i++) total *= best[i];
++            return Mathf.Max(0.05f, total);
+         }
+ 
+         static void DrawSphere(Vector3 center, float radius, Color color)
+diff --git a/Body/ProceduralAudio.Keypad.cs b/Body/ProceduralAudio.Keypad.cs
+new file mode 100644
+index 0000000..325f759
+--- /dev/null
++++ b/Body/ProceduralAudio.Keypad.cs
+@@ -0,0 +1,53 @@
++using UnityEngine;
++
++namespace HorrorFPS
++{
++    /// <summary>Sons do teclado numérico (tecla, código certo, código errado). Gerados por código: troque pelos seus clipes nos campos do KeypadPanel.</summary>
++    public static partial class ProceduralAudio
++    {
++        /// <summary>Bipe curto de tecla (0,08 s).</summary>
++        public static AudioClip KeypadBeep()
++        {
++            return Get("keypad_beep", 0.08f, d =>
++            {
++                for (int i = 0; i < d.Length; i++)
++                {
++                    float t = i / (float)Rate;
++                    float env = Mathf.Clamp01(t / 0.003f) * Mathf.Exp(-t * 38f);
++                    d[i] = (Sine(1650.0, i) * 0.8f + Sine(3300.0, i) * 0.12f) * env;
++                }
++            });
++        }
++
++        /// <summary>Código certo: dois bipes subindo (0,34 s).</summary>
++        public static AudioClip KeypadOk()
++        {
++            return Get("keypad_ok", 0.34f, d =>
++            {
++                for (int i = 0; i < d.Length; i++)
++                {
++                    float t = i / (float)Rate;
++                    bool second = t >= 0.16f;
++                    float seg = second ? t - 0.16f : t;
++                    float env = Mathf.Clamp01(seg / 0.004f) * Mathf.Clamp01((0.13f - seg) / 0.02f);
++                    d[i] = (Sine(second ? 2100.0 : 1650.0, i) * 0.8f) * env;
++                }
++            });
++        }
++
++        /// <summary>Código errado: zumbido grave e áspero (0,55 s).</summary>
++        public static AudioClip KeypadError()
++        {
++            return Get("keypad_error", 0.55f, d =>
++            {
++                for (int i = 0; i < d.Length; i++)
++                {
++                    float t = i / (float)Rate;
++                    float env = Mathf.Clamp01(t / 0.01f) * Mathf.Clamp01((0.5f - t) / 0.06f);
++                    float saw = ((float)(t * 155.0 % 1.0) * 2f - 1f);
++                    d[i] = (saw * 0.45f + Sine(110.0, i) * 0.5f) * env;
++                }
++            });
++        }
++    }
++}
+diff --git a/Body/SoundDamper.cs b/Body/SoundDamper.cs
+new file mode 100644
+index 0000000..fa76fbe
+--- /dev/null
++++ b/Body/SoundDamper.cs
+@@ -0,0 +1,19 @@
++using UnityEngine;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Diz o quanto um obstáculo deixa o SOM passar (para o barulho que o perseguidor e os NoiseListener escutam; não muda o áudio tocado).
++    /// Ponha no objeto de uma parede, laje, porta, cortina... (ou num pai do Collider). Sem este componente, uma superfície mais horizontal
++    /// que vertical (piso, teto) usa NoiseSystem.FloorTransmission e as outras (paredes) usam o fator de quem ouve.
++    ///
++    /// Valores de referência: 1 = não abafa (grade, vidro aberto) • 0,7 = porta fina, divisória • 0,5 = parede de tijolo • 0,3 = laje de
++    /// concreto • 0,15 = porão enterrado. O alcance do barulho é multiplicado por esta fração para cada obstáculo no caminho.
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/Body/Sound Damper")]
++    public class SoundDamper : MonoBehaviour
++    {
++        [Tooltip("Fração do alcance do barulho que atravessa este obstáculo (1 = nada abafa, 0,2 = quase tudo). Vários obstáculos se multiplicam.")]
++        [Range(0.02f, 1f)] public float transmission = 0.5f;
++    }
++}
+diff --git a/Core/PlayerModules.cs b/Core/PlayerModules.cs
+index 18813ef..56870e2 100644
+--- a/Core/PlayerModules.cs
++++ b/Core/PlayerModules.cs
+@@ -49,6 +49,8 @@ namespace HorrorFPS
+             Ensure<NoiseMeterHUD>(player);            // indicador de ruído (agachar = menos barulho)
+             Ensure<VisibilityHUD>(player);            // indicador de visibilidade (agachar/sombra = mais difícil de ver)
+             Ensure<JournalReader>(player);            // lê notas na tela e põe documentos pegos no diário
++            Ensure<ItemPickupInspector>(player);      // item novo no cenário: inspeção com Pegar / Deixar
++            Ensure<ObjectInspector>(player);          // examinar objetos do cenário (InspectableObject + SceneHotspot)
+ 
+             // corpo (a sonda de movimento primeiro: os outros dependem dela)
+             Ensure<PlayerMotionProbe>(player);
+diff --git a/Core/UIText.cs b/Core/UIText.cs
+index d794abe..726b061 100644
+--- a/Core/UIText.cs
++++ b/Core/UIText.cs
+@@ -58,6 +58,24 @@ namespace HorrorFPS
+         public const string PickedUp = "Pegou: {0}";
+         public const string LockedNeedsKey = "Trancado. Procure a chave";
+ 
++        // Inspeção (item novo, objeto do cenário) e teclado numérico
++        public const string InspectNewItem = "ITEM NOVO";
++        public const string InspectLeave = "Deixar";
++        public const string InspectClose = "Fechar";
++        public const string InspectHintItem = "{0}  Pegar     {1}  Deixar     Arrastar / analógico direito: girar     Roda: aproximar";
++        public const string InspectHintObject = "Arrastar / analógico direito / setas: girar     Roda: aproximar     {0}  Fechar";
++        public const string InspectPromptPad = "{0}  {1}";
++        public const string Examine = "Examinar";
++        public const string KeypadUse = "Usar teclado";
++        public const string KeypadExit = "Sair do teclado";
++        public const string KeypadPress = "Apertar";
++        public const string KeypadClear = "Apagar";
++        public const string KeypadConfirm = "Confirmar";
++        public const string KeypadLocked = "Bloqueado ({0} s)";
++        public const string KeypadWrong = "Código incorreto";
++        public const string KeypadOpened = "Destrancado";
++        public const string KeypadAlreadyOpen = "Já destrancado";
++
+         // Cutscenes
+         public const string HoldToSkip = "Segure {0} para pular";
+         public const string Skipping = "Pulando...";
+diff --git a/Editor/Levels/InteractionMenu.cs b/Editor/Levels/InteractionMenu.cs
+new file mode 100644
+index 0000000..83761c6
+--- /dev/null
++++ b/Editor/Levels/InteractionMenu.cs
+@@ -0,0 +1,127 @@
++using HorrorFPS.ItemsEditor;
++using UnityEditor;
++using UnityEngine;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Menus de interação com objetos: teclado numérico (mão e dedo por IK), objeto examinável e ponto de inspeção.
++    /// Os objetos de cena nascem no ponto que a Scene View está olhando.
++    /// </summary>
++    static class InteractionMenu
++    {
++        static Vector3 ViewPoint()
++        {
++            SceneView sv = SceneView.lastActiveSceneView;
++            return sv != null ? sv.pivot : Vector3.zero;
++        }
++
++        // ------------------------------------------------------------------ teclado numérico
++        [MenuItem(HorrorFPSMenu.Levels + "Create Keypad", false, HorrorFPSMenu.LevelsOrder + 5)]
++        static void CreateKeypad()
++        {
++            Material plate = WizardUtil.Mat("Keypad_Plate", new Color(0.12f, 0.13f, 0.14f, 1f));
++            Material keyMat = WizardUtil.Mat("Keypad_Key", new Color(0.7f, 0.72f, 0.7f, 1f));
++            Material special = WizardUtil.Mat("Keypad_KeySpecial", new Color(0.62f, 0.45f, 0.2f, 1f));
++            Material screen = WizardUtil.Mat("Keypad_Screen", new Color(0.03f, 0.08f, 0.04f, 1f));
++
++            GameObject root = new GameObject("Keypad");
++            Undo.RegisterCreatedObjectUndo(root, "Create Keypad");
++            root.transform.position = ViewPoint() + Vector3.up * 1.2f;
++
++            // Z azul do conjunto (e de cada tecla) aponta PARA FORA, na direção de quem olha
++            WizardUtil.Prim(root.transform, PrimitiveType.Cube, "Painel", Vector3.zero, new Vector3(0.20f, 0.30f, 0.03f), plate);
++            WizardUtil.Prim(root.transform, PrimitiveType.Cube, "Visor (fundo)", new Vector3(0f, 0.105f, 0.0155f), new Vector3(0.16f, 0.05f, 0.006f), screen, false);
++
++            // TextMesh se lê olhando no sentido +Z: como o painel é visto de frente (olhando no sentido -Z), o texto é girado 180° em Y
++            TextMesh text = MakeText(root.transform, "Visor", "____", new Vector3(0f, 0.105f, 0.0195f), 0.007f, 60, new Color(0.45f, 1f, 0.55f, 1f));
++
++            string[] symbols = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK" };
++            Vector3 keySize = new Vector3(0.045f, 0.04f, 0.012f);
++            for (int i = 0; i < symbols.Length; i++)
++            {
++                int col = i % 3, row = i / 3;
++                bool isSpecial = symbols[i] == "C" || symbols[i] == "OK";
++                GameObject key = new GameObject("Tecla " + symbols[i]);
++                Undo.RegisterCreatedObjectUndo(key, "Create Keypad");
++                key.transform.SetParent(root.transform, false);
++                key.transform.localPosition = new Vector3((col - 1) * 0.055f, 0.045f - row * 0.052f, 0.0225f);
++                BoxCollider box = key.AddComponent<BoxCollider>();
++                box.size = keySize;
++
++                WizardUtil.Prim(key.transform, PrimitiveType.Cube, "Cap", Vector3.zero, keySize, isSpecial ? special : keyMat, false);
++                MakeText(key.transform, "Rótulo", symbols[i], new Vector3(0f, 0f, keySize.z * 0.5f + 0.0005f), 0.0045f, 40, Color.black);
++
++                KeypadKey k = key.AddComponent<KeypadKey>();
++                SerializedObject ks = new SerializedObject(k);
++                ks.FindProperty("symbol").stringValue = symbols[i];
++                ks.FindProperty("touchOffset").vector3Value = new Vector3(0f, 0f, keySize.z * 0.5f);
++                ks.FindProperty("maxDistance").floatValue = 1.8f;
++                ks.ApplyModifiedProperties();
++            }
++
++            // o painel (KeypadPanel) fica na raiz: as teclas o acham pelo pai, e o Collider do "Painel" aponta para ele
++            KeypadPanel panel = Undo.AddComponent<KeypadPanel>(root);
++            SerializedObject ps = new SerializedObject(panel);
++            ps.FindProperty("display").objectReferenceValue = text;
++            ps.FindProperty("code").stringValue = "1234";
++            ps.FindProperty("saveId").stringValue = "keypad_" + System.Guid.NewGuid().ToString("N").Substring(0, 8);
++            ps.FindProperty("maxDistance").floatValue = 1.8f;
++            ps.ApplyModifiedProperties();
++
++            Selection.activeGameObject = root;
++            Debug.Log("[Levels] Teclado numérico criado ('Keypad', com o KeypadPanel na raiz). Passos: (1) coloque na parede: o Z azul do conjunto aponta PARA FORA (para quem olha); "
++                + "(2) em 'Code' escreva o código certo (só dígitos); (3) ligue 'On Unlocked' ao que deve acontecer (abrir uma Door, SmartEventTrigger.Trigger, uma cutscene) "
++                + "e/ou preencha 'Set Variable' (ex.: Door.unlockVariable); 'Save Id' é o nome que grava no save que ele já foi aberto. Em jogo: interagir com o painel = usar o teclado "
++                + "(o movimento trava, a câmera não); mire numa tecla e aperte Interagir; Voltar (Backspace / B) sai. A mão do corpo alcança a tecla com o dedo (PokeHandIK: se a mão ou "
++                + "os dedos ficarem tortos, ajuste 'Hand Euler' / 'Curl Axis' / 'Curl Angle' do componente, que nasce no corpo do jogador). Se o texto do visor aparecer espelhado, gire-o 180° em Y.", root);
++        }
++
++        static TextMesh MakeText(Transform parent, string name, string value, Vector3 localPos, float characterSize, int fontSize, Color color)
++        {
++            GameObject go = new GameObject(name);
++            go.transform.SetParent(parent, false);
++            go.transform.localPosition = localPos;
++            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
++            TextMesh t = go.AddComponent<TextMesh>();
++            t.text = value;
++            t.anchor = TextAnchor.MiddleCenter;
++            t.alignment = TextAlignment.Center;
++            t.characterSize = characterSize;
++            t.fontSize = fontSize;
++            t.color = color;
++            return t;
++        }
++
++        // ------------------------------------------------------------------ objeto examinável
++        [MenuItem(HorrorFPSMenu.Levels + "Add Inspectable Object To Selected", false, HorrorFPSMenu.LevelsOrder + 6)]
++        static void AddInspectable()
++        {
++            GameObject sel = Selection.activeGameObject;
++            if (sel == null) { Debug.LogWarning("[Levels] Selecione o objeto que o jogador poderá examinar (precisa de um Collider para ser mirado)."); return; }
++            if (sel.GetComponent<InspectableObject>() == null) Undo.AddComponent<InspectableObject>(sel);
++            if (sel.GetComponentInChildren<Collider>() == null) Undo.AddComponent<BoxCollider>(sel);
++            Selection.activeGameObject = sel;
++            Debug.Log("[Levels] 'Inspectable Object' adicionado. Em jogo, interagir abre a tela de inspeção com uma CÓPIA do objeto girando. Para pontos clicáveis "
++                + "(mouse) / acionáveis pelo botão (controle), use 'Add Scene Hotspot To Selected' num filho. Preencha 'Title' e 'Description'.", sel);
++        }
++
++        [MenuItem(HorrorFPSMenu.Levels + "Add Scene Hotspot To Selected", false, HorrorFPSMenu.LevelsOrder + 7)]
++        static void AddHotspot()
++        {
++            GameObject sel = Selection.activeGameObject;
++            if (sel == null) { Debug.LogWarning("[Levels] Selecione o objeto examinável (ou uma peça dele) onde o ponto vai ficar."); return; }
++            GameObject go = new GameObject("Ponto de inspeção");
++            Undo.RegisterCreatedObjectUndo(go, "Add Scene Hotspot");
++            go.transform.SetParent(sel.transform, false);
++            SphereCollider c = Undo.AddComponent<SphereCollider>(go);
++            c.radius = 0.03f;
++            c.isTrigger = true;
++            Undo.AddComponent<SceneHotspot>(go);
++            Selection.activeGameObject = go;
++            Debug.Log("[Levels] Ponto de inspeção criado. Mova-o para o botão / tampa / verso que o jogador pode acionar e gire-o para o Z azul apontar PARA FORA da "
++                + "superfície (é por ele que o controle sabe se o ponto está de frente). O collider deve ficar um pouco para fora da superfície. "
++                + "Preencha 'Label' (a dica) e use 'On Activated' / 'Set Variable' para o efeito (pode apontar para objetos da cena).", go);
++        }
++    }
++}
+diff --git a/Inventory/WorldItem.cs b/Inventory/WorldItem.cs
+index e90d993..d590208 100644
+--- a/Inventory/WorldItem.cs
++++ b/Inventory/WorldItem.cs
+@@ -54,14 +54,29 @@ namespace HorrorFPS
+         }
+ 
+         public override void Interact(PlayerContext p)
++        {
++            ItemInstance it = Instance;
++            if (it == null || PlayerRef.Find<InventoryOwner>(p) == null) return;
++
++            // item NOVO (o grupo nunca pegou um destes): antes, a tela de inspeção com Pegar / Deixar
++            if (ItemPickupInspector.NeedsInspection(it.data) && ItemPickupInspector.Ask(p, it, take => { if (take && this != null) Take(p); }))
++                return;
++            Take(p);
++        }
++
++        /// <summary>Põe o item na mochila de quem pegou (depois da inspeção, se houve).</summary>
++        void Take(PlayerContext p)
+         {
+             ItemInstance it = Instance;
+             InventoryOwner inv = PlayerRef.Find<InventoryOwner>(p);
+             if (it == null || inv == null) return;
++            if (it.container != null) return;                           // já foi pego (outro jogador, durante a inspeção)
++            if (!inv.CanFitAny(it.data)) { Toast.Show("Inventário cheio"); return; }   // a mochila encheu enquanto o item era inspecionado
+ 
+             // pegar uma lanterna acesa do chão: ela vai para a mochila apagada (acesa só na mão)
+             if (it.data.equip != null && it.data.equip.kind == EquipKind.Flashlight) it.SetFlag(EquipState.Lit, false);
+             inv.AddInstance(it);
++            ItemPickupInspector.MarkSeen(it.data);
+             if (it.container == null && it.stack > 0) return;           // coube só uma parte: o resto continua no chão (se a instância inteira entrou, ela já está num contêiner)
+ 
+             if (!string.IsNullOrEmpty(setVariableOnPickup)) FrameworkBridge.SetBool(setVariableOnPickup, true);
+diff --git a/Items/ItemData.cs b/Items/ItemData.cs
+index 0a51249..cf0df33 100644
+--- a/Items/ItemData.cs
++++ b/Items/ItemData.cs
+@@ -90,6 +90,8 @@ namespace HorrorFPS
+         public GameObject inspectPrefab;
+         public bool canDrop = true;
+         public bool canInspect = true;
++        [Tooltip("Na PRIMEIRA vez que o grupo pega este item no cenário, abre uma tela de inspeção (girar o modelo) com as opções Pegar ou Deixar. Só vale se 'Can Inspect' estiver ligado.")]
++        public bool inspectOnFirstPickup = true;
+ 
+         [Header("Equipamento (ao equipar)")]
+         [Tooltip("Comportamento do item equipado: lanterna, arma branca ou arma de fogo. Use os botões de modelo para preencher os valores.")]
+diff --git a/UI/Inspect/InspectModule.cs b/UI/Inspect/InspectModule.cs
+new file mode 100644
+index 0000000..9174b30
+--- /dev/null
++++ b/UI/Inspect/InspectModule.cs
+@@ -0,0 +1,273 @@
++using UnityEngine;
++using UnityEngine.InputSystem;
++using UnityEngine.UI;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Base das telas de inspeção 3D por jogador (item novo ao pegar, objeto do cenário): janela no meio da tela com o modelo girando
++    /// (InspectStudio), cursor do mouse, rotação (arrastar, analógico direito, setas), zoom, trava do jogador enquanto aberta e fechamento
++    /// seguro (dano, morte, cutscene, troca de fase). As filhas decidem o que a janela mostra e o que os botões fazem.
++    /// </summary>
++    public abstract class InspectModule : MonoBehaviour
++    {
++        protected const float PanelW = 920f;
++        protected const float PanelH = 560f;
++        protected const float ViewSize = 520f;
++
++        protected PlayerOverlay overlay;
++        protected PlayerContext player;
++        protected ItemInput input;
++        protected InspectStudio studio;
++
++        protected RectTransform layer, panel, imageRect;
++        protected Text titleText, nameText, descText, messageText, hintText, hoverText;
++        protected Vector2 cursor;
++        protected bool open;
++        protected float openedAt;
++        /// <summary>O clique que começou sobre a imagem terminou agora sem arrastar (ativa o ponto sob o cursor).</summary>
++        protected bool clicked;
++        /// <summary>Está arrastando o modelo com o mouse (mais que um clique).</summary>
++        protected bool dragging;
++
++        bool built, lockHeld, pointerOwned, prevVisible, damageHooked;
++        CursorLockMode prevLock;
++        int releaseFrame;
++        bool pressing;
++        float dragDistance;
++        RawImage raw;
++
++        protected abstract string LayerName { get; }
++        protected virtual bool ArrowsRotate { get { return true; } }
++
++        public bool IsOpen { get { return open; } }
++
++        protected bool Pad { get { return player != null && player.Input != null && player.Input.IsGamepad; } }
++        protected bool RealPointer { get { return input != null && input.UsesMouse && Mouse.current != null; } }
++
++        // ------------------------------------------------------------------ construção
++        /// <summary>Monta a janela (uma vez) e o estúdio. Falso se a tela do jogador ainda não existe.</summary>
++        protected bool Build()
++        {
++            if (built) return true;
++            overlay = PlayerRef.Find<PlayerOverlay>(this);
++            if (overlay == null) return false;
++            player = PlayerRef.ContextOf(this);
++            input = PlayerRef.Find<ItemInput>(this);
++            if (player == null || input == null) return false;
++            built = true;
++
++            studio = new InspectStudio(PlayerRef.IndexOf(this));
++            layer = overlay.NewLayer(LayerName);
++            Image dim = InvUI.Img(layer, "dim", new Color(0f, 0f, 0f, 0.62f));
++            InvUI.Stretch(dim.rectTransform);
++
++            panel = InvUI.Rect(layer, "panel");
++            InvUI.Center(panel, PanelW, PanelH);
++            Image bg = InvUI.Img(panel, "bg", InvUI.Panel);
++            InvUI.Stretch(bg.rectTransform);
++
++            imageRect = InvUI.Rect(panel, "view");
++            InvUI.TopLeft(imageRect, 20f, 20f, ViewSize, ViewSize);
++            GameObject rg = new GameObject("raw", typeof(RectTransform));
++            rg.transform.SetParent(imageRect, false);
++            raw = rg.AddComponent<RawImage>();
++            raw.raycastTarget = false;
++            InvUI.Stretch(raw.rectTransform);
++
++            titleText = InvUI.Label(panel, "title", "", 11, TextAnchor.UpperLeft, InvUI.Accent);
++            InvUI.TopLeft(titleText.rectTransform, 560f, 20f, 340f, 18f);
++            nameText = InvUI.Label(panel, "name", "", 20, TextAnchor.UpperLeft, InvUI.TextColor);
++            InvUI.TopLeft(nameText.rectTransform, 560f, 40f, 340f, 56f);
++            descText = InvUI.Label(panel, "desc", "", 14, TextAnchor.UpperLeft, InvUI.TextColor);
++            InvUI.TopLeft(descText.rectTransform, 560f, 104f, 340f, 250f);
++            messageText = InvUI.Label(panel, "msg", "", 13, TextAnchor.UpperLeft, new Color(0.85f, 0.8f, 0.6f, 1f));
++            InvUI.TopLeft(messageText.rectTransform, 560f, 360f, 340f, 80f);
++            hintText = InvUI.Label(panel, "hint", "", 11, TextAnchor.LowerLeft, InvUI.TextDim);
++            InvUI.TopLeft(hintText.rectTransform, 560f, 446f, 340f, 100f);
++
++            hoverText = InvUI.Label(panel, "hover", "", 13, TextAnchor.MiddleCenter, Color.white);
++            hoverText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.95f);
++            InvUI.Center(hoverText.rectTransform, 260f, 24f);
++            hoverText.gameObject.SetActive(false);
++
++            BuildExtra();
++            layer.gameObject.SetActive(false);
++            return true;
++        }
++
++        /// <summary>Gancho para a filha criar botões e outros elementos dentro de 'panel'.</summary>
++        protected virtual void BuildExtra() { }
++
++        // ------------------------------------------------------------------ abrir / fechar
++        /// <summary>Chamado pela filha DEPOIS de mostrar o modelo no estúdio e de preencher os textos.</summary>
++        protected void BeginWindow()
++        {
++            float scale = Mathf.Min(1f, (layer.rect.width - 16f) / PanelW, (layer.rect.height - 16f) / PanelH);
++            if (scale <= 0f) scale = 1f;
++            panel.localScale = new Vector3(scale, scale, 1f);
++            raw.texture = studio.Texture;
++            hoverText.gameObject.SetActive(false);
++            messageText.text = "";
++            pressing = false; dragging = false; clicked = false; dragDistance = 0f;
++
++            prevLock = Cursor.lockState;
++            prevVisible = Cursor.visible;
++            if (!lockHeld) { player.AddControlLock(this); lockHeld = true; }
++            if (player.Stats != null && !damageHooked) { player.Stats.Damaged += OnDamaged; damageHooked = true; }
++            open = true;
++            openedAt = Time.unscaledTime;
++            layer.gameObject.SetActive(true);
++            if (RealPointer) cursor = Mouse.current.position.ReadValue();
++        }
++
++        /// <summary>Fecha a janela. O jogador é solto dois quadros depois (o mesmo aperto que fecha não pode acionar o que está à frente).</summary>
++        protected void EndWindow()
++        {
++            if (!open) return;
++            open = false;
++            if (damageHooked && player != null && player.Stats != null) { player.Stats.Damaged -= OnDamaged; damageHooked = false; }
++            if (studio != null) studio.Hide();
++            if (layer != null) layer.gameObject.SetActive(false);
++            ReleasePointer();
++            releaseFrame = Time.frameCount + 2;
++            OnWindowClosed();
++        }
++
++        /// <summary>Chamado depois que a janela fechou, por qualquer motivo.</summary>
++        protected virtual void OnWindowClosed() { }
++
++        /// <summary>Fecha por culpa de fora (dano, morte, cutscene, troca de fase).</summary>
++        protected virtual void CloseForced() { EndWindow(); }
++
++        void OnDamaged(StatsComponent sc, DamageInfo info, float applied)
++        {
++            if (open && applied > 0f) CloseForced();
++        }
++
++        void OnDestroy()
++        {
++            if (damageHooked && player != null && player.Stats != null) player.Stats.Damaged -= OnDamaged;
++            if (studio != null) studio.Hide();
++            ReleasePointer();
++            if (lockHeld && player != null) player.RemoveControlLock(this);
++        }
++
++        // ------------------------------------------------------------------ ponteiro
++        void LateUpdate()
++        {
++            if (!open) return;
++            if (RealPointer)
++            {
++                pointerOwned = true;
++                Cursor.lockState = CursorLockMode.None;
++                Cursor.visible = true;
++            }
++            else ReleasePointer();
++        }
++
++        void ReleasePointer()
++        {
++            if (!pointerOwned) return;
++            pointerOwned = false;
++            Cursor.lockState = prevLock;
++            Cursor.visible = prevVisible;
++        }
++
++        // ------------------------------------------------------------------ quadro a quadro
++        void Update()
++        {
++            if (lockHeld && !open && Time.frameCount >= releaseFrame)
++            {
++                lockHeld = false;
++                if (player != null) player.RemoveControlLock(this);
++            }
++            if (!open) return;
++
++            if (input == null || Time.timeScale <= 0f || player == null || player.IsDead || SceneDirector.IsBusy || CutsceneDirector.IsPlaying)
++            {
++                CloseForced();
++                return;
++            }
++
++            float dt = Time.unscaledDeltaTime;
++            if (RealPointer) cursor = Mouse.current.position.ReadValue();
++            HandleView(dt);
++            OnTick(dt);
++        }
++
++        /// <summary>Roda enquanto a janela está aberta (depois de girar/zoom).</summary>
++        protected abstract void OnTick(float dt);
++
++        /// <summary>Passou tempo suficiente desde que abriu para um aperto de botão contar como "fechar" (o aperto que abriu não fecha).</summary>
++        protected bool PastOpenGuard { get { return Time.unscaledTime - openedAt > 0.3f; } }
++
++        // ------------------------------------------------------------------ girar / aproximar
++        protected bool OverView { get { return RealPointer && InvUI.Hit(imageRect, cursor); } }
++
++        /// <summary>Posição do cursor na imagem, de 0 a 1 (origem embaixo à esquerda, como a câmera do estúdio espera).</summary>
++        protected Vector2 CursorInView()
++        {
++            Vector2 p;
++            RectTransformUtility.ScreenPointToLocalPointInRectangle(imageRect, cursor, null, out p);
++            Rect r = imageRect.rect;
++            return new Vector2((p.x - r.xMin) / r.width, (p.y - r.yMin) / r.height);
++        }
++
++        void HandleView(float dt)
++        {
++            clicked = false;
++            bool over = OverView;
++            Vector2 delta = RealPointer ? ItemInput.Vec(input.CursorDelta) : Vector2.zero;
++
++            if (RealPointer)
++            {
++                if (ItemInput.Pressed(input.Select) && over) { pressing = true; dragDistance = 0f; }
++                if (pressing && ItemInput.Held(input.Select))
++                {
++                    dragDistance += delta.magnitude;
++                    if (dragDistance > 3f) studio.Rotate(-delta.x * 0.4f, delta.y * 0.4f);
++                }
++                dragging = pressing && dragDistance > 6f;
++                if (ItemInput.Released(input.Select))
++                {
++                    clicked = pressing && dragDistance <= 6f;
++                    pressing = false;
++                    dragging = false;
++                }
++            }
++
++            Vector2 rs = ItemInput.Vec(input.RightStick);
++            if (rs.sqrMagnitude > 0.04f) studio.Rotate(-rs.x * 170f * dt, rs.y * 170f * dt);
++            if (ArrowsRotate)
++            {
++                Vector2 nav = new Vector2((ItemInput.Held(input.NavRight) ? 1f : 0f) - (ItemInput.Held(input.NavLeft) ? 1f : 0f),
++                                          (ItemInput.Held(input.NavUp) ? 1f : 0f) - (ItemInput.Held(input.NavDown) ? 1f : 0f));
++                if (nav.sqrMagnitude > 0f) studio.Rotate(-nav.x * 170f * dt, nav.y * 170f * dt);
++            }
++
++            float scroll = ItemInput.Vec(input.Scroll).y;
++            if (Mathf.Abs(scroll) > 0.01f) studio.Zoom(Mathf.Sign(scroll) * 0.08f);
++            if (ItemInput.Held(input.Rotate)) studio.Zoom(0.9f * dt);
++            if (ItemInput.Held(input.RotateBack)) studio.Zoom(-0.9f * dt);
++        }
++
++        /// <summary>Texto da tecla/botão de uma action para o dispositivo atual.</summary>
++        protected string Glyph(InputAction action)
++        {
++            return InputGlyphs.GetBindingTextForDevice(action, Pad);
++        }
++
++        /// <summary>Coloca o texto de dica ao lado do cursor (mouse).</summary>
++        protected void ShowHover(string text)
++        {
++            hoverText.gameObject.SetActive(true);
++            hoverText.text = text;
++            Vector2 lp;
++            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)hoverText.rectTransform.parent, cursor, null, out lp);
++            hoverText.rectTransform.anchoredPosition = lp + new Vector2(0f, 26f);
++        }
++
++        protected void HideHover() { hoverText.gameObject.SetActive(false); }
++    }
++}
+diff --git a/UI/Inspect/ItemPickupInspector.cs b/UI/Inspect/ItemPickupInspector.cs
+new file mode 100644
+index 0000000..4b2be1e
+--- /dev/null
++++ b/UI/Inspect/ItemPickupInspector.cs
+@@ -0,0 +1,143 @@
++using System;
++using UnityEngine;
++using UnityEngine.UI;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Tela de inspeção de um item NOVO no cenário: na primeira vez que o grupo vai pegar aquele tipo de item (ItemData.inspectOnFirstPickup),
++    /// o jogador vê o modelo girando e escolhe Pegar ou Deixar. Pegar = o item entra na mochila; Deixar = continua no chão (e da próxima vez
++    /// a tela abre de novo, porque o item ainda é novo). O que o grupo já pegou fica registrado no save (variável "seen.item.&lt;id&gt;").
++    ///
++    /// Controles: E / A (ou clicar em "Pegar") pega; Voltar (Backspace / B), Tab, I ou clicar em "Deixar" deixa. Girar: arrastar com o
++    /// mouse, analógico direito ou setas; aproximar: roda do mouse, R / Q ou RB / LB.
++    /// De código: ItemPickupInspector.Ask(jogador, item, aceitou =&gt; ...). Falso = o jogador não tem a tela (a pergunta não foi feita).
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/UI/Item Pickup Inspector")]
++    [PlayerModule("Interface", 7)]
++    [RequireComponent(typeof(PlayerOverlay))]
++    public class ItemPickupInspector : InspectModule
++    {
++        const float ButtonW = 156f;
++        const float ButtonH = 40f;
++
++        RectTransform takeRect, leaveRect;
++        Image takeBack, leaveBack;
++        Text takeLabel, leaveLabel;
++
++        ItemInstance item;
++        Action<bool> callback;
++        InventoryOwner owner;
++
++        protected override string LayerName { get { return "ItemPickupInspector"; } }
++        protected override bool ArrowsRotate { get { return true; } }
++
++        // ------------------------------------------------------------------ registro de "já vi este item"
++        public static string SeenKey(ItemData data) { return "seen.item." + (data != null ? data.Id : "?"); }
++
++        public static bool WasSeen(ItemData data) { return data != null && FrameworkBridge.GetBool(SeenKey(data)); }
++
++        public static void MarkSeen(ItemData data) { if (data != null) FrameworkBridge.SetBool(SeenKey(data), true); }
++
++        /// <summary>Este item deveria passar pela tela de inspeção agora?</summary>
++        public static bool NeedsInspection(ItemData data)
++        {
++            return data != null && data.canInspect && data.inspectOnFirstPickup && !WasSeen(data);
++        }
++
++        /// <summary>Abre a tela para o jogador. 'decision' recebe true (Pegar) ou false (Deixar / fechou por outro motivo).</summary>
++        public static bool Ask(PlayerContext player, ItemInstance item, Action<bool> decision)
++        {
++            if (player == null || item == null || item.data == null) return false;
++            ItemPickupInspector m = player.GetComponentInChildren<ItemPickupInspector>(true);
++            return m != null && m.Show(item, decision);
++        }
++
++        void Start()
++        {
++            owner = PlayerRef.Find<InventoryOwner>(this);
++            if (owner != null) owner.Picked += OnPicked;      // qualquer jeito de pegar (baú, loja, item inicial) conta como "já viu"
++        }
++
++        void OnPicked(ItemInstance picked)
++        {
++            if (picked != null) MarkSeen(picked.data);
++        }
++
++        void OnDisable()
++        {
++            if (open) CloseForced();
++        }
++
++        // ------------------------------------------------------------------ janela
++        protected override void BuildExtra()
++        {
++            takeRect = MakeButton("take", 560f, out takeBack, out takeLabel);
++            leaveRect = MakeButton("leave", 560f + ButtonW + 16f, out leaveBack, out leaveLabel);
++        }
++
++        RectTransform MakeButton(string name, float x, out Image back, out Text label)
++        {
++            RectTransform rt = InvUI.Rect(panel, name);
++            InvUI.TopLeft(rt, x, 400f, ButtonW, ButtonH);
++            back = InvUI.Img(rt, "back", InvUI.PanelLight);
++            InvUI.Stretch(back.rectTransform);
++            label = InvUI.Label(rt, "label", "", 15, TextAnchor.MiddleCenter, InvUI.TextColor);
++            InvUI.Stretch(label.rectTransform);
++            return rt;
++        }
++
++        bool Show(ItemInstance target, Action<bool> decision)
++        {
++            if (open || !Build()) return false;
++            if (!studio.Show(target)) return false;
++
++            item = target;
++            callback = decision;
++            titleText.text = UIText.InspectNewItem;
++            nameText.text = target.GetName(this);
++            descText.text = target.GetDescription(this);
++            takeLabel.text = Glyph(Pad ? input.Select : input.MenuPick) + "  " + UIText.Take;
++            leaveLabel.text = Glyph(input.Cancel) + "  " + UIText.InspectLeave;
++            hintText.text = string.Format(UIText.InspectHintItem, Glyph(Pad ? input.Select : input.MenuPick), Glyph(input.Cancel));
++            BeginWindow();
++            return true;
++        }
++
++        void Finish(bool take)
++        {
++            Action<bool> cb = callback;
++            callback = null;
++            item = null;
++            EndWindow();
++            if (cb != null) cb(take);
++        }
++
++        protected override void CloseForced()
++        {
++            Finish(false);
++        }
++
++        protected override void OnTick(float dt)
++        {
++            bool over1 = RealPointer && InvUI.Hit(takeRect, cursor);
++            bool over2 = RealPointer && InvUI.Hit(leaveRect, cursor);
++            takeBack.color = over1 ? new Color(0.28f, 0.24f, 0.12f, 1f) : InvUI.PanelLight;
++            leaveBack.color = over2 ? new Color(0.28f, 0.24f, 0.12f, 1f) : InvUI.PanelLight;
++
++            // mouse: clique nos botões (o clique sobre a imagem gira o modelo)
++            if (RealPointer && ItemInput.Pressed(input.Select) && PastOpenGuard)
++            {
++                if (over1) { Finish(true); return; }
++                if (over2) { Finish(false); return; }
++            }
++
++            // teclado: E; controle: A (o botão Select do mouse NÃO pega: ele gira o modelo)
++            bool take = ItemInput.Pressed(Pad ? input.Select : input.MenuPick);
++            bool leave = ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.ToggleBag);
++            if (!PastOpenGuard) return;
++            if (take) { Finish(true); return; }
++            if (leave) Finish(false);
++        }
++    }
++}
+diff --git a/UI/Inspect/ObjectInspector.cs b/UI/Inspect/ObjectInspector.cs
+new file mode 100644
+index 0000000..e4146d4
+--- /dev/null
++++ b/UI/Inspect/ObjectInspector.cs
+@@ -0,0 +1,167 @@
++using System.Collections.Generic;
++using UnityEngine;
++using UnityEngine.UI;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Tela de inspeção de um objeto do cenário (InspectableObject): o objeto gira (arrastar com o mouse, analógico direito, setas) e os
++    /// SceneHotspot dele podem ser acionados:
++    ///  - mouse: passe o cursor sobre o ponto (aparece o texto) e clique;
++    ///  - controle: um marcador aparece em cada ponto que está de frente para a câmera; o mais perto do centro fica em destaque, com
++    ///    "[botão] texto" embaixo da imagem, e o botão A (Select) o aciona.
++    /// Fecha com Voltar (Backspace / B), Tab, I, botão direito / X, ao levar dano, ao morrer ou ao começar uma cutscene.
++    /// De código: ObjectInspector.OpenFor(jogador, objeto).
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/UI/Object Inspector")]
++    [PlayerModule("Interface", 8)]
++    [RequireComponent(typeof(PlayerOverlay))]
++    public class ObjectInspector : InspectModule
++    {
++        const float MarkerSize = 12f;
++
++        InspectableObject target;
++        Text promptText;
++        readonly List<Image> markers = new List<Image>();
++        readonly List<SceneHotspot> seen = new List<SceneHotspot>();
++        readonly List<Vector2> seenPos = new List<Vector2>();
++        string message = "";
++
++        protected override string LayerName { get { return "ObjectInspector"; } }
++
++        public static bool OpenFor(PlayerContext player, InspectableObject obj)
++        {
++            if (player == null || obj == null) return false;
++            ObjectInspector m = player.GetComponentInChildren<ObjectInspector>(true);
++            return m != null && m.Show(obj);
++        }
++
++        void OnDisable()
++        {
++            if (open) CloseForced();
++        }
++
++        protected override void BuildExtra()
++        {
++            // a dica do controle fica embaixo da imagem, por cima dela
++            promptText = InvUI.Label(imageRect, "prompt", "", 14, TextAnchor.MiddleCenter, Color.white);
++            promptText.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.95f);
++            InvUI.TopLeft(promptText.rectTransform, 10f, ViewSize - 44f, ViewSize - 20f, 30f);
++            promptText.gameObject.SetActive(false);
++        }
++
++        bool Show(InspectableObject obj)
++        {
++            if (open || !Build()) return false;
++            if (!studio.ShowObject(obj.ModelSource)) return false;
++
++            target = obj;
++            for (int i = 0; i < studio.Hotspots.Count; i++) studio.Hotspots[i].ownerKey = obj.SaveKey;
++            message = "";
++            titleText.text = UIText.Examine.ToUpperInvariant();
++            nameText.text = obj.Title;
++            descText.text = obj.Description;
++            messageText.text = "";
++            hintText.text = string.Format(UIText.InspectHintObject, Glyph(input.Cancel));
++            promptText.gameObject.SetActive(false);
++            BeginWindow();
++            obj.RaiseOpened();
++            return true;
++        }
++
++        protected override void OnWindowClosed()
++        {
++            for (int i = 0; i < markers.Count; i++) if (markers[i] != null) markers[i].gameObject.SetActive(false);
++            if (promptText != null) promptText.gameObject.SetActive(false);
++            InspectableObject t = target;
++            target = null;
++            if (t != null) t.RaiseClosed();
++        }
++
++        protected override void OnTick(float dt)
++        {
++            // fechar
++            if (PastOpenGuard && (ItemInput.Pressed(input.Cancel) || ItemInput.Pressed(input.Toggle) || ItemInput.Pressed(input.ToggleBag)
++                                  || ItemInput.Pressed(input.Secondary)))
++            {
++                EndWindow();
++                return;
++            }
++            if (target == null) { EndWindow(); return; }
++
++            IList<SceneHotspot> all = studio.Hotspots;
++            SceneHotspot hovered = null;
++            if (RealPointer && OverView && !dragging) hovered = studio.RaycastScene(CursorInView());
++
++            // pontos disponíveis que estão à mostra (de frente, sem nada na frente): ganham um marcador
++            seen.Clear();
++            seenPos.Clear();
++            SceneHotspot aimed = null;
++            float aimedDist = float.MaxValue;
++            for (int i = 0; i < all.Count; i++)
++            {
++                SceneHotspot h = all[i];
++                Vector2 vp;
++                if (h == null || !h.IsAvailable() || !studio.IsVisible(h, out vp)) continue;
++                seen.Add(h);
++                seenPos.Add(vp);
++                // controle: o ponto mais perto do centro (dentro do raio dele) é o "mirado"
++                float dist = (vp - new Vector2(0.5f, 0.5f)).magnitude;
++                if (dist <= h.aimRadius && dist < aimedDist) { aimedDist = dist; aimed = h; }
++            }
++
++            for (int i = 0; i < seen.Count; i++)
++            {
++                Image m = Marker(i);
++                Vector2 vp = seenPos[i];
++                bool hot = RealPointer ? seen[i] == hovered : seen[i] == aimed;
++                float size = hot ? MarkerSize * 1.5f : MarkerSize;
++                InvUI.TopLeft(m.rectTransform, vp.x * ViewSize - size * 0.5f, (1f - vp.y) * ViewSize - size * 0.5f, size, size);
++                m.color = hot ? Color.white : new Color(InvUI.Accent.r, InvUI.Accent.g, InvUI.Accent.b, 0.6f);
++            }
++            for (int i = seen.Count; i < markers.Count; i++) markers[i].gameObject.SetActive(false);
++
++            // texto: mouse = ao lado do cursor; controle = embaixo da imagem
++            SceneHotspot active = RealPointer ? hovered : aimed;
++            if (RealPointer)
++            {
++                promptText.gameObject.SetActive(false);
++                if (active != null) ShowHover(active.label); else HideHover();
++            }
++            else
++            {
++                HideHover();
++                if (active != null)
++                {
++                    promptText.gameObject.SetActive(true);
++                    promptText.text = string.Format(UIText.InspectPromptPad, Glyph(input.Select), active.label);
++                }
++                else promptText.gameObject.SetActive(false);
++            }
++
++            // acionar
++            bool fire = RealPointer ? (clicked && hovered != null) : (ItemInput.Pressed(input.Select) && PastOpenGuard && aimed != null);
++            if (fire)
++            {
++                string msg = active.Activate(player);
++                if (!string.IsNullOrEmpty(msg)) message = msg;
++                messageText.text = message;
++            }
++
++            // a descrição pode ser trocada por eventos (ex.: depois de abrir a tampa): o texto do objeto é lido de novo
++            if (Time.frameCount % 15 == 0 && target != null) descText.text = target.Description;
++        }
++
++        Image Marker(int index)
++        {
++            while (markers.Count <= index)
++            {
++                Image m = InvUI.Img(imageRect, "marker", InvUI.Accent);
++                m.raycastTarget = false;
++                markers.Add(m);
++            }
++            markers[index].gameObject.SetActive(true);
++            return markers[index];
++        }
++    }
++}
+diff --git a/UI/Inventory/InspectStudio.cs b/UI/Inventory/InspectStudio.cs
+index 9041775..7682816 100644
+--- a/UI/Inventory/InspectStudio.cs
++++ b/UI/Inventory/InspectStudio.cs
+@@ -23,15 +23,39 @@ namespace HorrorFPS
+         float zoom = 1f;
+         float yaw, pitch;
+ 
++        /// <summary>Quanto (m) um ponto pode ficar "enterrado" na superfície do objeto e ainda contar como à mostra / clicável.</summary>
++        const float HotspotDepth = 0.03f;
++
++        readonly List<SceneHotspot> hotspots = new List<SceneHotspot>();
++
+         public RenderTexture Texture { get { return rt; } }
+         public bool IsOpen { get { return root != null; } }
++        public Camera Camera { get { return cam; } }
++        /// <summary>Os SceneHotspot do modelo mostrado (vazio para itens: eles usam InspectHotspot).</summary>
++        public IList<SceneHotspot> Hotspots { get { return hotspots; } }
+ 
+         public InspectStudio(int playerIndex) { this.playerIndex = playerIndex; }
+ 
+         public bool Show(ItemInstance item)
+         {
+-            Hide();
+             GameObject prefab = item.data.inspectPrefab != null ? item.data.inspectPrefab : item.data.worldPrefab;
++            return ShowModel(() => prefab != null ? BuildFromPrefab(prefab) : BuildFallback(item.data));
++        }
++
++        /// <summary>
++        /// Mostra um objeto do cenário (ou um prefab): uma CÓPIA dele, sem scripts (só os SceneHotspot e InspectHotspot ficam, e os UnityEvents deles
++        /// continuam apontando para a cena). O original não é tocado.
++        /// </summary>
++        public bool ShowObject(GameObject source)
++        {
++            if (source == null) return false;
++            return ShowModel(() => BuildFromPrefab(source));
++        }
++
++        bool ShowModel(System.Func<GameObject> build)
++        {
++            Hide();
++            hotspots.Clear();
+ 
+             root = new GameObject("[InspectStudio " + playerIndex + "]");
+             root.transform.position = new Vector3(4000f + playerIndex * 60f, 4000f, 4000f);
+@@ -39,10 +63,11 @@ namespace HorrorFPS
+             pivot = new GameObject("pivot").transform;
+             pivot.SetParent(root.transform, false);
+ 
+-            model = prefab != null ? BuildFromPrefab(prefab) : BuildFallback(item.data);
++            model = build();
+             model.transform.SetParent(pivot, false);
+             SetLayerRecursive(model, InspectLayer);
+             CenterModel();
++            model.GetComponentsInChildren(true, hotspots);
+ 
+             rt = new RenderTexture(TextureSize, TextureSize, 24, RenderTextureFormat.ARGB32);
+             rt.name = "InspectRT" + playerIndex;
+@@ -96,10 +121,16 @@ namespace HorrorFPS
+             MonoBehaviour[] mbs = go.GetComponentsInChildren<MonoBehaviour>(true);
+             for (int i = mbs.Length - 1; i >= 0; i--)
+             {
+-                if (mbs[i] == null || mbs[i] is InspectHotspot) continue;
++                if (mbs[i] == null || mbs[i] is InspectHotspot || mbs[i] is SceneHotspot) continue;
+                 Object.DestroyImmediate(mbs[i]);
+             }
+-            // 2) corpos rígidos (depois dos scripts que podem exigi-los)
++            // 2) o que prende o objeto ao cenário (juntas), luzes e sons do objeto; depois os corpos rígidos (que as juntas exigem)
++            Joint[] joints = go.GetComponentsInChildren<Joint>(true);
++            for (int i = 0; i < joints.Length; i++) if (joints[i] != null) Object.DestroyImmediate(joints[i]);
++            Light[] lights = go.GetComponentsInChildren<Light>(true);
++            for (int i = 0; i < lights.Length; i++) if (lights[i] != null) Object.DestroyImmediate(lights[i]);
++            AudioSource[] sources = go.GetComponentsInChildren<AudioSource>(true);
++            for (int i = 0; i < sources.Length; i++) if (sources[i] != null) Object.DestroyImmediate(sources[i]);
+             Rigidbody[] rbs = go.GetComponentsInChildren<Rigidbody>(true);
+             for (int i = 0; i < rbs.Length; i++) Object.DestroyImmediate(rbs[i]);
+ 
+@@ -183,6 +214,69 @@ namespace HorrorFPS
+             return best;
+         }
+ 
++        /// <summary>Raio a partir de um ponto normalizado (0..1) da imagem; devolve o SceneHotspot disponível acertado (o mais perto da câmera), se houver.</summary>
++        public SceneHotspot RaycastScene(Vector2 normalized)
++        {
++            if (cam == null) return null;
++            Physics.SyncTransforms();
++            Ray ray = cam.ViewportPointToRay(new Vector3(normalized.x, normalized.y, 0f));
++            RaycastHit[] hits = Physics.RaycastAll(ray, 50f, 1 << InspectLayer, QueryTriggerInteraction.Collide);
++            // o primeiro colisor SÓLIDO bloqueia: um botão atrás de uma peça não responde
++            float blockDist = float.MaxValue;
++            for (int i = 0; i < hits.Length; i++)
++            {
++                if (hits[i].collider.isTrigger) continue;
++                if (hits[i].collider.GetComponentInParent<SceneHotspot>() != null) continue;
++                if (hits[i].distance < blockDist) blockDist = hits[i].distance;
++            }
++            SceneHotspot best = null;
++            float bestDist = float.MaxValue;
++            for (int i = 0; i < hits.Length; i++)
++            {
++                SceneHotspot h = hits[i].collider.GetComponentInParent<SceneHotspot>();
++                if (h == null || !h.IsAvailable() || hits[i].distance > blockDist + HotspotDepth) continue;
++                if (hits[i].distance < bestDist) { bestDist = hits[i].distance; best = h; }
++            }
++            return best;
++        }
++
++        /// <summary>
++        /// O ponto está à mostra para a câmera da inspeção? Dentro do quadro, de frente (SceneHotspot.minFacing, se useFacing) e sem nada na frente.
++        /// 'viewport' devolve a posição 0..1 na imagem.
++        /// </summary>
++        public bool IsVisible(SceneHotspot h, out Vector2 viewport)
++        {
++            viewport = Vector2.zero;
++            if (cam == null || h == null) return false;
++            Vector3 p = h.Anchor;
++            Vector3 vp = cam.WorldToViewportPoint(p);
++            if (vp.z <= 0f || vp.x < 0f || vp.x > 1f || vp.y < 0f || vp.y > 1f) return false;
++            viewport = new Vector2(vp.x, vp.y);
++
++            Vector3 camPos = cam.transform.position;
++            if (h.useFacing)
++            {
++                Vector3 to = (camPos - p).normalized;
++                if (Vector3.Dot(h.transform.forward, to) < h.minFacing) return false;
++            }
++
++            // nada sólido (fora o próprio ponto) entre a câmera e o ponto
++            Physics.SyncTransforms();
++            Vector3 d = p - camPos;
++            float dist = d.magnitude;
++            if (dist < 0.001f) return true;
++            RaycastHit[] hits = Physics.RaycastAll(camPos, d / dist, dist + 0.05f, 1 << InspectLayer, QueryTriggerInteraction.Collide);
++            float own = dist;
++            for (int i = 0; i < hits.Length; i++)
++                if (hits[i].collider.GetComponentInParent<SceneHotspot>() == h && hits[i].distance < own) own = hits[i].distance;
++            for (int i = 0; i < hits.Length; i++)
++            {
++                if (hits[i].collider.isTrigger || hits[i].collider.GetComponentInParent<SceneHotspot>() != null) continue;
++                if (hits[i].distance < own - HotspotDepth) return false;
++            }
++            return true;
++        }
++
+         public void Hide()
+         {
+             if (root != null) Object.Destroy(root);
+diff --git a/World/InspectableObject.cs b/World/InspectableObject.cs
+new file mode 100644
+index 0000000..23d1bbd
+--- /dev/null
++++ b/World/InspectableObject.cs
+@@ -0,0 +1,48 @@
++using UnityEngine;
++using UnityEngine.Events;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Objeto do cenário que o jogador pode EXAMINAR: ao interagir abre a tela de inspeção (ObjectInspector) com uma cópia do objeto que gira.
++    /// Os SceneHotspot filhos do objeto viram pontos clicáveis (mouse) ou acionáveis pelo botão do controle quando ficam de frente para a
++    /// câmera. Serve para ler o verso de um quadro, apertar o botão de um aparelho, abrir a tampa de uma caixa...
++    ///
++    /// Diferente do item do inventário (ver InspectHotspot): aqui o objeto fica no mundo, e os eventos dos pontos mexem na cena.
++    /// O que é copiado: o objeto inteiro com todos os filhos (sem scripts, luzes e sons). Para um modelo mais simples ou mais bonito, use
++    /// 'Inspect Model' (um prefab só visual: então os SceneHotspot precisam estar NELE, e os eventos só alcançam o que o prefab contém,
++    /// por isso o padrão é copiar o próprio objeto).
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/World/Inspectable Object")]
++    public class InspectableObject : Interactable
++    {
++        [Header("Inspeção")]
++        [Tooltip("Nome mostrado na janela. Vazio = o nome do objeto.")]
++        [SerializeField] string title = "";
++        [TextArea(2, 6)]
++        [SerializeField] string description = "";
++        [Tooltip("Modelo mostrado. Vazio = uma cópia deste objeto (recomendado: os SceneHotspot filhos e seus eventos funcionam).")]
++        [SerializeField] GameObject inspectModel;
++        [Tooltip("Identificador para o save dos pontos 'Once'. Vazio = o nome do objeto. Mude se houver dois objetos com o mesmo nome.")]
++        [SerializeField] string saveId = "";
++
++        [Header("Eventos")]
++        public UnityEvent onOpened = new UnityEvent();
++        public UnityEvent onClosed = new UnityEvent();
++
++        protected override string DefaultVerb { get { return UIText.Examine; } }
++
++        public string Title { get { return string.IsNullOrEmpty(title) ? name : title; } }
++        public string Description { get { return description; } }
++        public string SaveKey { get { return string.IsNullOrEmpty(saveId) ? name : saveId; } }
++        public GameObject ModelSource { get { return inspectModel != null ? inspectModel : gameObject; } }
++
++        public override void Interact(PlayerContext player)
++        {
++            ObjectInspector.OpenFor(player, this);
++        }
++
++        internal void RaiseOpened() { onOpened.Invoke(); }
++        internal void RaiseClosed() { onClosed.Invoke(); }
++    }
++}
+diff --git a/World/KeypadKey.cs b/World/KeypadKey.cs
+new file mode 100644
+index 0000000..fe246c1
+--- /dev/null
++++ b/World/KeypadKey.cs
+@@ -0,0 +1,114 @@
++using System.Collections;
++using UnityEngine;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Uma tecla do teclado numérico (KeypadPanel). Fica num filho do painel, com um Collider (o jogador mira nele e aperta Interagir).
++    /// Z azul da tecla = PARA FORA do painel (para quem olha). A tecla só pode ser mirada enquanto o jogador está usando o teclado.
++    /// 'Symbol': "0".."9" (dígito), "C" (apagar tudo) ou "OK" (confirmar).
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/World/Keypad Key")]
++    public class KeypadKey : Interactable
++    {
++        [Header("Tecla")]
++        [Tooltip("\"0\" a \"9\", \"C\" (apagar) ou \"OK\" (confirmar).")]
++        [SerializeField] string symbol = "1";
++        [Tooltip("A parte que afunda ao apertar (vazio = este objeto).")]
++        [SerializeField] Transform cap;
++        [Tooltip("Quanto a tecla afunda (m).")]
++        [SerializeField] float travel = 0.008f;
++        [Tooltip("Onde a ponta do dedo toca, relativo a esta tecla (m). Z = para fora do painel; ajuste para a superfície da tecla.")]
++        [SerializeField] Vector3 touchOffset = Vector3.zero;
++
++        KeypadPanel panel;
++        Vector3 capRest;
++        Coroutine pressAnim;
++
++        public string Symbol { get { return symbol; } set { symbol = value; } }
++        public bool IsDigit { get { return symbol.Length == 1 && symbol[0] >= '0' && symbol[0] <= '9'; } }
++        public bool IsClear { get { return symbol == "C" || symbol == "c"; } }
++        public bool IsConfirm { get { return symbol == "OK" || symbol == "ok"; } }
++
++        /// <summary>Direção para fora do painel.</summary>
++        public Vector3 Normal { get { return transform.forward; } }
++        /// <summary>Onde a ponta do dedo encosta (na superfície da tecla, sem afundar).</summary>
++        public Vector3 TouchPoint { get { return transform.TransformPoint(touchOffset); } }
++
++        void Awake()
++        {
++            if (cap == null) cap = transform;
++            capRest = cap.localPosition;
++        }
++
++        void OnEnable()
++        {
++            if (cap != null && pressAnim == null) cap.localPosition = capRest;
++        }
++
++        KeypadPanel Panel
++        {
++            get
++            {
++                if (panel == null) panel = GetComponentInParent<KeypadPanel>();
++                return panel;
++            }
++        }
++
++        protected override string DefaultVerb { get { return UIText.KeypadPress; } }
++
++        public override bool IsFocusable(PlayerContext player)
++        {
++            KeypadPanel p = Panel;
++            return base.IsFocusable(player) && p != null && p.IsUsedBy(player);
++        }
++
++        public override bool CanInteract(PlayerContext player)
++        {
++            KeypadPanel p = Panel;
++            return p != null && p.CanPress(player);
++        }
++
++        public override string GetBlockedReason(PlayerContext player)
++        {
++            KeypadPanel p = Panel;
++            return p != null ? p.BlockedReason() : null;
++        }
++
++        public override string GetLabel(PlayerContext player)
++        {
++            string what = IsClear ? UIText.KeypadClear : IsConfirm ? UIText.KeypadConfirm : symbol;
++            return IsDigit ? UIText.KeypadPress + " " + symbol : what;
++        }
++
++        public override void Interact(PlayerContext player)
++        {
++            KeypadPanel p = Panel;
++            if (p != null) p.Press(this, player);
++        }
++
++        /// <summary>Anima a tecla afundando e voltando (o painel chama no instante do toque).</summary>
++        public void Depress(float duration)
++        {
++            if (!isActiveAndEnabled) return;
++            if (pressAnim != null) { StopCoroutine(pressAnim); cap.localPosition = capRest; }
++            pressAnim = StartCoroutine(DepressRoutine(Mathf.Max(0.05f, duration)));
++        }
++
++        IEnumerator DepressRoutine(float duration)
++        {
++            Vector3 down = capRest + Vector3.back * travel;       // local -Z = para dentro do painel
++            float t = 0f;
++            while (t < duration)
++            {
++                t += Time.deltaTime;
++                float k = t / duration;
++                float depth = k < 0.4f ? k / 0.4f : 1f - (k - 0.4f) / 0.6f;
++                cap.localPosition = Vector3.Lerp(capRest, down, Mathf.Clamp01(depth));
++                yield return null;
++            }
++            cap.localPosition = capRest;
++            pressAnim = null;
++        }
++    }
++}
+diff --git a/World/KeypadPanel.cs b/World/KeypadPanel.cs
+new file mode 100644
+index 0000000..3383b6b
+--- /dev/null
++++ b/World/KeypadPanel.cs
+@@ -0,0 +1,375 @@
++using System;
++using System.Collections;
++using UnityEngine;
++using UnityEngine.Events;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Teclado numérico no cenário: o jogador interage com o painel para "usar o teclado" (o movimento trava, a câmera continua livre),
++    /// mira nas teclas (KeypadKey) e aperta Interagir. Cada aperto leva a MÃO do corpo até a tecla com o dedo indicador (PokeHandIK),
++    /// a tecla afunda, toca um bipe e o dígito aparece no visor. Código certo = destranca: liga uma variável do jogo, grava no save e dispara
++    /// os eventos (porta, luz, SmartEventTrigger.Trigger, cutscene...). Errado = zumbido, visor "ERRO" e, se configurado, bloqueio por um tempo.
++    ///
++    /// Montagem rápida: menu Tools > Horror FPS > Levels > Create Keypad (cria o painel com 12 teclas e o visor). Para o seu modelo: ponha este
++    /// componente no painel (com um Collider), uma KeypadKey em cada tecla (cada uma com Collider, Z azul para FORA do painel) e, se quiser,
++    /// um TextMesh no campo 'Display'.
++    ///
++    /// Saída do teclado: tecla de Voltar (Backspace / B), apertar Interagir no painel de novo, afastar-se, levar dano, morrer, abrir a mochila
++    /// ou começar uma cutscene.
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/World/Keypad Panel")]
++    public class KeypadPanel : Interactable
++    {
++        public enum KeypadHand { Auto, Right, Left }
++        [Serializable] public class StringEvent : UnityEvent<string> { }
++
++        [Header("Código")]
++        [Tooltip("O código certo: só dígitos (0 a 9). O jogador digita até esse tamanho.")]
++        [SerializeField] string code = "1234";
++        [Tooltip("Confirma sozinho ao digitar o último dígito. Desligado, o jogador precisa apertar a tecla OK.")]
++        [SerializeField] bool autoSubmit = true;
++        [Tooltip("Erros seguidos até bloquear o teclado (0 = nunca bloqueia).")]
++        [SerializeField] int maxAttempts = 0;
++        [SerializeField] float lockoutSeconds = 15f;
++        [Tooltip("Ligado: depois de acertar o teclado continua funcionando (e dispara 'On Unlocked' de novo, como um botão). Desligado: destranca uma vez para sempre.")]
++        [SerializeField] bool reusable = false;
++
++        [Header("Save e variáveis")]
++        [Tooltip("Nome para o save: guarda que este teclado já foi destrancado (vazio = não guarda, a não ser que 'Set Variable' esteja preenchida).")]
++        [SerializeField] string saveId = "";
++        [Tooltip("Variável (bool) do jogo ligada ao acertar: portas (Door.unlockVariable), objetivos, condições de SmartEvent...")]
++        [SerializeField] string setVariable = "";
++
++        [Header("Uso")]
++        [Tooltip("Distância máxima (m) da câmera ao painel; mais longe que isto (+0,6) o jogador sai do teclado.")]
++        [SerializeField] float useDistance = 1.6f;
++        [Tooltip("Altura (m) em que o dedo paira sobre a tecla antes de apertar.")]
++        [SerializeField] float hoverHeight = 0.06f;
++        [SerializeField] KeypadHand hand = KeypadHand.Auto;
++
++        [Header("Visor")]
++        [Tooltip("TextMesh que mostra o que foi digitado (opcional).")]
++        [SerializeField] TextMesh display;
++        [Tooltip("Mostra os dígitos. Desligado mostra asteriscos.")]
++        [SerializeField] bool showDigits = true;
++        [SerializeField] Color normalColor = new Color(0.45f, 1f, 0.55f, 1f);
++        [SerializeField] Color errorColor = new Color(1f, 0.3f, 0.25f, 1f);
++        [Tooltip("Avisos no canto da tela (código incorreto, destrancado).")]
++        [SerializeField] bool showMessages = true;
++
++        [Header("Sons e barulho")]
++        [Tooltip("Vazio = bipes gerados por código.")]
++        [SerializeField] AudioClip pressSound;
++        [SerializeField] AudioClip okSound;
++        [SerializeField] AudioClip errorSound;
++        [SerializeField, Range(0f, 1f)] float volume = 0.7f;
++        [Tooltip("Raio (m) do barulho que o perseguidor ouve a cada tecla (0 = silencioso).")]
++        [SerializeField] float pressNoise = 2.5f;
++        [Tooltip("Raio (m) do barulho ao errar o código.")]
++        [SerializeField] float wrongNoise = 7f;
++
++        [Header("Eventos")]
++        public UnityEvent onUnlocked = new UnityEvent();
++        public UnityEvent onWrong = new UnityEvent();
++        public UnityEvent onLockedOut = new UnityEvent();
++        [Tooltip("Ao carregar a cena, se o teclado já estava destrancado (no save): reaplique aqui o estado final (porta aberta, luz acesa...).")]
++        public UnityEvent onRestored = new UnityEvent();
++        public StringEvent onEntryChanged = new StringEvent();
++
++        PlayerContext user;
++        ItemInput userInput;
++        PokeHandIK ik;
++        StatsComponent userStats;
++        string entry = "";
++        int attempts;
++        float lockedUntil;
++        bool unlocked;
++        bool prevMovementLocked;
++        float usedAt, lastPressTime;
++        Coroutine routine;
++        string resultText = "";
++        Color resultColor;
++        float resultUntil;
++        bool lastRight = true;
++
++        string SaveKey { get { return "keypad." + saveId; } }
++        bool LockedOut { get { return Time.time < lockedUntil; } }
++        bool Finished { get { return unlocked && !reusable; } }
++
++        public bool IsUnlocked { get { return unlocked; } }
++        public string Entry { get { return entry; } }
++        public PlayerContext User { get { return user; } }
++
++        protected override string DefaultVerb { get { return UIText.KeypadUse; } }
++
++        // ------------------------------------------------------------------ ciclo de vida
++        void Start()
++        {
++            bool saved = !string.IsNullOrEmpty(saveId) && FrameworkBridge.GetBool(SaveKey);
++            bool viaVariable = !string.IsNullOrEmpty(setVariable) && FrameworkBridge.GetBool(setVariable);
++            if ((saved || viaVariable) && !reusable)
++            {
++                unlocked = true;
++                onRestored.Invoke();
++            }
++            RefreshDisplay();
++        }
++
++        void OnDisable()
++        {
++            if (user != null) EndUse();
++        }
++
++        void Update()
++        {
++            if (user != null) CheckExit();
++            RefreshDisplay();
++            // a mão volta depois de um tempo sem apertar nada
++            if (ik != null && user != null && routine == null && Time.time - lastPressTime > 0.9f) ik.Release();
++        }
++
++        // ------------------------------------------------------------------ Interactable (o painel)
++        public bool IsUsedBy(PlayerContext p) { return user != null && user == p; }
++
++        public bool CanPress(PlayerContext p) { return IsUsedBy(p) && !LockedOut && !Finished; }
++
++        public string BlockedReason()
++        {
++            if (Finished) return UIText.KeypadAlreadyOpen;
++            if (LockedOut) return string.Format(UIText.KeypadLocked, Mathf.CeilToInt(lockedUntil - Time.time));
++            return null;
++        }
++
++        public override bool CanInteract(PlayerContext p)
++        {
++            if (IsUsedBy(p)) return true;                       // sair
++            return user == null && !Finished && !LockedOut;
++        }
++
++        public override string GetBlockedReason(PlayerContext p)
++        {
++            if (user != null && !IsUsedBy(p)) return null;
++            return BlockedReason();
++        }
++
++        public override string GetLabel(PlayerContext p)
++        {
++            return IsUsedBy(p) ? UIText.KeypadExit : UIText.KeypadUse;
++        }
++
++        public override void Interact(PlayerContext p)
++        {
++            if (IsUsedBy(p)) EndUse();
++            else if (user == null) BeginUse(p);
++        }
++
++        void BeginUse(PlayerContext p)
++        {
++            user = p;
++            userInput = PlayerRef.Find<ItemInput>(p);
++            userStats = p.Stats;
++            if (userStats != null) userStats.Damaged += OnUserDamaged;
++            prevMovementLocked = p.Controller != null && p.Controller.MovementLocked;
++            if (p.Controller != null) p.Controller.MovementLocked = true;       // anda não; a câmera continua livre para mirar
++            ik = PokeHandIK.For(p);
++            entry = "";
++            usedAt = Time.time;
++            lastPressTime = Time.time;
++            RefreshDisplay();
++        }
++
++        void EndUse()
++        {
++            if (user == null) return;
++            if (routine != null) { StopCoroutine(routine); routine = null; }
++            if (userStats != null) userStats.Damaged -= OnUserDamaged;
++            if (user.Controller != null) user.Controller.MovementLocked = prevMovementLocked;
++            if (ik != null) ik.Release();
++            user = null;
++            userInput = null;
++            userStats = null;
++            ik = null;
++            entry = "";
++            RefreshDisplay();
++        }
++
++        void OnUserDamaged(StatsComponent sc, DamageInfo info, float applied)
++        {
++            if (applied > 0f) EndUse();
++        }
++
++        void CheckExit()
++        {
++            if (user == null) return;
++            bool far = user.Camera != null && Vector3.Distance(user.Camera.transform.position, transform.position) > useDistance + 0.6f;
++            bool back = userInput != null && Time.time - usedAt > 0.3f && ItemInput.Pressed(userInput.Cancel);
++            if (user.IsDead || user.IsControlLocked || far || back || SceneDirector.IsBusy || CutsceneDirector.IsPlaying)
++                EndUse();
++        }
++
++        // ------------------------------------------------------------------ apertar
++        /// <summary>Chamado pela KeypadKey. Um aperto por vez: a mão leva um instante para ir e voltar.</summary>
++        public void Press(KeypadKey key, PlayerContext p)
++        {
++            if (key == null || !CanPress(p) || routine != null) return;
++            routine = StartCoroutine(PressRoutine(key));
++        }
++
++        bool ChooseRight(KeypadKey key)
++        {
++            if (hand == KeypadHand.Right) return true;
++            if (hand == KeypadHand.Left) return false;
++            Camera cam = user != null ? user.Camera : null;
++            if (cam == null) return lastRight;
++            float side = Vector3.Dot(key.TouchPoint - cam.transform.position, cam.transform.right);
++            if (side > 0.04f) lastRight = true;
++            else if (side < -0.04f) lastRight = false;
++            return lastRight;
++        }
++
++        IEnumerator PressRoutine(KeypadKey key)
++        {
++            Vector3 touch = key.TouchPoint;
++            Vector3 n = key.Normal;
++            Vector3 into = -n;
++            Vector3 hover = touch + n * hoverHeight;
++            bool right = ChooseRight(key);
++
++            if (ik != null)
++            {
++                // 1) alcançar: o dedo pára um pouco acima da tecla
++                float t = 0f;
++                while (t < 0.55f)
++                {
++                    ik.Aim(hover, into, right);
++                    t += Time.deltaTime;
++                    if (t > 0.12f && ik.IsAt(hover, 0.02f)) break;
++                    yield return null;
++                }
++                // 2) descer até a tecla
++                t = 0f;
++                while (t < 0.09f)
++                {
++                    ik.Aim(touch, into, right);
++                    t += Time.deltaTime;
++                    yield return null;
++                }
++            }
++            else yield return new WaitForSeconds(0.1f);
++
++            // 3) contato: a tecla afunda, toca e o dígito entra
++            key.Depress(0.2f);
++            Play(pressSound != null ? pressSound : ProceduralAudio.KeypadBeep(), touch);
++            if (pressNoise > 0f && user != null) NoiseSystem.Emit(transform.position, pressNoise, NoiseKind.Item, user.gameObject);
++            Apply(key);
++
++            // 4) segurar um instante e recuar
++            if (ik != null)
++            {
++                float t = 0f;
++                while (t < 0.07f) { ik.Aim(touch, into, right); t += Time.deltaTime; yield return null; }
++                t = 0f;
++                while (t < 0.1f) { ik.Aim(hover, into, right); t += Time.deltaTime; yield return null; }
++            }
++            lastPressTime = Time.time;
++            routine = null;
++        }
++
++        void Apply(KeypadKey key)
++        {
++            if (key.IsConfirm) { Submit(); return; }
++            if (key.IsClear) entry = "";
++            else if (key.IsDigit && entry.Length < code.Length) entry += key.Symbol;
++            else return;
++
++            onEntryChanged.Invoke(entry);
++            RefreshDisplay();
++            if (autoSubmit && key.IsDigit && entry.Length >= code.Length) StartCoroutine(SubmitLater(0.28f));
++        }
++
++        IEnumerator SubmitLater(float seconds)
++        {
++            yield return new WaitForSeconds(seconds);
++            if (user != null && entry.Length >= code.Length) Submit();
++        }
++
++        void Submit()
++        {
++            if (entry.Length == 0 || Finished) return;
++            if (entry == code) Succeed(); else Fail();
++        }
++
++        void Succeed()
++        {
++            attempts = 0;
++            entry = "";
++            if (!reusable) unlocked = true;
++            if (!string.IsNullOrEmpty(saveId)) FrameworkBridge.SetBool(SaveKey, true);
++            if (!string.IsNullOrEmpty(setVariable)) FrameworkBridge.SetBool(setVariable, true);
++            Play(okSound != null ? okSound : ProceduralAudio.KeypadOk(), transform.position);
++            if (pressNoise > 0f && user != null) NoiseSystem.Emit(transform.position, pressNoise * 1.5f, NoiseKind.Item, user.gameObject);
++            ShowResult("OK", normalColor, 1.4f);
++            if (showMessages) Toast.Show(UIText.KeypadOpened);
++            onEntryChanged.Invoke(entry);
++            onUnlocked.Invoke();
++            StartCoroutine(ExitSoon(0.9f));
++        }
++
++        void Fail()
++        {
++            attempts++;
++            entry = "";
++            Play(errorSound != null ? errorSound : ProceduralAudio.KeypadError(), transform.position);
++            if (wrongNoise > 0f && user != null) NoiseSystem.Emit(transform.position, wrongNoise, NoiseKind.Item, user.gameObject);
++            ShowResult("ERRO", errorColor, 1.2f);
++            if (showMessages) Toast.Show(UIText.KeypadWrong);
++            onEntryChanged.Invoke(entry);
++            onWrong.Invoke();
++            if (maxAttempts > 0 && attempts >= maxAttempts)
++            {
++                attempts = 0;
++                lockedUntil = Time.time + Mathf.Max(1f, lockoutSeconds);
++                onLockedOut.Invoke();
++                StartCoroutine(ExitSoon(1.2f));
++            }
++        }
++
++        IEnumerator ExitSoon(float seconds)
++        {
++            yield return new WaitForSeconds(seconds);
++            EndUse();
++        }
++
++        void Play(AudioClip clip, Vector3 at)
++        {
++            if (clip != null) AudioCategoryFilter.PlayClipAtPoint(clip, at, volume, AudioCategory.Effects);
++        }
++
++        // ------------------------------------------------------------------ visor
++        void ShowResult(string text, Color color, float seconds)
++        {
++            resultText = text;
++            resultColor = color;
++            resultUntil = Time.time + seconds;
++            RefreshDisplay();
++        }
++
++        void RefreshDisplay()
++        {
++            if (display == null) return;
++            string text;
++            Color color = normalColor;
++            if (Time.time < resultUntil) { text = resultText; color = resultColor; }
++            else if (Finished) text = "OK";
++            else if (LockedOut) { text = "BLOQ."; color = errorColor; }
++            else
++            {
++                string shown = showDigits ? entry : new string('*', entry.Length);
++                text = shown.PadRight(Mathf.Max(1, code.Length), '_');
++            }
++            if (display.text != text) display.text = text;
++            if (display.color != color) display.color = color;
++        }
++    }
++}
+diff --git a/World/SceneHotspot.cs b/World/SceneHotspot.cs
+new file mode 100644
+index 0000000..85354fe
+--- /dev/null
++++ b/World/SceneHotspot.cs
+@@ -0,0 +1,91 @@
++using UnityEngine;
++using UnityEngine.Events;
++
++namespace HorrorFPS
++{
++    /// <summary>
++    /// Ponto interativo de um objeto do cenário durante a INSPEÇÃO (InspectableObject): um botão, uma tampa, uma gaveta, o verso de um quadro...
++    /// Ponha num filho do objeto, junto de um Collider (pode ser Trigger: só serve para o clique/raio). Na tela de inspeção:
++    ///  - mouse: passe o cursor (aparece o texto) e clique;
++    ///  - controle: gire o objeto; quando o ponto fica de frente para a câmera e perto do centro, aparece "[botão] texto" e o botão do controle o aciona.
++    /// Z azul do ponto = para FORA da superfície (a direção de quem olha). Com 'Use Facing' desligado o ponto vale de qualquer ângulo.
++    /// Os UnityEvents podem apontar para objetos da cena (porta, luz, SmartEventTrigger.Trigger...): a inspeção usa uma cópia do objeto, mas os
++    /// eventos chamam os originais.
++    /// </summary>
++    [AddComponentMenu("HorrorFPS/World/Scene Hotspot")]
++    public class SceneHotspot : MonoBehaviour
++    {
++        [Tooltip("Texto da dica (ex.: 'Abrir a tampa', 'Apertar o botão').")]
++        public string label = "Examinar";
++        [Tooltip("Mensagem mostrada na janela depois de ativar.")]
++        [TextArea(1, 3)] public string message;
++        [Tooltip("Só funciona uma vez (fica registrado no save).")]
++        public bool once;
++        [Tooltip("Nome para o save de 'Once'. Vazio = o nome do objeto. Mude se houver dois pontos com o mesmo nome no mesmo objeto.")]
++        public string id;
++
++        [Header("Visibilidade")]
++        [Tooltip("Só aparece (e só vale para o controle) quando o Z azul do ponto aponta para a câmera.")]
++        public bool useFacing = true;
++        [Tooltip("1 = exatamente de frente, 0 = de lado, -1 = de costas. 0,35 = até uns 70° de lado.")]
++        [Range(-1f, 1f)] public float minFacing = 0.35f;
++        [Tooltip("Para o controle: o ponto precisa estar a esta distância do centro da imagem (0..0,5).")]
++        [Range(0.05f, 0.7f)] public float aimRadius = 0.3f;
++
++        [Header("Condição")]
++        [Tooltip("Variável (bool) do jogo que precisa estar ligada para o ponto existir.")]
++        public string requiresVariable;
++        [Tooltip("O ponto some depois que esta variável for ligada.")]
++        public string hideWhenVariable;
++
++        [Header("Efeito")]
++        [Tooltip("Variável (bool) da partida alterada ao ativar: destranca portas, libera objetivos...")]
++        public string setVariable;
++        public bool variableValue = true;
++        public AudioClip sound;
++        [Tooltip("Barulho que o perseguidor escuta ao ativar (raio em metros, 0 = silencioso).")]
++        public float noiseRadius = 0f;
++        public UnityEvent onActivated;
++
++        /// <summary>Preenchido pela inspeção: prefixo do save (a chave do objeto inspecionado).</summary>
++        [System.NonSerialized] public string ownerKey = "";
++
++        Collider cached;
++
++        /// <summary>Ponto de mira: o centro do collider, ou a posição do objeto.</summary>
++        public Vector3 Anchor
++        {
++            get
++            {
++                if (cached == null) cached = GetComponentInChildren<Collider>();
++                return cached != null ? cached.bounds.center : transform.position;
++            }
++        }
++
++        string Key { get { return "scenehs." + ownerKey + "." + (string.IsNullOrEmpty(id) ? name : id); } }
++
++        public bool IsAvailable()
++        {
++            if (!string.IsNullOrEmpty(requiresVariable) && !FrameworkBridge.GetBool(requiresVariable)) return false;
++            if (!string.IsNullOrEmpty(hideWhenVariable) && FrameworkBridge.GetBool(hideWhenVariable)) return false;
++            if (once && FrameworkBridge.GetBool(Key)) return false;
++            return true;
++        }
++
++        /// <summary>Roda o ponto. Devolve a mensagem a mostrar (pode ser vazia).</summary>
++        public string Activate(PlayerContext player)
++        {
++            if (!IsAvailable()) return "";
++            if (once) FrameworkBridge.SetBool(Key, true);
++            if (!string.IsNullOrEmpty(setVariable)) FrameworkBridge.SetBool(setVariable, variableValue);
++            if (sound != null)
++            {
++                Vector3 at = player != null && player.Camera != null ? player.Camera.transform.position : transform.position;
++                AudioCategoryFilter.PlayClipAtPoint(sound, at, 1f, AudioCategory.Effects, 0f);
++            }
++            if (noiseRadius > 0f && player != null) NoiseSystem.Emit(player.transform.position, noiseRadius, NoiseKind.Item, player.gameObject);
++            if (onActivated != null) onActivated.Invoke();
++            return message;
++        }
++    }
++}

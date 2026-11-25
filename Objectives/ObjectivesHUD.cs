@@ -182,7 +182,6 @@ namespace HorrorFPS
             float dt = Time.unscaledDeltaTime;
             bool hidden = (screen != null && screen.IsOpen) || (player != null && player.IsDead) || Time.timeScale <= 0f;
 
-            ReadInput();
             // reconfere de tempos em tempos: carregar um save ou Novo Jogo troca os objetivos sem avisar ninguém
             if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 0.5f; dirty = true; }
             if (dirty) Refresh();
@@ -192,28 +191,6 @@ namespace HorrorFPS
             panelGroup.alpha = Mathf.MoveTowards(panelGroup.alpha, want ? 1f : 0f, dt * (want ? 6f : 2.5f));
 
             TickBanner(dt, hidden);
-        }
-
-        void ReadInput()
-        {
-            if (input == null || !ItemInput.Pressed(input.Objectives)) return;
-            if (Time.timeScale <= 0f || (screen != null && screen.IsOpen)) return;
-            if (player != null && (player.IsDead || FrameworkBridge.IsLockedByOthers(player))) return;
-            if (player != null && HidingSpot.IsHidden(player)) return;      // escondido, esse botão segura o fôlego
-
-            if (panelGroup != null && Time.unscaledTime < visibleUntil && panelGroup.alpha > 0.5f && !alwaysVisible)
-            {
-                visibleUntil = 0f;      // apertar de novo esconde
-                return;
-            }
-
-            Refresh();
-            if (rowsActive == 0)
-            {
-                if (notifier != null) notifier.Notify(UIText.NoObjectives);
-                return;
-            }
-            Show();
         }
 
         /// <summary>Redesenha a lista com os objetivos ativos (os obrigatórios primeiro).</summary>
