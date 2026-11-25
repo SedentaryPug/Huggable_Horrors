@@ -166,7 +166,8 @@ using HorrorFPS;
 // CARACTERÍSTICA do perseguidor: um dado que diz o que ele É e o que PODE fazer (visão, olfato, um ataque...).
 // Aparece sozinha no menu ""Adicionar característica"" do Stalker Profile Graph (Create > HorrorFPS > Stalker Profile Graph).
 // - Campo PÚBLICO = parâmetro editável no grafo. StalkerLevelValue = um valor para cada nível de atenção (Calm, Alert, Hunting, Frenzy).
-// - Campo PRIVADO = estado deste monstro (listas e arrays crie em OnBuild: a cópia é rasa e eles seriam divididos entre os monstros).
+// - Estado de execução deve ser não serializado e inicializado em OnBuild; os campos serializados são copiados por JSON.
+// - Se usar referências a UnityEngine.Object, sobrescreva CloneForRuntime para copiá-las explicitamente.
 // - Apply: escreve números no perfil DESTE monstro (uma cópia, nunca o asset). Roda uma vez ao montar; não use Brain aqui.
 // - Publish: publica as capacidades (caps.SetFloat / SetFlag / AddAttack) para a ÁRVORE consultar. Publique a partir de ""profile""
 //   (já com os números finais). A árvore nunca conhece esta classe: ela só pergunta pela chave (""meumonstro.faro >= 10"").

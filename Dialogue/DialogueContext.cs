@@ -98,9 +98,10 @@ namespace HorrorFPS
             if (Views.Count > 0 && Views[0] != null) Views[0].Notify(message);
         }
 
-        public void PlayLocalSound(AudioClip clip, float volume)
+        public void PlayLocalSound(AudioClip clip, float volume, AudioCategory category = AudioCategory.Effects)
         {
-            if (Views.Count > 0 && Views[0] != null) Views[0].PlayClip(clip, volume);
+            if (Views.Count > 0 && Views[0] != null)
+                AudioCategoryFilter.PlayClipAtPoint(clip, Vector3.zero, volume, category, 0f);
         }
 
         internal void RaiseEnded()

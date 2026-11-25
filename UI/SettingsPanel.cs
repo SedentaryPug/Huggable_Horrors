@@ -6,7 +6,7 @@ namespace HorrorFPS
 {
     /// <summary>
     /// Página "Opções" (sensibilidade, inverter Y, dica de interação, modo de arrastar/agachar, dicas na tela, botão Controles) e a
-    /// subpágina "Áudio" (volume geral, música, ambiente). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings,
+    /// subpágina "Áudio" (volume geral, música, ambiente, efeitos, vozes e interface). Usada no menu de pausa e no menu principal; tudo passa pelo GameSettings,
     /// que persiste sozinho.
     /// </summary>
     public class SettingsPanel
@@ -141,6 +141,12 @@ namespace HorrorFPS
                 delegate { return GameSettings.MusicVolume; }, delegate (float v) { GameSettings.MusicVolume = v; });
             AddSliderRow(pageRoot, UIText.AmbienceVolume, 0f, 1f, "0%",
                 delegate { return GameSettings.AmbienceVolume; }, delegate (float v) { GameSettings.AmbienceVolume = v; });
+            AddSliderRow(pageRoot, UIText.EffectsVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.EffectsVolume; }, delegate (float v) { GameSettings.EffectsVolume = v; });
+            AddSliderRow(pageRoot, UIText.VoiceVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.VoiceVolume; }, delegate (float v) { GameSettings.VoiceVolume = v; });
+            AddSliderRow(pageRoot, UIText.InterfaceVolume, 0f, 1f, "0%",
+                delegate { return GameSettings.InterfaceVolume; }, delegate (float v) { GameSettings.InterfaceVolume = v; });
 
             Button back = UIFactory.CreateButton(pageRoot, UIText.Back, new Vector2(300f, 64f),
                 delegate { SwitchPage(false); });

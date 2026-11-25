@@ -97,6 +97,10 @@ namespace HorrorFPS
         }
 
         // ------------------------------------------------------------------ ciclo de vida
+        void OnEnable() { SceneDirector.TransitionStarted += StopAll; }
+
+        void OnDisable() { SceneDirector.TransitionStarted -= StopAll; }
+
         void OnDestroy()
         {
             DialogueSession[] all = active.ToArray();

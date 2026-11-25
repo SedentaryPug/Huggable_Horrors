@@ -61,7 +61,8 @@ namespace HorrorFPS
                 ItemUseContext ctx = new ItemUseContext { owner = owner, item = item, action = null };
                 for (int i = 0; i < effects.Length; i++) if (effects[i] != null) effects[i].Execute(ctx);
             }
-            if (sound != null) AudioSource.PlayClipAtPoint(sound, transform.position);
+            if (sound != null)
+                AudioCategoryFilter.PlayClipAtPoint(sound, transform.position, 1f, AudioCategory.Effects);
             onActivated.Invoke();
             return message;
         }

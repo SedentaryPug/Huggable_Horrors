@@ -28,6 +28,7 @@ namespace HorrorFPS
             traits = list;
             inputs = modifierInputs;
             off = new bool[list.Length];
+            for (int i = 0; i < list.Length; i++) off[i] = list[i] == null;
             caps = capabilities;
             profile = runtimeProfile;
         }
@@ -52,7 +53,11 @@ namespace HorrorFPS
             bool[] active = StalkerGraphOps.ComputeActive(graph);
             List<StalkerTrait> ordered = Sorted(graph.traits, active);
             StalkerTrait[] spawned = new StalkerTrait[ordered.Count];
-            for (int i = 0; i < ordered.Count; i++) spawned[i] = ordered[i].Spawn(brain);
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                try { spawned[i] = ordered[i].Spawn(brain); }
+                catch (Exception e) { Debug.LogError("[Stalker] A característica '" + ordered[i].DisplayName() + "' foi desativada neste perseguidor ao ser copiada.\n" + e); }
+            }
             Run(spawned, runtime, caps);
             return new StalkerTraitSet(brain, spawned, graph.wired ? ModifierInputs(graph, active, ordered, spawned) : null, caps, runtime);
         }
@@ -73,7 +78,7 @@ namespace HorrorFPS
                 for (int s = 0; s < sources.Count; s++)
                 {
                     int at = ordered.IndexOf(sources[s]);
-                    if (at >= 0) mine.Add(spawned[at]);
+                    if (at >= 0 && spawned[at] != null) mine.Add(spawned[at]);
                 }
                 result[i] = mine.ToArray();
             }
@@ -124,11 +129,13 @@ namespace HorrorFPS
             caps.Clear();
             for (int i = 0; i < ordered.Length; i++)
             {
+                if (ordered[i] == null) continue;
                 try { ordered[i].Apply(profile); }
                 catch (Exception e) { Debug.LogError("[Stalker] Erro em Apply da característica '" + ordered[i].DisplayName() + "': " + e); }
             }
             for (int i = 0; i < ordered.Length; i++)
             {
+                if (ordered[i] == null) continue;
                 caps.BeginPublisher(ordered[i].DisplayName(), ordered[i]);
                 try { ordered[i].Publish(caps, profile); }
                 catch (Exception e) { Debug.LogError("[Stalker] Erro em Publish da característica '" + ordered[i].DisplayName() + "': " + e); }

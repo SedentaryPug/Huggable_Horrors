@@ -149,8 +149,9 @@ namespace HorrorFPS
     /// Base de toda característica do perfil em grafo (StalkerProfileGraph): UMA característica do monstro como dado, sem MonoBehaviour.
     /// Para criar a sua: herde desta classe, marque [Serializable], ponha [StalkerTraitMenu("Categoria/Nome", "descrição")] e
     /// sobrescreva só os ganchos de que precisa (veja Assets > Create > HorrorFPS > Stalker Trait Script). Ela aparece sozinha
-    /// no menu do perfil em grafo. Campo PÚBLICO = parâmetro editável; campo privado = estado deste monstro (listas e arrays
-    /// crie em OnBuild: a cópia é rasa e eles seriam divididos entre os monstros).
+    /// no menu do perfil em grafo. Campos serializados são configuração e são copiados por JSON; estado de execução deve ser
+    /// não serializado e criado em OnBuild. Se a característica contém referências a UnityEngine.Object, sobrescreva
+    /// CloneForRuntime para copiá-las explicitamente.
     ///
     /// Regra de ouro: uma característica diz o que o monstro É e PODE FAZER (números, ganchos, capacidades publicadas). Quem decide QUANDO
     /// fazer é a árvore de comportamento, que só consulta as capacidades (StalkerCapabilities). Característica nunca mexe na árvore.
@@ -203,6 +204,12 @@ namespace HorrorFPS
         protected virtual void OnBuild() { }
 
         /// <summary>
+        /// Cria uma instância de execução. Sobrescreva se a característica tiver referências não serializáveis que precisem
+        /// ser preservadas ou copiadas de forma especial.
+        /// </summary>
+        protected virtual StalkerTrait CloneForRuntime() { return DeepClone(); }
+
+        /// <summary>
         /// Escreve os números desta característica no perfil de EXECUÇÃO deste monstro (uma cópia do perfil de números; nunca o asset).
         /// Roda uma vez, ao montar o monstro, e não deve usar Brain.
         /// </summary>
@@ -253,20 +260,22 @@ namespace HorrorFPS
         // ------------------------------------------------------------------ cópias
         internal StalkerTrait Spawn(StalkerBrain brain)
         {
-            StalkerTrait t = (StalkerTrait)MemberwiseClone();
+            StalkerTrait t = CloneForRuntime();
+            if (t == null || ReferenceEquals(t, this) || t.GetType() != GetType())
+                throw new InvalidOperationException("[Stalker] CloneForRuntime da característica '" + DisplayName() + "' deve devolver uma instância do mesmo tipo.");
             t.Brain = brain;
             try { t.OnBuild(); }
             catch (Exception e) { Debug.LogError("[Stalker] Erro ao montar a característica '" + DisplayName() + "': " + e); }
             return t;
         }
 
-        /// <summary>Cópia independente, para duplicar na janela de edição. O jogo não usa.</summary>
+        /// <summary>Cópia independente da configuração serializada; o jogo também usa ao montar cada perseguidor.</summary>
         public StalkerTrait DeepClone()
         {
-            StalkerTrait c = null;
+            StalkerTrait c;
             try { c = (StalkerTrait)JsonUtility.FromJson(JsonUtility.ToJson(this), GetType()); }
-            catch (Exception) { c = null; }
-            if (c == null) c = (StalkerTrait)MemberwiseClone();
+            catch (Exception e) { throw new InvalidOperationException("[Stalker] Não foi possível copiar a característica '" + DisplayName() + "'.", e); }
+            if (c == null) throw new InvalidOperationException("[Stalker] A cópia JSON da característica '" + DisplayName() + "' ficou vazia.");
             c.Brain = null;
             return c;
         }

@@ -165,7 +165,8 @@ namespace HorrorFPS
         public static void Sfx(AudioClip custom, PropSfx.Kind fallback, Vector3 position, float volume)
         {
             AudioClip clip = custom != null ? custom : PropSfx.Get(fallback);
-            if (clip != null) AudioSource.PlayClipAtPoint(clip, position, Mathf.Clamp01(volume));
+            if (clip != null)
+                AudioCategoryFilter.PlayClipAtPoint(clip, position, Mathf.Clamp01(volume), AudioCategory.Effects);
         }
 
         public static void Shake(Vector3 position, float radius, float trauma)

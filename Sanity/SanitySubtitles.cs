@@ -30,6 +30,10 @@ namespace HorrorFPS
 
         public bool IsBusy { get { return showing || queue.Count > 0; } }
 
+        void OnEnable() { SceneDirector.TransitionStarted += Clear; }
+
+        void OnDisable() { SceneDirector.TransitionStarted -= Clear; }
+
         /// <summary>Legendas do jogador dono de 'c' (o jogador, a câmera dele, qualquer coisa dele).</summary>
         public static SanitySubtitles Of(Component c) { return PlayerRef.Find<SanitySubtitles>(c); }
 
@@ -52,7 +56,7 @@ namespace HorrorFPS
             InvUI.Stretch(label.rectTransform, 14f, 6f, 14f, 6f);
             label.gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.9f);
 
-            voiceSource = PlayerAudio.Create(transform, "[Voice]", 14f);
+            voiceSource = PlayerAudio.Create(transform, "[Voice]", 14f, AudioCategory.Voice);
             return true;
         }
 

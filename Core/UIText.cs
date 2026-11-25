@@ -192,7 +192,10 @@ namespace HorrorFPS
         public const string OpenAudio = "Abrir";
         public const string MasterVolume = "Volume geral";
         public const string MusicVolume = "Música";
-        public const string AmbienceVolume = "Ambiente e efeitos";
+        public const string AmbienceVolume = "Ambiente";
+        public const string EffectsVolume = "Efeitos";
+        public const string VoiceVolume = "Vozes";
+        public const string InterfaceVolume = "Interface";
         public const string NoiseSilent = "Silencioso";
         public const string NoiseQuiet = "Baixo";
         public const string NoiseNormal = "Médio";

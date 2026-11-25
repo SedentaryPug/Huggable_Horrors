@@ -74,6 +74,7 @@ namespace HorrorFPS
             GameObject go = new GameObject("[HurtboxSfx]");
             go.transform.position = pos;
             AudioSource a = go.AddComponent<AudioSource>();
+            AudioCategoryFilter.Attach(a, AudioCategory.Effects);
             a.clip = clip;
             a.volume = volume;
             a.pitch = Mathf.Max(0.1f, pitch);

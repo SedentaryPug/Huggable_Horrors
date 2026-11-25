@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -122,7 +123,34 @@ namespace HorrorFPS
     [RequireComponent(typeof(StalkerBrain))]
     public abstract class StalkerModule : MonoBehaviour
     {
+        [SerializeField, HideInInspector] string stateId;
+
         public StalkerBrain Brain { get; private set; }
+
+        internal string StateId { get { return stateId; } }
+
+        void Reset()
+        {
+            if (string.IsNullOrEmpty(stateId))
+                stateId = Guid.NewGuid().ToString("N");
+        }
+
+        void OnValidate()
+        {
+            if (string.IsNullOrEmpty(stateId) || HasEarlierDuplicate())
+                stateId = Guid.NewGuid().ToString("N");
+        }
+
+        bool HasEarlierDuplicate()
+        {
+            StalkerModule[] modules = GetComponents<StalkerModule>();
+            for (int i = 0; i < modules.Length; i++)
+            {
+                if (modules[i] == this) return false;
+                if (modules[i] != null && modules[i].stateId == stateId) return true;
+            }
+            return false;
+        }
 
         /// <summary>Menor roda primeiro nos ganchos encadeados (ModifyTuning, ModifyVisibility, FilterNoise).</summary>
         public virtual int Order { get { return 0; } }

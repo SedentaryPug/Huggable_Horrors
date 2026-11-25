@@ -258,6 +258,8 @@ namespace HorrorFPS
 
             loopVolume = spec.throwEffect == ThrowEffect.Radio ? 0.6f : 0.5f;
             loop = gameObject.AddComponent<AudioSource>();
+            AudioCategoryFilter.Attach(loop, spec.throwEffect == ThrowEffect.Radio
+                ? AudioCategory.Voice : AudioCategory.Effects);
             loop.clip = clip;
             loop.loop = true;
             loop.playOnAwake = false;

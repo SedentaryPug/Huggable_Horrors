@@ -108,6 +108,7 @@ namespace HorrorFPS
             notifyText = NewText("Notify", viewport, 26, TextAnchor.MiddleCenter, DialogueStyle.NotifyColor);
 
             audioSrc = gameObject.AddComponent<AudioSource>();
+            AudioCategoryFilter.Attach(audioSrc, AudioCategory.Interface);
             audioSrc.playOnAwake = false;
             audioSrc.spatialBlend = 0f;
 

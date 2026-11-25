@@ -21,8 +21,8 @@ namespace HorrorFPS
             Disabled    // desligado por roteiro: nunca aparece
         }
 
-        /// <summary>Estado de um módulo exclusivo (StalkerModule.SaveState), identificado pelo nome do tipo.</summary>
-        [Serializable] public class ModuleState { public string type; public string data; }
+        /// <summary>Estado de um módulo exclusivo. id identifica a instância; type permite migrar saves antigos.</summary>
+        [Serializable] public class ModuleState { public string id; public string type; public string data; }
 
         [Serializable]
         public class Record

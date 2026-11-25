@@ -104,7 +104,7 @@ namespace HorrorFPS
             staticSource.clip = staticLoop != null ? staticLoop : ProceduralAudio.RadioStatic();
             staticSource.volume = 0f;
 
-            voiceSource = PlayerAudio.Create(transform, "[Radio Voice]", maxDistance);
+            voiceSource = PlayerAudio.Create(transform, "[Radio Voice]", maxDistance, AudioCategory.Voice);
             voiceSource.volume = volume;
             fx = RadioFx.Apply(voiceSource, 1f);
             fx.Volume = volume;

@@ -56,6 +56,8 @@ namespace HorrorFPS
         public float number = 1f;
         public bool flag = true;
         public AudioClip clip;
+        [Tooltip("Categoria de volume do som tocado por esta ação.")]
+        public AudioCategory audioCategory = AudioCategory.Effects;
         public DialogueAnimation animation = new DialogueAnimation();
         public DialogueGraph graph;
         public string actorId;
@@ -118,8 +120,8 @@ namespace HorrorFPS
                         if (a.clip == null) break;
                         float vol = a.number > 0f ? a.number : 1f;
                         DialogueActor actor = DialogueManager.ResolveActor(s, a.actorId);
-                        if (actor != null) AudioSource.PlayClipAtPoint(a.clip, actor.transform.position, vol);
-                        else s.PlayLocalSound(a.clip, vol);
+                        if (actor != null) AudioCategoryFilter.PlayClipAtPoint(a.clip, actor.transform.position, vol, a.audioCategory);
+                        else s.PlayLocalSound(a.clip, vol, a.audioCategory);
                         break;
                     }
                 case DialogueActionKind.Sanity:

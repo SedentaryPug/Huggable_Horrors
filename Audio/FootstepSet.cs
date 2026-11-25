@@ -1,3 +1,4 @@
+using UnityEngine.Audio;
 using UnityEngine;
 
 namespace HorrorFPS
@@ -6,7 +7,7 @@ namespace HorrorFPS
     /// Seus clipes de passo e de pouso para um tipo de piso. Crie pelo menu Assets > Create > HorrorFPS > Audio > Footstep Set.
     /// Dois jeitos de usar: (1) coloque o conjunto na lista 'Sets' do FootstepAudio do jogador: vale em todo piso daquele tipo;
     /// (2) arraste para o campo 'Footsteps' de um NoiseSurface: vale só naquele piso (uma passarela de metal com um som próprio).
-    /// Sem nenhum conjunto, o jogo usa os passos gerados por código.
+    /// Sem nenhum conjunto, o jogo usa os passos gerados por código. O grupo do Audio Mixer permite aplicar efeitos, como reverb e filtros.
     /// </summary>
     [CreateAssetMenu(fileName = "FootstepSet", menuName = "HorrorFPS/Audio/Footstep Set")]
     public class FootstepSet : ScriptableObject
@@ -19,6 +20,8 @@ namespace HorrorFPS
         public AudioClip[] landings = new AudioClip[0];
         [Range(0.1f, 2f)] public float volume = 1f;
         [Range(0.5f, 1.5f)] public float pitch = 1f;
+        [Tooltip("Grupo do Audio Mixer para aplicar efeitos a estes passos. Vazio = usa o grupo geral do FootstepAudio.")]
+        public AudioMixerGroup mixerGroup;
 
         public bool HasSteps { get { return steps != null && steps.Length > 0; } }
         public bool HasLandings { get { return landings != null && landings.Length > 0; } }

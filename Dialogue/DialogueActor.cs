@@ -134,6 +134,7 @@ namespace HorrorFPS
             {
                 voiceSource = GetComponent<AudioSource>();
                 if (voiceSource == null) voiceSource = gameObject.AddComponent<AudioSource>();
+                AudioCategoryFilter.Attach(voiceSource, AudioCategory.Voice);
                 voiceSource.playOnAwake = false;
                 voiceSource.spatialBlend = 1f;
                 voiceSource.rolloffMode = AudioRolloffMode.Linear;

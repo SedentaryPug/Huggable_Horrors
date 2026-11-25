@@ -63,6 +63,7 @@ namespace HorrorFPS
             if (sfx == null)
             {
                 sfx = gameObject.AddComponent<AudioSource>();
+                AudioCategoryFilter.Attach(sfx, AudioCategory.Interface);
                 sfx.playOnAwake = false;
                 sfx.spatialBlend = 0f;
             }

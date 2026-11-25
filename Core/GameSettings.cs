@@ -32,6 +32,9 @@ namespace HorrorFPS
         static float masterVolume = 1f;
         static float musicVolume = 0.8f;
         static float ambienceVolume = 0.8f;
+        static float effectsVolume = 1f;
+        static float voiceVolume = 1f;
+        static float interfaceVolume = 1f;
 
         public static event Action Changed;
 
@@ -59,6 +62,9 @@ namespace HorrorFPS
             masterVolume = PlayerPrefs.GetFloat(Prefix + "MasterVolume", masterVolume);
             musicVolume = PlayerPrefs.GetFloat(Prefix + "MusicVolume", musicVolume);
             ambienceVolume = PlayerPrefs.GetFloat(Prefix + "AmbienceVolume", ambienceVolume);
+            effectsVolume = PlayerPrefs.GetFloat(Prefix + "EffectsVolume", effectsVolume);
+            voiceVolume = PlayerPrefs.GetFloat(Prefix + "VoiceVolume", voiceVolume);
+            interfaceVolume = PlayerPrefs.GetFloat(Prefix + "InterfaceVolume", interfaceVolume);
         }
 
         static void Save()
@@ -76,6 +82,9 @@ namespace HorrorFPS
             PlayerPrefs.SetFloat(Prefix + "MasterVolume", masterVolume);
             PlayerPrefs.SetFloat(Prefix + "MusicVolume", musicVolume);
             PlayerPrefs.SetFloat(Prefix + "AmbienceVolume", ambienceVolume);
+            PlayerPrefs.SetFloat(Prefix + "EffectsVolume", effectsVolume);
+            PlayerPrefs.SetFloat(Prefix + "VoiceVolume", voiceVolume);
+            PlayerPrefs.SetFloat(Prefix + "InterfaceVolume", interfaceVolume);
             Changed?.Invoke();
         }
 
@@ -171,6 +180,27 @@ namespace HorrorFPS
         {
             get { EnsureLoaded(); return ambienceVolume; }
             set { EnsureLoaded(); ambienceVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume dos efeitos de jogo (0..1).</summary>
+        public static float EffectsVolume
+        {
+            get { EnsureLoaded(); return effectsVolume; }
+            set { EnsureLoaded(); effectsVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume das vozes e falas (0..1).</summary>
+        public static float VoiceVolume
+        {
+            get { EnsureLoaded(); return voiceVolume; }
+            set { EnsureLoaded(); voiceVolume = Mathf.Clamp01(value); Save(); }
+        }
+
+        /// <summary>Volume dos sons da interface (0..1).</summary>
+        public static float InterfaceVolume
+        {
+            get { EnsureLoaded(); return interfaceVolume; }
+            set { EnsureLoaded(); interfaceVolume = Mathf.Clamp01(value); Save(); }
         }
     }
 }

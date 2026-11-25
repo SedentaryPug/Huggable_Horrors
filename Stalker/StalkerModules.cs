@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace HorrorFPS
     {
         readonly StalkerBrain brain;
         StalkerModule[] list = new StalkerModule[0];
+        readonly Dictionary<StalkerModule, string> stateIds = new Dictionary<StalkerModule, string>();
 
         public StalkerModules(StalkerBrain owner) { brain = owner; }
 
@@ -20,7 +22,38 @@ namespace HorrorFPS
         public void Collect()
         {
             list = brain.GetComponents<StalkerModule>();
-            System.Array.Sort(list, (a, b) => a.Order != b.Order ? a.Order.CompareTo(b.Order) : a.GetInstanceID().CompareTo(b.GetInstanceID()));
+            stateIds.Clear();
+
+            Dictionary<StalkerModule, int> componentOrder = new Dictionary<StalkerModule, int>();
+            Dictionary<Type, int> typeOccurrences = new Dictionary<Type, int>();
+            HashSet<string> usedIds = new HashSet<string>();
+            for (int i = 0; i < list.Length; i++)
+            {
+                StalkerModule module = list[i];
+                componentOrder[module] = i;
+
+                Type type = module.GetType();
+                int occurrence;
+                typeOccurrences.TryGetValue(type, out occurrence);
+                typeOccurrences[type] = occurrence + 1;
+
+                string stateId = module.StateId;
+                if (string.IsNullOrEmpty(stateId))
+                    stateId = "legacy:" + (type.FullName ?? type.Name) + "#" + occurrence;
+                if (!usedIds.Add(stateId))
+                {
+                    Debug.LogError("[Stalker] ID de estado duplicado no módulo '" + module.name + "' (" + type.Name + "). Usando um ID de compatibilidade baseado na ordem do componente.", module);
+                    stateId = "duplicate:" + (type.FullName ?? type.Name) + "#" + occurrence;
+                    usedIds.Add(stateId);
+                }
+                stateIds[module] = stateId;
+            }
+
+            Array.Sort(list, (a, b) =>
+            {
+                int byOrder = a.Order.CompareTo(b.Order);
+                return byOrder != 0 ? byOrder : componentOrder[a].CompareTo(componentOrder[b]);
+            });
             for (int i = 0; i < list.Length; i++) list[i].Attach(brain);
         }
 
@@ -133,6 +166,7 @@ namespace HorrorFPS
                 if (s == null) continue;
                 StalkerRoster.ModuleState m = new StalkerRoster.ModuleState();
                 m.type = list[i].GetType().Name;
+                m.id = stateIds[list[i]];
                 m.data = s;
                 output.Add(m);
             }
@@ -141,15 +175,36 @@ namespace HorrorFPS
         public void LoadStates(List<StalkerRoster.ModuleState> input)
         {
             if (input == null) return;
+            bool[] consumed = new bool[input.Count];
             for (int i = 0; i < list.Length; i++)
             {
-                string type = list[i].GetType().Name;
+                StalkerModule module = list[i];
+                string id = stateIds[module];
+                int match = -1;
                 for (int j = 0; j < input.Count; j++)
                 {
-                    if (input[j] == null || input[j].type != type) continue;
-                    list[i].LoadState(input[j].data);
-                    break;
+                    if (consumed[j] || input[j] == null) continue;
+                    if (input[j].id == id && input[j].type == module.GetType().Name)
+                    {
+                        match = j;
+                        break;
+                    }
                 }
+
+                if (match < 0 && module.SaveState() != null)
+                {
+                    string type = module.GetType().Name;
+                    for (int j = 0; j < input.Count; j++)
+                    {
+                        if (consumed[j] || input[j] == null || !string.IsNullOrEmpty(input[j].id) || input[j].type != type) continue;
+                        match = j;
+                        break;
+                    }
+                }
+
+                if (match < 0) continue;
+                consumed[match] = true;
+                module.LoadState(input[match].data);
             }
         }
     }

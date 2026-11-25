@@ -22,6 +22,8 @@ namespace HorrorFPS
         [SerializeField, Range(0.5f, 1.5f)] float pitchMax = 1.04f;
         [Tooltip("Até onde o JOGADOR ouve o som (metros).")]
         [SerializeField] float hearDistance = 30f;
+        [Tooltip("Categoria usada pelo controle de volume nas opções.")]
+        [SerializeField] AudioCategory audioCategory = AudioCategory.Effects;
 
         [Header("Barulho para a IA")]
         [Tooltip("Raio do OverlapSphere, em metros. 0 = não faz barulho para a IA.")]
@@ -83,6 +85,7 @@ namespace HorrorFPS
                     go.hideFlags = HideFlags.DontSave;
                     go.transform.SetParent(transform, false);
                     src = go.AddComponent<AudioSource>();
+                    AudioCategoryFilter.Attach(src, audioCategory);
                     src.playOnAwake = false;
                     src.spatialBlend = 1f;
                     src.rolloffMode = AudioRolloffMode.Linear;
@@ -110,7 +113,8 @@ namespace HorrorFPS
         /// 'source' = quem fez (a IA dele não se ouve). Devolve o AudioSource (ou nulo) para você ajustar o que quiser.
         /// </summary>
         public static AudioSource PlayAt(AudioClip clip, Vector3 position, float noiseRadius, NoiseKind kind = NoiseKind.Custom,
-                                         GameObject source = null, float volume = 1f, float hearDistance = 30f)
+                                         GameObject source = null, float volume = 1f, float hearDistance = 30f,
+                                         AudioCategory category = AudioCategory.Effects)
         {
             AudioSource a = null;
             if (clip != null)
@@ -118,6 +122,7 @@ namespace HorrorFPS
                 GameObject go = new GameObject("OneShot_" + clip.name);
                 go.transform.position = position;
                 a = go.AddComponent<AudioSource>();
+                AudioCategoryFilter.Attach(a, category);
                 a.clip = clip;
                 a.volume = Mathf.Clamp01(volume);
                 a.spatialBlend = 1f;

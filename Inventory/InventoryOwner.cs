@@ -489,7 +489,8 @@ namespace HorrorFPS
             if (action.effects != null)
                 for (int i = 0; i < action.effects.Length; i++) if (action.effects[i] != null) action.effects[i].Execute(ctx);
 
-            if (action.sound != null) AudioSource.PlayClipAtPoint(action.sound, transform.position);
+            if (action.sound != null)
+                AudioCategoryFilter.PlayClipAtPoint(action.sound, transform.position, 1f, AudioCategory.Effects);
 
             if (action.consume > 0 && item.container != null)
             {

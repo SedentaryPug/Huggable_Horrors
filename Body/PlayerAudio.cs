@@ -45,11 +45,13 @@ namespace HorrorFPS
         }
 
         /// <summary>Cria uma AudioSource filha de 'parent' pronta para sons curtos do corpo.</summary>
-        public static AudioSource Create(Transform parent, string name, float maxDistance = 16f)
+        public static AudioSource Create(Transform parent, string name, float maxDistance = 16f,
+                                         AudioCategory category = AudioCategory.Effects)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
             AudioSource src = go.AddComponent<AudioSource>();
+            AudioCategoryFilter.Attach(src, category);
             src.playOnAwake = false;
             src.loop = false;
             src.spatialBlend = 0f;

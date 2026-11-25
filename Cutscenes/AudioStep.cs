@@ -12,6 +12,8 @@ namespace HorrorFPS
         [SerializeField] AudioSource source;
         [Tooltip("Opcional com AudioSource (troca o clipe dele). Obrigatório sem AudioSource.")]
         [SerializeField] AudioClip clip;
+        [Tooltip("Categoria de volume deste som nas opções.")]
+        [SerializeField] AudioCategory category = AudioCategory.Effects;
         [Range(0f, 1f)]
         [Tooltip("Volume (só vale para o clipe solto).")]
         [SerializeField] float volume = 1f;
@@ -24,6 +26,7 @@ namespace HorrorFPS
             if (source != null)
             {
                 if (clip != null) source.clip = clip;
+                AudioCategoryFilter.Attach(source, category);
                 source.Play();
                 if (waitUntilFinished)
                 {
@@ -32,7 +35,7 @@ namespace HorrorFPS
             }
             else if (clip != null)
             {
-                AudioSource.PlayClipAtPoint(clip, ListenerPosition(ctx), volume);
+                AudioCategoryFilter.PlayClipAtPoint(clip, ListenerPosition(ctx), volume, category);
                 if (waitUntilFinished) yield return CutsceneContext.Wait(clip.length);
             }
         }

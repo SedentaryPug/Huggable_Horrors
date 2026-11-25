@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace HorrorFPS
 {
@@ -15,7 +16,8 @@ namespace HorrorFPS
     ///
     /// Só o SOM muda com a inferência pelo nome do material; o RAIO do barulho para a IA continua vindo do NoiseSurface
     /// (nada de marcar um piso e ele ficar mais silencioso por conta própria). Para o piso abafar ou denunciar de verdade, use NoiseSurface.
-    /// No split-screen existe um AudioListener só: no modo Auto, com 2+ jogadores os passos viram sons do mundo (ouve-se o parceiro de longe/de perto).
+    /// O passo é espacializado por padrão; Local2D força som sem posição e Auto alterna conforme a quantidade de jogadores.
+    /// No split-screen existe um AudioListener só: em Auto, com 2+ jogadores os passos viram sons do mundo (ouve-se o parceiro de longe/de perto).
     /// </summary>
     [AddComponentMenu("HorrorFPS/Body/Footstep Audio")]
     [PlayerModule("Corpo", 6)]
@@ -24,8 +26,11 @@ namespace HorrorFPS
         [Header("Som")]
         [SerializeField, Range(0f, 1f)] float volume = 0.55f;
         [SerializeField, Range(0f, 0.3f)] float pitchVariance = 0.08f;
-        [SerializeField] AudioMode audioMode = AudioMode.Auto;
+        [Tooltip("World3D posiciona passos no mundo; Local2D remove a espacialização; Auto escolhe conforme o número de jogadores.")]
+        [SerializeField] AudioMode audioMode = AudioMode.World3D;
         [SerializeField] float maxDistance = 18f;
+        [Tooltip("Grupo padrão do Audio Mixer para aplicar efeitos aos passos sem um grupo definido no FootstepSet.")]
+        [SerializeField] AudioMixerGroup outputMixerGroup;
         [Tooltip("Seus clipes por tipo de piso (FootstepSet). Tipos sem conjunto usam o passo gerado por código.")]
         [SerializeField] FootstepSet[] sets;
 
@@ -119,15 +124,16 @@ namespace HorrorFPS
             float gain = Mathf.Lerp(0.5f, 1.3f, k);
             if (g.set != null && g.set.HasLandings)
             {
-                Play(g.set.PickLanding(), g.set.volume * gain, g.set.pitch);
+                Play(g.set.PickLanding(), g.set.volume * gain, g.set.pitch, g.set.mixerGroup);
                 return;
             }
             if (g.set != null && g.set.HasSteps)
             {
-                Play(g.set.PickStep(ref lastClip), g.set.volume * gain * 1.2f, g.set.pitch * 0.85f);
+                Play(g.set.PickStep(ref lastClip), g.set.volume * gain * 1.2f, g.set.pitch * 0.85f, g.set.mixerGroup);
                 return;
             }
-            Play(ProceduralAudio.Land(g.kind), ProceduralAudio.StepGain(g.kind) * gain, 1f);
+            Play(ProceduralAudio.Land(g.kind), ProceduralAudio.StepGain(g.kind) * gain, 1f,
+                g.set != null ? g.set.mixerGroup : null);
         }
 
         // ------------------------------------------------------------------ tocar
@@ -147,15 +153,16 @@ namespace HorrorFPS
                 clip = ProceduralAudio.Step(g.kind, lastVariant);
                 gain = ProceduralAudio.StepGain(g.kind);
             }
-            Play(clip, gain * intensity * extra, pitch);
+            Play(clip, gain * intensity * extra, pitch, g.set != null ? g.set.mixerGroup : null);
         }
 
-        void Play(AudioClip clip, float gain, float pitch)
+        void Play(AudioClip clip, float gain, float pitch, AudioMixerGroup mixerGroup)
         {
             if (clip == null || sources == null) return;
             AudioSource s = sources[nextSource];
             nextSource = (nextSource + 1) % sources.Length;       // um pé em cada fonte: o pitch de um não mexe no outro
             s.spatialBlend = PlayerAudio.SpatialBlend(audioMode);
+            s.outputAudioMixerGroup = mixerGroup != null ? mixerGroup : outputMixerGroup;
             s.pitch = pitch * (1f + Random.Range(-pitchVariance, pitchVariance));
             s.PlayOneShot(clip, Mathf.Clamp01(volume * gain));
         }

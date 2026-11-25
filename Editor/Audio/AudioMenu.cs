@@ -70,7 +70,8 @@ namespace HorrorFPS
             FootstepSet set = ScriptableObject.CreateInstance<FootstepSet>();
             string path = CreateAsset(set, "FootstepSet");
             Debug.Log("[Audio] Conjunto de passos criado em " + path + ". Escolha o tipo de piso, ponha os clipes de passo (e de pouso) e arraste "
-                + "para a lista 'Sets' do FootstepAudio do jogador (vale em todo piso desse tipo) ou para o campo 'Footsteps' de um NoiseSurface (vale só ali).", set);
+                + "para a lista 'Sets' do FootstepAudio do jogador (vale em todo piso desse tipo) ou para o campo 'Footsteps' de um NoiseSurface (vale só ali). "
+                + "O campo 'Mixer Group' pode direcionar cada piso para efeitos próprios do Audio Mixer.", set);
         }
 
         [MenuItem(HorrorFPSMenu.Audio + "Create Audio Profile", false, HorrorFPSMenu.AudioOrder + 4)]
