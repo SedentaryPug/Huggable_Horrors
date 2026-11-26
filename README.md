@@ -82,6 +82,7 @@ Tudo é remapeável em **Controles** (menu de pausa e menu principal > Opções)
 | [`HorrorFPS-Itens-Sanidade-Corpo`](Docs/HorrorFPS-Itens-Sanidade-Corpo.md) | itens, inventário, sanidade, corpo, personagens, Item Studio, armas e lanterna |
 | [`HorrorFPS-Animacao-Corpo`](Docs/HorrorFPS-Animacao-Corpo.md) · [`Locomocao-Mixamo`](Docs/HorrorFPS-Locomocao-Mixamo.md) | corpo visível aos outros jogadores, Animator, Mixamo |
 | [`HorrorFPS-Perseguidor`](Docs/HorrorFPS-Perseguidor.md) · [`ArvoreComportamento`](Docs/HorrorFPS-ArvoreComportamento.md) | IA do perseguidor e a árvore de comportamento editável |
+| [`HorrorFPS-GanchosDeCena`](Docs/HorrorFPS-GanchosDeCena.md) | ligar eventos de assets (diálogo, árvore do perseguidor) a objetos da cena, por NPC ou por monstro |
 | [`HorrorFPS-Props`](Docs/HorrorFPS-Props.md) | props interativos |
 | [`HorrorFPS-Reanimacao`](Docs/HorrorFPS-Reanimacao.md) | reanimação em co-op |
 | [`HorrorFPS-Contexto-Scripts`](Docs/HorrorFPS-Contexto-Scripts.md) | guia de referência do código (receitas, armadilhas, índice de classes) |

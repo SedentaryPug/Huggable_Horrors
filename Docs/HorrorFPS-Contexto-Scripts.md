@@ -419,7 +419,7 @@ Condições: enum DialogueConditionKind { Variable, Number, Text, HasItem, Sanit
   DialogueConditions.Register(string id, Func<DialogueContext, string, bool> fn)   // kind = Custom
 Ids especiais de quem fala: DialogueIds.Player = "@player", DialogueIds.Narrator = "@narrator"
 ```
-Componentes de cena: `DialogueActor`, `DialogueInteractable`, `DialogueTrigger`, `DialogueEventRelay` (UnityEvent por id de evento), `DialogueStep` (cutscene). `DialogueBridge` expõe helpers (variáveis, `SetLock`, `GiveItem`, `AddSanity`, `Damage`, `Shake`, `Alert`, `GoToLevel`, `Autosave`). Chaves de save: `dlg.<grafo>.v.<nó>` (nó visitado), `dlgtrigger.<id>`.
+Componentes de cena: `DialogueActor`, `DialogueInteractable`, `DialogueTrigger`, `DialogueEventRelay` (UnityEvent por id de evento; escopo "Qualquer conversa" ou "Só deste objeto" via `DialogueOptions.source`; ver `HorrorFPS-GanchosDeCena.md`), `DialogueStep` (cutscene). `DialogueBridge` expõe helpers (variáveis, `SetLock`, `GiveItem`, `AddSanity`, `Damage`, `Shake`, `Alert`, `GoToLevel`, `Autosave`). Chaves de save: `dlg.<grafo>.v.<nó>` (nó visitado), `dlgtrigger.<id>`.
 
 ### 5.14 Props — `Props/`
 
@@ -437,7 +437,7 @@ Props prontos: `Breakable`, `ExplosiveBarrel` (herdam `PropHealth`), `Drawer`, `
 - **Objetos de dados:** `StalkerDefinition` (carregadas por `Resources.LoadAll<StalkerDefinition>("HorrorFPS/Stalkers")`), `StalkerProfile` (sentidos, `AttentionTuning`), `StalkerTreeAsset` (árvore editável; `Tools > Horror FPS > 24. Stalker Tree Editor`), `StalkerProfileGraph` (perfil em grafo opcional: lista `[SerializeReference]` de `StalkerTrait` com os sentidos, o corpo e os **ataques** do monstro; cada característica publica capacidades no contrato `StalkerCapabilities`, que a árvore consulta pelos nós `Atacar`, `Tem capacidade`, `Capacidade comparada` e `Pode atacar`; campo `Profile Graph` do `StalkerBrain`/`StalkerDefinition`; sem ele nada muda).
 - **Cérebro:** `StalkerBrain` (+`NavMeshAgent`) com `Knowledge` (`StalkerKnowledge`: `focus`, `hasVisual`, `visualPos`, `hasLead`, `leadFresh`, `leadPos`, `leadRadius`, `leadConfidence`…), `Blackboard` (`GetFloat/GetBool/SetFloat/SetBool/Add/Remove/Clear`), `Mode` (`StalkerMode`: Patrol, Investigate, Search, CheckHiding, Chase, Attack), `Tune` (`AttentionTuning`), `Home`, `Memory`, `Senses`, `Agent`, `Modules`; ações `MoveTo(dest, speed)`, `Stop()`, `Arrived(dist)`, `FaceToward(point, degPerSecond)`, `Stimulate(amount)`, `ForceAttention(value)`, `Freeze(frozen, disableAgent)`, `Warp(pos, rot)`, `ReceiveHint(h)`, `SetTree(asset)`/`RebuildTree()`; eventos `ModeChanged`, `AttentionChanged`, `Spotted`, `HintReceived`. Enums: `StalkerAttention { Calm, Alert, Hunting, Frenzy }`, `HintSource { Seen, Glimpse, Heard, DirectorPressure, DirectorHiding, Ping, Shared }`.
 - **Ganchos de extensão:** nós da árvore (`StalkerTask`, `StalkerCondition`, `StalkerNode` — R5) e **módulos/traços** (`StalkerModule`: `Order`, `OnAttach`, `BuildBranches(StalkerTreeBuilder)`, `ModifyTuning(ref AttentionTuning)`, `ModifyVisibility(target, visibility)`, `FilterNoise(ref StalkerNoise)`, `OnSpotted`, `OnLostSight`, `OnHint`, `OnModeChanged`, `OnAttentionChanged`, `DecideAttack(target, ref damage)`, `OnArrived(reason)`, `BrainTick(dt)`, `SaveState()/LoadState(string)`). `StalkerTraitSprint` e `StalkerFinisher` são os exemplos.
-- **Jogadores vistos pelo monstro:** `StalkerTarget` (`player`, `root`, `alive`, `hidden`, `sanity01`, `tension`, `speed`, `isolation`, `exposure`) via `StalkerBridge` (`TargetOf`, `Players`, `IsAlive`, `IsHidden`, `Damage`, `Kill`, `LoseSanity`, `EmitNoise`, `SpotsNear`…). Sistema em volta: `StalkerManager` (singleton), `StalkerDirector` (pressão/ritmo), `StalkerRoster` (persiste entre cenas), `StalkerMemory` (aprende iscas), `StalkerSpawner`/`StalkerSpawnPoint`/`StalkerSummonTrigger`, `PatrolPoint`, `StalkerNoiseTag`. Chaves de save: `stalker_memory_v2_<chave>`, `stalker_roster_v1`, `stalker_trigger_<id>`.
+- **Jogadores vistos pelo monstro:** `StalkerTarget` (`player`, `root`, `alive`, `hidden`, `sanity01`, `tension`, `speed`, `isolation`, `exposure`) via `StalkerBridge` (`TargetOf`, `Players`, `IsAlive`, `IsHidden`, `Damage`, `Kill`, `LoseSanity`, `EmitNoise`, `SpotsNear`…). Sistema em volta: `StalkerManager` (singleton), `StalkerDirector` (pressão/ritmo), `StalkerRoster` (persiste entre cenas), `StalkerMemory` (aprende iscas), `StalkerSpawner`/`StalkerSpawnPoint`/`StalkerSummonTrigger`, `PatrolPoint`, `StalkerNoiseTag`, `StalkerSceneHooks` (UnityEvents da cena para o nó "Evento de cena" e para o cérebro: notou, modo, atenção). Chaves de save: `stalker_memory_v2_<chave>`, `stalker_roster_v1`, `stalker_trigger_<id>`.
 
 ### 5.16 Reanimação (Revive) — `Revive/`
 
@@ -1108,7 +1108,7 @@ Tipos em arquivo de outro nome:
 
 **Editor/**  (28 arquivos)
 
-Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DeathMenu, DistractionItems, EquipPresets, HorrorFPSMenu, HorrorFPSSetup, HorrorFPSSetup.Audio, HorrorFPSSetup.Distractions, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.MoreLevels, HorrorFPSSetup.NewLevel, HorrorFPSSetup.StalkerTest, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, StartingItemsView, StealthMenu, WizardUtil
+Arquivos: CharacterCatalogEditor, CharacterCatalogUtil, CharacterDefinitionEditor, DeathMenu, DistractionItems, EquipPresets, HorrorFPSMenu, HorrorFPSSetup, HorrorFPSSetup.Audio, HorrorFPSSetup.Distractions, HorrorFPSSetup.FullDemo, HorrorFPSSetup.Levels, HorrorFPSSetup.MoreLevels, HorrorFPSSetup.NewLevel, HorrorFPSSetup.StalkerTest, ItemContainerEditor, ItemEquipDrawer, ItemShapeDrawer, ItemStudioWindow, PlayerContextEditor, PlayerInventoryWindow, PlayerPrefabInstaller, ProjectPaths, SampleItemModels, SampleItems, SceneHooksEditorUtil, StartingItemsView, StealthMenu, WizardUtil
 
 Tipos em arquivo de outro nome:
 - `EquipPresets.cs` define enum `EquipPreset`
@@ -1119,7 +1119,7 @@ Arquivos: AnimationEditorUtil, ModelBodySetup, PlaceholderBodyBuilder, PlayerAni
 
 **Editor/Dialogue/**  (4 arquivos)
 
-Arquivos: DialogueDrawers, DialogueGraphInspector, DialogueGraphWindow, DialogueMenus
+Arquivos: DialogueDrawers, DialogueEventRelayEditor, DialogueGraphInspector, DialogueGraphWindow, DialogueMenus
 
 Tipos em arquivo de outro nome:
 - `DialogueDrawers.cs` define class `DialogueEditorUtil`, class `DialogueNodeIdDrawer`, class `DialogueAnimationDrawer`, class `DialogueConditionDrawer`, class `DialogueActionDrawer`
@@ -1134,7 +1134,7 @@ Arquivos: ReviveMenu
 
 **Editor/Stalker/**  (11 arquivos)
 
-Arquivos: StalkerCapKeyDrawer, StalkerLevelValueDrawer, StalkerMenu, StalkerProfileGraphEditor, StalkerProfileGraphMenu, StalkerTraitTypes, StalkerTreeAssetEditor, StalkerTreeCheckMenu, StalkerTreeMenu, StalkerTreeWindow, StalkerWorldMenu
+Arquivos: StalkerCapKeyDrawer, StalkerLevelValueDrawer, StalkerMenu, StalkerProfileGraphEditor, StalkerProfileGraphMenu, StalkerSceneHooksEditor, StalkerTraitTypes, StalkerTreeAssetEditor, StalkerTreeCheckMenu, StalkerTreeMenu, StalkerTreeWindow, StalkerWorldMenu
 
 **Editor/Stalker/Graph/**  (7 arquivos)
 
@@ -1241,7 +1241,7 @@ Tipos em arquivo de outro nome:
 
 **Stalker/**  (25 arquivos)
 
-Arquivos: PatrolPoint, StalkerActions, StalkerBT, StalkerBrain, StalkerBridge, StalkerDefinition, StalkerDirector, StalkerFinisher, StalkerFinisherEnd, StalkerKnowledge, StalkerManager, StalkerMemory, StalkerModule, StalkerModules, StalkerNoiseTag, StalkerProfile, StalkerRoster, StalkerSchedule, StalkerSenses, StalkerSpawnPoint, StalkerSpawner, StalkerSummonTrigger, StalkerTraitSprint, StalkerTypes, StalkerWorld
+Arquivos: PatrolPoint, StalkerActions, StalkerBT, StalkerBrain, StalkerBridge, StalkerDefinition, StalkerDirector, StalkerFinisher, StalkerFinisherEnd, StalkerKnowledge, StalkerManager, StalkerMemory, StalkerModule, StalkerModules, StalkerNoiseTag, StalkerProfile, StalkerRoster, StalkerSceneHooks, StalkerSchedule, StalkerSenses, StalkerSpawnPoint, StalkerSpawner, StalkerSummonTrigger, StalkerTraitSprint, StalkerTypes, StalkerWorld
 
 Tipos em arquivo de outro nome:
 - `StalkerBT.cs` define enum `BTStatus`, class `BTNode`, class `BTSelector`, class `BTSequence`, class `BTGuard`, class `BTCondition`, class `BTAction`

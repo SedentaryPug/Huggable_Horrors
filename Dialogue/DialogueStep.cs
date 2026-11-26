@@ -31,6 +31,7 @@ namespace HorrorFPS
             o.startNode = startNode;
             o.audience = audience;
             o.faceSpeaker = false;
+            o.source = this;
             session = DialogueManager.Play(graph, players[0], o);
             if (session == null || !waitForEnd) yield break;
 

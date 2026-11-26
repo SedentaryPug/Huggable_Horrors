@@ -159,6 +159,45 @@ namespace HorrorFPS
             return set;
         }
 
+        /// <summary>
+        /// Junta em <paramref name="into"/> os ids das ações "Event" deste grafo (sem repetir). Com <paramref name="followLinked"/>,
+        /// entra também nos grafos ligados por Salto e por "Começar diálogo", porque os eventos deles chegam aos mesmos relés.
+        /// O Inspector do DialogueEventRelay usa para listar o que falta ligar na cena.
+        /// </summary>
+        public void CollectEventIds(ICollection<string> into, bool followLinked = true)
+        {
+            Collect(this, into, followLinked ? new HashSet<DialogueGraph>() : null);
+        }
+
+        static void Collect(DialogueGraph g, ICollection<string> into, HashSet<DialogueGraph> visited)
+        {
+            if (g == null || into == null) return;
+            if (visited != null && !visited.Add(g)) return;
+            for (int i = 0; i < g.nodes.Count; i++)
+            {
+                DialogueNode n = g.nodes[i];
+                if (n == null) continue;
+                Collect(n.onStart, into, visited);
+                Collect(n.onEnd, into, visited);
+                Collect(n.actions, into, visited);
+                for (int c = 0; c < n.choices.Count; c++)
+                    if (n.choices[c] != null) Collect(n.choices[c].actions, into, visited);
+                if (visited != null && n.kind == DialogueNodeKind.Jump && n.jumpGraph != null) Collect(n.jumpGraph, into, visited);
+            }
+        }
+
+        static void Collect(List<DialogueAction> list, ICollection<string> into, HashSet<DialogueGraph> visited)
+        {
+            if (list == null) return;
+            for (int i = 0; i < list.Count; i++)
+            {
+                DialogueAction a = list[i];
+                if (a == null) continue;
+                if (a.kind == DialogueActionKind.Event && !string.IsNullOrEmpty(a.key) && !into.Contains(a.key)) into.Add(a.key);
+                else if (a.kind == DialogueActionKind.StartDialogue && visited != null && a.graph != null) Collect(a.graph, into, visited);
+            }
+        }
+
         public static string LabelOf(DialogueNode n)
         {
             return string.IsNullOrEmpty(n.label) ? n.kind + " " + n.id : n.label;
