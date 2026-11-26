@@ -155,11 +155,12 @@ namespace HorrorFPS
                 case DialogueActionKind.StartDialogue:
                     {
                         if (a.graph == null) break;
-                        DialogueGraph g = a.graph; PlayerContext p = s.Player; DialogueActor spk = s.Actor;
+                        DialogueGraph g = a.graph; PlayerContext p = s.Player; DialogueActor spk = s.Actor; Component src = s.Source;
                         s.afterEnd.Add(delegate
                         {
                             DialogueOptions o = new DialogueOptions();
                             o.speaker = spk;
+                            o.source = src;     // a conversa seguinte continua sendo "deste objeto" para os relés
                             DialogueManager.Play(g, p, o);
                         });
                         break;

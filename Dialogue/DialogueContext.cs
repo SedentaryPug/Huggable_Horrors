@@ -17,6 +17,9 @@ namespace HorrorFPS
         public bool faceSpeaker = true;
         /// <summary>Se o jogador já está numa conversa, encerra a atual e começa esta.</summary>
         public bool interrupt;
+        /// <summary>Quem começou a conversa (DialogueInteractable, DialogueTrigger, DialogueStep...). O DialogueEventRelay no modo
+        /// "Só deste objeto" usa para saber se a conversa é dele. Vazio = conversa sem dono (só os relés de "Qualquer conversa" ouvem).</summary>
+        public Component source;
         public Action<DialogueSession> onEnded;
     }
 
@@ -53,6 +56,9 @@ namespace HorrorFPS
         public readonly List<PlayerContext> Viewers = new List<PlayerContext>();
 
         public DialogueActor Actor { get { return Options.speaker; } }
+
+        /// <summary>Quem começou a conversa (ver DialogueOptions.source).</summary>
+        public Component Source { get { return Options != null ? Options.source : null; } }
 
         public event Action<DialogueSession> Ended;
 

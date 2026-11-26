@@ -344,6 +344,31 @@ namespace HorrorFPS
     }
 
     [Serializable]
+    [StalkerNodeMenu("Ações/Evento de cena", "Dispara um evento por id que o componente Stalker Scene Hooks da cena transforma em UnityEvent: abrir uma porta, apagar as luzes, tocar um som. A árvore é um asset e não enxerga a cena; o id faz a ponte, e cada cena (ou cada monstro) liga o mesmo id a coisas diferentes. Sem ninguém ligado ao id, não acontece nada. Termina bem na hora.")]
+    public class StalkerSceneEventNode : StalkerTask
+    {
+        [Tooltip("Id do evento (o mesmo de uma entrada do Stalker Scene Hooks).")]
+        public string eventId = "rugido";
+        [Tooltip("Opcional: um texto entregue ao UnityEvent com argumento.")]
+        public string argument = "";
+
+        public override string Summary() { return string.IsNullOrEmpty(eventId) ? "(sem id)" : eventId; }
+
+        public override bool CanFail { get { return false; } }
+
+        public override void Validate(List<string> report, string who)
+        {
+            if (string.IsNullOrEmpty(eventId)) report.Add(who + ": evento de cena sem id (não dispara nada).");
+        }
+
+        protected override BTStatus OnTick()
+        {
+            StalkerSceneHooks.Raise(Brain, eventId, argument);
+            return BTStatus.Success;
+        }
+    }
+
+    [Serializable]
     [StalkerNodeMenu("Ações/Log (teste)", "Escreve uma linha no Console e termina bem. Para descobrir se a árvore chegou até aqui.")]
     public class StalkerLogNode : StalkerTask
     {

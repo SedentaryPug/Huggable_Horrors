@@ -95,6 +95,7 @@ namespace HorrorFPS
             o.startNode = startNode;
             o.audience = audience;
             o.faceSpeaker = faceSpeaker;
+            o.source = this;
             o.onEnded = delegate (DialogueSession s) { if (onFinished != null) onFinished.Invoke(); };
             DialogueSession session = DialogueManager.Play(graph, p, o);
             if (session != null && playOnce) DialogueBridge.SetBool(Key, true);

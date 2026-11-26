@@ -83,6 +83,7 @@ namespace HorrorFPS
             o.startNode = e.startNode;
             o.audience = dlgAudience;
             o.faceSpeaker = dlgFaceSpeaker;
+            o.source = this;
             DialogueManager.Play(e.graph, p, o);
         }
     }

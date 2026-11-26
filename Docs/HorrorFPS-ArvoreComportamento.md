@@ -6,7 +6,7 @@ Até aqui a árvore do perseguidor era montada em código (`StalkerActions` + tr
 
 - **Árvore como asset** (`StalkerTreeAsset`): cada monstro (ou cada `StalkerDefinition`) aponta para a sua. Vários monstros podem dividir o mesmo asset.
 - **Janela de edição**: lista indentada, com parâmetros, condições, desfazer/refazer, copiar/colar e **visão ao vivo** (qual nó está rodando agora, quais condições valem, as variáveis do monstro).
-- **Nós prontos**: 4 de fluxo, 6 decoradores, 11 ações, 13 condições.
+- **Nós prontos**: 4 de fluxo, 6 decoradores, 12 ações, 13 condições.
 - **Nós seus**: um script de uma classe, criado por um menu já com o esqueleto pronto.
 
 > **Código escrito sem compilar no Unity**, só conferido por checagem estática. A janela usa a API do Editor (seção 9). Se algo não compilar ou se comportar de outro jeito, mande a mensagem do Console.
@@ -126,6 +126,7 @@ Os nomes são os do menu "Adicionar". Parâmetros entre parênteses (valor padr�
 | Definir variável | troca ou soma (**Add**) uma variável do monstro |
 | Animator: gatilho | dispara um `Trigger` do `Animator` do monstro (procura nos filhos); avisa uma vez se não houver |
 | Enviar mensagem (OnRoar) | `SendMessage` no monstro, sem exigir receptor; argumento de texto opcional |
+| Evento de cena (rugido) | dispara um evento por id que o componente `StalkerSceneHooks` da cena transforma em UnityEvent (porta, luz, som). Ver [Ganchos de cena](HorrorFPS-GanchosDeCena.md) |
 | Log (teste) | escreve no Console; para descobrir se a árvore chegou ali |
 
 **Condições** (todas aceitam **NÃO**; "comparar" = `>=`, `<=` ou `=`)
